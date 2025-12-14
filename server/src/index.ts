@@ -2,9 +2,11 @@ import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 
 import * as routers from "./routes";
 import { apiLogger, errorHandler } from "./middlewares";
+import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
@@ -15,6 +17,12 @@ app.use(cors());
 
 app.use(express.json());
 app.use(apiLogger);
+
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Poker Utilities API Documentation",
+}));
 
 Object.values(routers).forEach((router) => {
     app.use(router);
