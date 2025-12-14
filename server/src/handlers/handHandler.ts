@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-// import { yahoo } from "../integrations";
 // import { LeagueInfo } from "@common/interfaces";
 
-class YahooHandler {
+class HandHandler {
     getUserLeagues = async (_req: Request, res: Response) => {
         // const response: LeagueInfo[] = await yahoo.getUserLeagues();
         const response = {};
@@ -10,4 +9,4 @@ class YahooHandler {
     };
 }
 
-export const yahooHandler = new YahooHandler();
+export const handHandler = new HandHandler();

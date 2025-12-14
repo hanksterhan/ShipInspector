@@ -73,3 +73,29 @@ export function parseBoard(board: string): Board {
     const cards = board.split(" ");
     return { cards: cards.map(parseCard) };
 }
+
+/**
+ * The category of a hand
+ * - 0: High Card
+ * - 1: Pair
+ * - 2: Two Pair
+ * - 3: Three of a Kind
+ * - 4: Straight
+ * - 5: Flush
+ * - 6: Full House
+ * - 7: Four of a Kind
+ * - 8: Straight Flush
+ * - 9: Royal Flush
+ */
+export type HandCategory = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+/**
+ * The rank of a hand
+ * @param category - The category of the hand
+ * @param tiebreak - The tiebreak cards
+ * @returns The HandRank object
+ */
+export interface HandRank {
+    category: HandCategory;
+    tiebreak: CardRank[];
+}

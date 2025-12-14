@@ -1,2 +1,2 @@
-export * from "./yahooHandler";
+export * from "./handHandler";
 // export * from "./databaseHandler";

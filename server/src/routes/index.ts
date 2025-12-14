@@ -1,2 +1,2 @@
-export * from "./yahooRouter";
+export * from "./handRouter";
 export * from "./databaseRouter";

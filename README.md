@@ -1,4 +1,5 @@
-# Here is a boilerplate for a full stack application
+# Ship Inspector
+A utility to help track poker hands that have been played.
 
 ## Usage
 
@@ -29,4 +30,10 @@ npm run start
 ```bash
 cd web
 npm run lint
+```
+
+#### Test on Server
+```bash
+cd server
+npm test -- hand.spec.ts
 ```
