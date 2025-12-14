@@ -4,7 +4,13 @@ import { handHandler } from "../handlers";
 function createRouter(): IRouter {
     const router = defineRouter();
 
-    router.get("/poker/hand", handHandler.getUserLeagues);
+    // Hand evaluation endpoints
+    router.post("/poker/hand/evaluate", handHandler.evaluateHand);
+    router.post("/poker/hand/compare", handHandler.compareHands);
+    
+    // Equity calculation endpoint
+    router.post("/poker/equity/calculate", handHandler.calculateEquity);
+
     return router;
 }
 
