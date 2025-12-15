@@ -62,7 +62,7 @@ export class CardSelector extends MobxLitElement {
         const faceRanks = RANKS.filter((r) => r.rank >= 11);
         return html`
             <div class="selection-stage">
-                <h3 class="stage-title">Select a Rank</h3>
+                <h3 class="stage-title">Select a Card</h3>
                 <div class="rank-grid">
                     <div class="rank-row">
                         ${numberRanks.map(

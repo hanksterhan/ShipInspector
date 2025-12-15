@@ -77,7 +77,6 @@ export class HoleSelector extends MobxLitElement {
 
         return html`
             <div class="selected-holes-section">
-                <h4 class="selected-holes-title">Selected Holes</h4>
                 <div class="selected-holes-grid">
                     ${holesWithIndices.map(
                         ({ hole, playerIndex }) => html`
@@ -121,15 +120,11 @@ export class HoleSelector extends MobxLitElement {
             <div class="hole-selector-container">
                 ${allHolesSelected
                     ? html`
-                          <h3 class="hole-selector-title">
-                              All Holes Selected
-                          </h3>
                           ${this.renderSelectedHoles()}
                       `
                     : html`
                           <h3 class="hole-selector-title">
-                              Player ${cardStore.currentPlayer + 1} - Select
-                              Hole Cards
+                              Player ${cardStore.currentPlayer + 1} Hand
                           </h3>
                           <div class="hole-cards-preview">
                               ${this.renderCard(
@@ -158,8 +153,8 @@ export class HoleSelector extends MobxLitElement {
                                 : hasExistingHole && canSelectMore
                                   ? html`
                                         <div class="hole-complete-message">
-                                            Hole cards selected for Player
-                                            ${cardStore.currentPlayer + 1}
+                                            Player
+                                            ${cardStore.currentPlayer + 1} Hand
                                         </div>
                                         <sp-action-button
                                             class="start-selection-button"
