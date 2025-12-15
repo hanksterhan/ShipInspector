@@ -170,37 +170,44 @@ export const styles = css`
     }
 
     .selected-card-display {
+        width: 150px;
+        height: 210px;
+        min-width: 150px;
+        max-width: 150px;
+        min-height: 210px;
+        max-height: 210px;
+        aspect-ratio: 5 / 7;
+        background: white;
+        border-radius: var(--spectrum-global-dimension-size-150);
+        border: 2px solid var(--spectrum-global-color-gray-400);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: var(--spectrum-global-dimension-size-200);
-        padding: var(--spectrum-global-dimension-size-400);
-        background: linear-gradient(
-            135deg,
-            var(--spectrum-global-color-gray-50) 0%,
-            var(--spectrum-global-color-gray-100) 100%
-        );
-        border-radius: var(--spectrum-global-dimension-size-200);
-        border: 2px solid var(--spectrum-global-color-gray-300);
-        min-width: 200px;
+        justify-content: center;
+        padding: var(--spectrum-global-dimension-size-200);
+        box-sizing: border-box;
     }
 
     .card-display-content {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: var(--spectrum-global-dimension-size-200);
-        font-size: var(--spectrum-global-dimension-font-size-600);
+        justify-content: center;
+        gap: var(--spectrum-global-dimension-size-100);
+        width: 100%;
+        height: 100%;
     }
 
     .card-rank {
-        font-size: var(--spectrum-global-dimension-font-size-700);
+        font-size: var(--spectrum-global-dimension-font-size-600);
         font-weight: var(--spectrum-global-font-weight-bold);
         color: var(--spectrum-global-color-gray-900);
+        line-height: 1;
     }
 
     .card-suit-icon {
-        width: 64px;
-        height: 64px;
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -209,12 +216,6 @@ export const styles = css`
     .card-suit-icon svg {
         width: 100%;
         height: 100%;
-    }
-
-    .card-label {
-        font-size: var(--spectrum-global-dimension-font-size-200);
-        color: var(--spectrum-global-color-gray-700);
-        text-transform: capitalize;
     }
 
     .selection-stage.complete {

@@ -163,7 +163,6 @@ export class CardSelector extends MobxLitElement {
         );
         return html`
             <div class="selection-stage complete">
-                <h3 class="stage-title">Card Selected</h3>
                 <div class="selected-card-display">
                     <div class="card-display-content">
                         <span class="card-rank"
@@ -175,9 +174,6 @@ export class CardSelector extends MobxLitElement {
                         >
                             ${selectedSuitData?.icon}
                         </span>
-                    </div>
-                    <div class="card-label">
-                        ${selectedRankData?.label} of ${selectedSuitData?.label}
                     </div>
                 </div>
                 <sp-action-button
