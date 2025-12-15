@@ -3,6 +3,7 @@ import { css } from "lit";
 export const styles = css`
     :host {
         display: block;
-        padding: 16px;
+        padding: var(--spectrum-global-dimension-size-300);
+        min-height: 100%;
     }
 `;

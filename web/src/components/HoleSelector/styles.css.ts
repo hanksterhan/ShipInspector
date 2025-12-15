@@ -12,6 +12,10 @@ export const styles = css`
         align-items: center;
         padding: var(--spectrum-global-dimension-size-300);
         gap: var(--spectrum-global-dimension-size-300);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: var(--spectrum-global-dimension-size-200);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        margin: var(--spectrum-global-dimension-size-200);
     }
 
     .hole-selector-title {
@@ -111,5 +115,51 @@ export const styles = css`
         padding: var(--spectrum-global-dimension-size-150);
         background-color: var(--spectrum-global-color-gray-100);
         border-radius: var(--spectrum-global-dimension-size-100);
+    }
+
+    .selected-holes-section {
+        width: 100%;
+        margin-top: var(--spectrum-global-dimension-size-300);
+        padding-top: var(--spectrum-global-dimension-size-300);
+        border-top: 2px solid var(--spectrum-global-color-gray-300);
+    }
+
+    .selected-holes-title {
+        margin: 0 0 var(--spectrum-global-dimension-size-200) 0;
+        font-size: var(--spectrum-global-dimension-font-size-300);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        color: var(--spectrum-global-color-gray-800);
+        text-align: center;
+    }
+
+    .selected-holes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spectrum-global-dimension-size-300);
+        width: 100%;
+    }
+
+    .player-hole-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spectrum-global-dimension-size-150);
+        padding: var(--spectrum-global-dimension-size-200);
+        background-color: var(--spectrum-global-color-gray-50);
+        border-radius: var(--spectrum-global-dimension-size-100);
+        border: 1px solid var(--spectrum-global-color-gray-300);
+    }
+
+    .player-label {
+        font-size: var(--spectrum-global-dimension-font-size-300);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        color: var(--spectrum-global-color-gray-800);
+    }
+
+    .player-hole-cards {
+        display: flex;
+        gap: var(--spectrum-global-dimension-size-150);
+        align-items: center;
+        justify-content: center;
     }
 `;
