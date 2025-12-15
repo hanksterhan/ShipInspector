@@ -6,10 +6,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "@spectrum-web-components/icons-workflow/icons/sp-icon-rail-right-open.js";
 
 import { menuStore } from "../../stores/index";
-import {
-    pokerIcon,
-    percentageIcon,
-} from "../../assets";
+import { pokerIcon, percentageIcon } from "../../assets";
 import { when } from "lit-html/directives/when.js";
 
 interface MenuItemDetails {
@@ -28,7 +25,7 @@ const MENU_ITEMS: MenuItemDetails[] = [
         id: "equity-calculator",
         name: "Equity Calculator",
         icon: html`<span class="menu-icon">${percentageIcon}</span>`,
-    }
+    },
 ];
 
 @customElement("app-menu")

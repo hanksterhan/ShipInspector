@@ -8,24 +8,24 @@ import "../../components/index";
 
 @customElement("equity-calculator")
 export class EquityCalculator extends MobxLitElement {
-  static readonly TAG_NAME = "equity-calculator";
-  static get styles() {
-    return styles;
-  }
+    static readonly TAG_NAME = "equity-calculator";
+    static get styles() {
+        return styles;
+    }
 
-  @property({ type: String })
-  placeholderProperty: string = "";
+    @property({ type: String })
+    placeholderProperty: string = "";
 
-  render() {
-    return html`
-        <h2>EquityCalculator page</h2>
-        <p>Welcome to the EquityCalculator page</p>
-    `;
-  }
+    render() {
+        return html`
+            <h2>EquityCalculator page</h2>
+            <p>Welcome to the EquityCalculator page</p>
+        `;
+    }
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    [EquityCalculator.TAG_NAME]: EquityCalculator;
-  }
+    interface HTMLElementTagNameMap {
+        [EquityCalculator.TAG_NAME]: EquityCalculator;
+    }
 }

@@ -8,4 +8,3 @@ export const percentageIcon = svg`
     <line x1="88" y1="168" x2="168" y2="88" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
 </svg>
 `;
-

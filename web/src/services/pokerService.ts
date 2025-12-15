@@ -1,5 +1,10 @@
 import { httpClient } from "./fetch";
-import { CompareHandsResponse, EquityOptions, EquityResult, EvaluateHandResponse } from "@common/interfaces";
+import {
+    CompareHandsResponse,
+    EquityOptions,
+    EquityResult,
+    EvaluateHandResponse,
+} from "@common/interfaces";
 
 const POKER_ENDPOINTS = {
     getHandEquity: "/poker/equity/calculate",
@@ -10,7 +15,12 @@ const POKER_ENDPOINTS = {
 export class PokerService {
     constructor() {}
 
-    async getHandEquity(players: string[], board: string, options: EquityOptions, dead: string[] = []): Promise<EquityResult> {
+    async getHandEquity(
+        players: string[],
+        board: string,
+        options: EquityOptions,
+        dead: string[] = []
+    ): Promise<EquityResult> {
         const response = await httpClient.post(POKER_ENDPOINTS.getHandEquity, {
             players,
             board,
@@ -20,7 +30,11 @@ export class PokerService {
         return response.data as EquityResult;
     }
 
-    async compareHands(hand1: string, hand2: string, board: string): Promise<CompareHandsResponse> {
+    async compareHands(
+        hand1: string,
+        hand2: string,
+        board: string
+    ): Promise<CompareHandsResponse> {
         const response = await httpClient.post(POKER_ENDPOINTS.compareHands, {
             hand1,
             hand2,
@@ -29,7 +43,10 @@ export class PokerService {
         return response.data as CompareHandsResponse;
     }
 
-    async evaluateHand(hole: string, board: string): Promise<EvaluateHandResponse> {
+    async evaluateHand(
+        hole: string,
+        board: string
+    ): Promise<EvaluateHandResponse> {
         const response = await httpClient.post(POKER_ENDPOINTS.evaluateHand, {
             hole,
             board,
