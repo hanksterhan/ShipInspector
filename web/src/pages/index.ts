@@ -1,3 +1,4 @@
 export * from "./AppRoot";
-export * from "./FantasyFootball";
+export * from "./PokerHands";
+export * from "./EquityCalculator";
 // PLOP: APPEND PAGE EXPORTS

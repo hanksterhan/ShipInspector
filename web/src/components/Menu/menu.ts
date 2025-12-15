@@ -7,10 +7,8 @@ import "@spectrum-web-components/icons-workflow/icons/sp-icon-rail-right-open.js
 
 import { menuStore } from "../../stores/index";
 import {
-    basketballIcon,
-    footballIcon,
-    leagueIcon,
-    teamsIcon,
+    pokerIcon,
+    percentageIcon,
 } from "../../assets";
 import { when } from "lit-html/directives/when.js";
 
@@ -22,25 +20,15 @@ interface MenuItemDetails {
 
 const MENU_ITEMS: MenuItemDetails[] = [
     {
-        id: "teams",
-        name: "Teams",
-        icon: html`<span class="menu-icon">${teamsIcon}</span>`,
+        id: "poker-hands",
+        name: "Poker Hands",
+        icon: html`<span class="menu-icon">${pokerIcon}</span>`,
     },
     {
-        id: "leagues",
-        name: "Leagues",
-        icon: html`<span class="menu-icon">${leagueIcon}</span>`,
-    },
-    {
-        id: "nba",
-        name: "Fantasy Basketball",
-        icon: html`<span class="menu-icon">${basketballIcon}</span>`,
-    },
-    {
-        id: "nfl",
-        name: "Fantasy Football",
-        icon: html`<span class="menu-icon">${footballIcon}</span>`,
-    },
+        id: "equity-calculator",
+        name: "Equity Calculator",
+        icon: html`<span class="menu-icon">${percentageIcon}</span>`,
+    }
 ];
 
 @customElement("app-menu")

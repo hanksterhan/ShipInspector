@@ -23,17 +23,11 @@ export class AppRoot extends MobxLitElement {
                 <div class="app-root-flex-container">
                     <app-menu></app-menu>
                     <div class="app-root-content">
-                        ${menuStore.selectedPage === "teams"
-                            ? html`<teams-page></teams-page>`
+                        ${menuStore.selectedPage === "poker-hands"
+                            ? html`<poker-hands></poker-hands>`
                             : ""}
-                        ${menuStore.selectedPage === "leagues"
-                            ? html`<league-page></league-page>`
-                            : ""}
-                        ${menuStore.selectedPage === "nba"
-                            ? html`<fantasy-basketball></fantasy-basketball>`
-                            : ""}
-                        ${menuStore.selectedPage === "nfl"
-                            ? html`<fantasy-football></fantasy-football>`
+                        ${menuStore.selectedPage === "equity-calculator"
+                            ? html`<equity-calculator></equity-calculator>`
                             : ""}
                     </div>
                 </div>

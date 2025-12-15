@@ -6,9 +6,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 
-@customElement("fantasy-football")
-export class FantasyFootball extends MobxLitElement {
-    static readonly TAG_NAME = "fantasy-football";
+@customElement("poker-hands")
+export class PokerHands extends MobxLitElement {
+    static readonly TAG_NAME = "poker-hands";
     static get styles() {
         return styles;
     }
@@ -18,14 +18,14 @@ export class FantasyFootball extends MobxLitElement {
 
     render() {
         return html`
-            <h2>FantasyFootball page</h2>
-            <p>Welcome to the FantasyFootball page</p>
+            <h2>PokerHands page</h2>
+            <p>Welcome to the PokerHands page</p>
         `;
     }
 }
 
 declare global {
     interface HTMLElementTagNameMap {
-        [FantasyFootball.TAG_NAME]: FantasyFootball;
+        [PokerHands.TAG_NAME]: PokerHands;
     }
 }
