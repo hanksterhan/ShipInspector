@@ -3,9 +3,11 @@ import {
     page,
     mobxStore,
     service,
+    icon,
 } from "./plop/generators/index.js";
 
 export default function (plop) {
+    plop.setGenerator("Icon", icon);
     plop.setGenerator("Component", component);
     plop.setGenerator("Page", page);
     plop.setGenerator("MobX Store", mobxStore);
@@ -20,6 +22,7 @@ export default function (plop) {
         return value.includes("Service") ? value.split("Service")[0] : value;
     });
 
+    plop.setPartial("iconPath", "src/assets");
     plop.setPartial("componentPath", "src/components");
     plop.setPartial("pagePath", "src/pages");
     plop.setPartial(
