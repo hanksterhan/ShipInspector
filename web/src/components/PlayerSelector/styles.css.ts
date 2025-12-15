@@ -15,9 +15,11 @@ export const styles = css`
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        position: relative;
+        z-index: 1;
     }
 
     .player-slider {

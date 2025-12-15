@@ -12,10 +12,12 @@ export const styles = css`
         align-items: center;
         padding: var(--spectrum-global-dimension-size-300);
         gap: var(--spectrum-global-dimension-size-300);
-        background: rgba(255, 255, 255, 0.95);
+        background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         margin: var(--spectrum-global-dimension-size-200);
+        position: relative;
+        z-index: 1;
     }
 
     .selection-stage {

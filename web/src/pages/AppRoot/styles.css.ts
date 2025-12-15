@@ -5,16 +5,7 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: linear-gradient(
-            135deg,
-            #0f5132 0%,
-            #157347 25%,
-            #0f5132 50%,
-            #157347 75%,
-            #0f5132 100%
-        );
-        background-size: 200% 200%;
-        animation: feltTexture 20s ease infinite;
+        background-color: #0f5132;
         position: relative;
     }
 
@@ -25,40 +16,45 @@ export const styles = css`
         left: 0;
         right: 0;
         bottom: 0;
-        background-image: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.03) 2px,
-                rgba(0, 0, 0, 0.03) 4px
-            ),
+        background-image: 
             repeating-linear-gradient(
-                90deg,
+                45deg,
                 transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.03) 2px,
-                rgba(0, 0, 0, 0.03) 4px
+                transparent 8px,
+                rgba(0, 0, 0, 0.02) 8px,
+                rgba(0, 0, 0, 0.02) 16px
             );
         pointer-events: none;
+        opacity: 0.6;
+        z-index: 0;
     }
 
-    @keyframes feltTexture {
-        0%,
-        100% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
+    sp-theme::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(21, 115, 71, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(21, 115, 71, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(15, 81, 50, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
     }
     .app-root-flex-container {
         display: flex;
         height: 100vh;
+        position: relative;
+        z-index: 1;
     }
     .app-root-content {
         flex: 1;
         overflow: auto;
         overflow-x: hidden;
+        position: relative;
+        z-index: 1;
     }
     .expand-menu-btn {
         position: fixed;
