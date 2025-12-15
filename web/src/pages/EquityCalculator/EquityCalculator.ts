@@ -18,8 +18,8 @@ export class EquityCalculator extends MobxLitElement {
 
     render() {
         return html`
-            <h2>EquityCalculator page</h2>
-            <p>Welcome to the EquityCalculator page</p>
+            <player-selector></player-selector>
+            <hole-selector></hole-selector>
         `;
     }
 }

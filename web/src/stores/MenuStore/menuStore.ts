@@ -6,7 +6,7 @@ export class MenuStore {
     }
 
     @observable
-    selectedPage: string = "poker-hands";
+    selectedPage: string = "equity-calculator";
 
     @observable
     menuVisible: boolean = true;

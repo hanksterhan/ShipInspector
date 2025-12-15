@@ -141,6 +141,7 @@ export const styles = css`
         border-radius: var(--spectrum-global-dimension-size-100);
     }
 
+
     .rank-button-content {
         display: flex;
         flex-direction: column;
@@ -172,6 +173,12 @@ export const styles = css`
 
     sp-action-button.back-button,
     sp-action-button.reset-button {
+        margin-top: var(--spectrum-global-dimension-size-200);
+    }
+
+    .button-group {
+        display: flex;
+        gap: var(--spectrum-global-dimension-size-150);
         margin-top: var(--spectrum-global-dimension-size-200);
     }
 

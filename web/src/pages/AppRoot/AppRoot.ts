@@ -23,7 +23,7 @@ export class AppRoot extends MobxLitElement {
                 <div class="app-root-flex-container">
                     <app-menu></app-menu>
                     <div class="app-root-content">
-                        ${menuStore.selectedPage === "poker-hands"
+                        ${menuStore.selectedPage === "equity-calculator"
                             ? html`<poker-hands></poker-hands>`
                             : ""}
                         ${menuStore.selectedPage === "equity-calculator"

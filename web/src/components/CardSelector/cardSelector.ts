@@ -2,8 +2,8 @@ import { html, TemplateResult } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { CardSuit, CardRank } from "@common/interfaces";
-import { cardStore } from "../../stores/index";
+import { CardSuit, CardRank, Card } from "@common/interfaces";
+import { cardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 
 @customElement("card-selector")
@@ -18,7 +18,14 @@ export class CardSelector extends MobxLitElement {
     }
 
     handleRankClick(rank: CardRank) {
-        cardStore.setSelectedRank(rank);
+        if (cardStore.selectedSuit) {
+            const card: Card = { rank, suit: cardStore.selectedSuit };
+            // Only allow selection if card is not already selected
+            if (!deckStore.isCardSelected(card)) {
+                deckStore.markCardAsSelected(card);
+                cardStore.setSelectedRank(rank);
+            }
+        }
     }
 
     handleReset() {
@@ -66,52 +73,70 @@ export class CardSelector extends MobxLitElement {
                 <div class="rank-grid">
                     <div class="rank-row">
                         ${numberRanks.map(
-                            (rankData) => html`
-                                <sp-action-button
-                                    class="rank-button"
-                                    size="s"
-                                    @click=${() =>
-                                        this.handleRankClick(rankData.rank)}
-                                >
-                                    <div class="rank-button-content">
-                                        <span class="rank-label"
-                                            >${rankData.label}</span
-                                        >
-                                        <span
-                                            class="rank-suit-icon"
-                                            style="color: ${selectedSuitData?.color ||
-                                            "#000"}"
-                                        >
-                                            ${selectedSuitData?.icon}
-                                        </span>
-                                    </div>
-                                </sp-action-button>
-                            `
+                            (rankData) => {
+                                const card: Card = {
+                                    rank: rankData.rank,
+                                    suit: cardStore.selectedSuit!,
+                                };
+                                const isSelected = deckStore.isCardSelected(card);
+                                return html`
+                                    <sp-action-button
+                                        class="rank-button"
+                                        size="s"
+                                        ?disabled=${isSelected}
+                                        ?selected=${isSelected}
+                                        @click=${() =>
+                                            this.handleRankClick(rankData.rank)}
+                                    >
+                                        <div class="rank-button-content">
+                                            <span class="rank-label"
+                                                >${rankData.label}</span
+                                            >
+                                            <span
+                                                class="rank-suit-icon"
+                                                style="color: ${selectedSuitData?.color ||
+                                                "#000"}"
+                                            >
+                                                ${selectedSuitData?.icon}
+                                            </span>
+                                        </div>
+                                    </sp-action-button>
+                                `;
+                            }
                         )}
                     </div>
                     <div class="rank-row">
                         ${faceRanks.map(
-                            (rankData) => html`
-                                <sp-action-button
-                                    class="rank-button"
-                                    size="s"
-                                    @click=${() =>
-                                        this.handleRankClick(rankData.rank)}
-                                >
-                                    <div class="rank-button-content">
-                                        <span class="rank-label"
-                                            >${rankData.label}</span
-                                        >
-                                        <span
-                                            class="rank-suit-icon"
-                                            style="color: ${selectedSuitData?.color ||
-                                            "#000"}"
-                                        >
-                                            ${selectedSuitData?.icon}
-                                        </span>
-                                    </div>
-                                </sp-action-button>
-                            `
+                            (rankData) => {
+                                const card: Card = {
+                                    rank: rankData.rank,
+                                    suit: cardStore.selectedSuit!,
+                                };
+                                const isSelected = deckStore.isCardSelected(card);
+                                return html`
+                                    <sp-action-button
+                                        class="rank-button"
+                                        size="s"
+                                        ?disabled=${isSelected}
+                                        ?selected=${isSelected}
+                                        @click=${() =>
+                                            this.handleRankClick(rankData.rank)}
+                                    >
+                                        <div class="rank-button-content">
+                                            <span class="rank-label"
+                                                >${rankData.label}</span
+                                            >
+                                            <span
+                                                class="rank-suit-icon"
+                                                style="color: ${selectedSuitData?.color ||
+                                                "#000"}"
+                                            >
+                                                ${selectedSuitData?.icon}
+                                            </span>
+                                        </div>
+                                    </sp-action-button>
+                                `;
+                            }
                         )}
                     </div>
                 </div>
@@ -148,13 +173,33 @@ export class CardSelector extends MobxLitElement {
                         </span>
                     </div>
                 </div>
-                <sp-action-button
-                    class="reset-button"
-                    size="m"
-                    @click=${this.handleReset}
-                >
-                    Select Another Card
-                </sp-action-button>
+                <div class="button-group">
+                    <sp-action-button
+                        class="reset-button"
+                        size="m"
+                        @click=${this.handleReset}
+                    >
+                        Select Another Card
+                    </sp-action-button>
+                    ${cardStore.selectedCard
+                        ? html`
+                              <sp-action-button
+                                  class="unselect-button"
+                                  size="m"
+                                  @click=${() => {
+                                      if (cardStore.selectedCard) {
+                                          deckStore.markCardAsUnselected(
+                                              cardStore.selectedCard
+                                          );
+                                          cardStore.clearSelectedCard();
+                                      }
+                                  }}
+                              >
+                                  Unselect Card
+                              </sp-action-button>
+                          `
+                        : ""}
+                </div>
             </div>
         `;
     }
