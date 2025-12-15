@@ -20,6 +20,8 @@ export class PokerHands extends MobxLitElement {
         return html`
             <h2>PokerHands page</h2>
             <p>Welcome to the PokerHands page</p>
+
+            <card-selector></card-selector>
         `;
     }
 }
