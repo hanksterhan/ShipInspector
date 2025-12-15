@@ -21,7 +21,7 @@ export class PokerHands extends MobxLitElement {
             <h2>PokerHands page</h2>
             <p>Welcome to the PokerHands page</p>
 
-            <card-selector></card-selector>
+            <hole-selector></hole-selector>
         `;
     }
 }

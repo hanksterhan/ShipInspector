@@ -107,4 +107,54 @@ export class CardStore {
         this.selectedCard = null;
         this.selectionStage = "suit";
     }
+
+    // Hole selection state
+    @observable
+    currentPlayer: number = 0;
+
+    @observable
+    holeCardIndex: number = 0; // 0 for first card, 1 for second card
+
+    @observable
+    selectedHoleCards: Card[] = [];
+
+    @action
+    setCurrentPlayer(player: number) {
+        this.currentPlayer = player;
+    }
+
+    @action
+    addHoleCardToSelection(card: Card) {
+        if (this.holeCardIndex === 0) {
+            this.selectedHoleCards = [card];
+            this.holeCardIndex = 1;
+            this.resetSelection();
+        } else if (this.holeCardIndex === 1) {
+            this.selectedHoleCards = [this.selectedHoleCards[0], card];
+            // Create hole and add to store
+            const hole: Hole = { cards: [this.selectedHoleCards[0], card] };
+            // Set the hole for the current player (will create array entries if needed)
+            this.holeCards[this.currentPlayer] = hole;
+            // Reset for next selection
+            this.selectedHoleCards = [];
+            this.holeCardIndex = 0;
+            this.currentPlayer += 1;
+            this.resetSelection();
+        }
+    }
+
+    @action
+    resetHoleSelection() {
+        this.selectedHoleCards = [];
+        this.holeCardIndex = 0;
+        this.resetSelection();
+    }
+
+    @action
+    startHoleSelectionForPlayer(player: number) {
+        this.currentPlayer = player;
+        this.selectedHoleCards = [];
+        this.holeCardIndex = 0;
+        this.resetSelection();
+    }
 }

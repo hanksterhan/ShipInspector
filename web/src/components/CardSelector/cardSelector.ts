@@ -4,35 +4,7 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { CardSuit, CardRank } from "@common/interfaces";
 import { cardStore } from "../../stores/index";
-import { clubsIcon, diamondsIcon, heartsIcon, spadesIcon } from "../../assets";
-
-const SUITS: {
-    suit: CardSuit;
-    icon: TemplateResult;
-    label: string;
-    color: string;
-}[] = [
-    { suit: "c", icon: clubsIcon, label: "Clubs", color: "#000000" },
-    { suit: "d", icon: diamondsIcon, label: "Diamonds", color: "#E60000" },
-    { suit: "h", icon: heartsIcon, label: "Hearts", color: "#E60000" },
-    { suit: "s", icon: spadesIcon, label: "Spades", color: "#000000" },
-];
-
-const RANKS: { rank: CardRank; label: string }[] = [
-    { rank: 2, label: "2" },
-    { rank: 3, label: "3" },
-    { rank: 4, label: "4" },
-    { rank: 5, label: "5" },
-    { rank: 6, label: "6" },
-    { rank: 7, label: "7" },
-    { rank: 8, label: "8" },
-    { rank: 9, label: "9" },
-    { rank: 10, label: "10" },
-    { rank: 11, label: "J" },
-    { rank: 12, label: "Q" },
-    { rank: 13, label: "K" },
-    { rank: 14, label: "A" },
-];
+import { SUITS, RANKS } from "../utilities";
 
 @customElement("card-selector")
 export class CardSelector extends MobxLitElement {
