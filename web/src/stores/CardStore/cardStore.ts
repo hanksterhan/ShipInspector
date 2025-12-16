@@ -154,4 +154,30 @@ export class CardStore {
         this.holeCardIndex = 0;
         this.resetSelection();
     }
+
+    // Board selection state
+    @observable
+    boardCardIndex: number = 0; // 0-4 for flop (0-2), turn (3), river (4)
+
+    @action
+    startBoardSelection() {
+        this.boardCardIndex = this.boardCards.length;
+        this.resetSelection();
+    }
+
+    @action
+    addBoardCardToSelection(card: Card) {
+        if (this.boardCardIndex < 5) {
+            // Card is already marked as selected by CardSelector
+            this.boardCards[this.boardCardIndex] = card;
+            this.boardCardIndex += 1;
+            this.resetSelection();
+        }
+    }
+
+    @action
+    resetBoardSelection() {
+        this.boardCardIndex = 0;
+        this.resetSelection();
+    }
 }

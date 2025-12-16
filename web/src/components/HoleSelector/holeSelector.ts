@@ -8,6 +8,7 @@ import { cardStore, equityStore, settingsStore } from "../../stores/index";
 import { SUITS, RANKS, holeToString, boardToString } from "../utilities";
 import { pokerService } from "../../services/index";
 import "../CardSelector";
+import "../BoardSelector";
 
 @customElement("hole-selector")
 export class HoleSelector extends MobxLitElement {
@@ -18,11 +19,25 @@ export class HoleSelector extends MobxLitElement {
 
     constructor() {
         super();
-        // React to card selection completion
+        // React to card selection completion (only for hole selection)
         reaction(
             () => cardStore.selectedCard,
             (selectedCard) => {
-                if (selectedCard && cardStore.selectionStage === "complete") {
+                // Only process if we're actively selecting hole cards
+                // (not board cards - board selection happens when all holes are selected)
+                const allHolesSelected =
+                    cardStore.holeCards.filter((h) => h !== undefined)
+                        .length === settingsStore.players;
+                const isSelectingHole =
+                    cardStore.holeCardIndex < 2 &&
+                    cardStore.currentPlayer < settingsStore.players;
+
+                if (
+                    selectedCard &&
+                    cardStore.selectionStage === "complete" &&
+                    !allHolesSelected &&
+                    isSelectingHole
+                ) {
                     const previousHoleCardsCount = cardStore.holeCards.filter(
                         (hole) => hole !== undefined
                     ).length;
@@ -173,7 +188,10 @@ export class HoleSelector extends MobxLitElement {
         return html`
             <div class="hole-selector-container">
                 ${allHolesSelected
-                    ? html` ${this.renderSelectedHoles()} `
+                    ? html`
+                          ${this.renderSelectedHoles()}
+                          <board-selector></board-selector>
+                      `
                     : html`
                           <h3 class="hole-selector-title">
                               Player ${cardStore.currentPlayer + 1} Hand
