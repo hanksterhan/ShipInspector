@@ -5,4 +5,5 @@ export * from "./clubs.svg";
 export * from "./diamonds.svg";
 export * from "./spades.svg";
 export * from "./gear.svg";
+export * from "./close.svg";
 // PLOP: APPEND ICON EXPORTS
