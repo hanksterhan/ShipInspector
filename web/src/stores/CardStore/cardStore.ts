@@ -147,6 +147,8 @@ export class CardStore {
     resetHoleSelection() {
         this.selectedHoleCards = [];
         this.holeCardIndex = 0;
+        this.currentPlayer = 0;
+        this.holeCards = [];
         this.resetSelection();
     }
 
