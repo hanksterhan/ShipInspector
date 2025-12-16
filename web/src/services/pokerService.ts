@@ -2,8 +2,8 @@ import { httpClient } from "./fetch";
 import {
     CompareHandsResponse,
     EquityOptions,
-    EquityResult,
     EvaluateHandResponse,
+    CalculateEquityResponse,
 } from "@common/interfaces";
 
 const POKER_ENDPOINTS = {
@@ -18,16 +18,16 @@ export class PokerService {
     async getHandEquity(
         players: string[],
         board: string,
-        options: EquityOptions,
+        options: EquityOptions = {},
         dead: string[] = []
-    ): Promise<EquityResult> {
+    ): Promise<CalculateEquityResponse> {
         const response = await httpClient.post(POKER_ENDPOINTS.getHandEquity, {
             players,
             board,
             options,
             dead,
         });
-        return response.data as EquityResult;
+        return response as CalculateEquityResponse;
     }
 
     async compareHands(
@@ -40,7 +40,7 @@ export class PokerService {
             hand2,
             board,
         });
-        return response.data as CompareHandsResponse;
+        return response as CompareHandsResponse;
     }
 
     async evaluateHand(
@@ -51,6 +51,6 @@ export class PokerService {
             hole,
             board,
         });
-        return response.data as EvaluateHandResponse;
+        return response as EvaluateHandResponse;
     }
 }

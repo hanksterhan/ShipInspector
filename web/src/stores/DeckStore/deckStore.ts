@@ -36,9 +36,21 @@ export class DeckStore {
     initializeDeck() {
         // Initialize with all 52 cards
         const suits: ("c" | "d" | "h" | "s")[] = ["c", "d", "h", "s"];
-        const ranks: (2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14)[] = [
-            2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-        ];
+        const ranks: (
+            | 2
+            | 3
+            | 4
+            | 5
+            | 6
+            | 7
+            | 8
+            | 9
+            | 10
+            | 11
+            | 12
+            | 13
+            | 14
+        )[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
         const cards: Card[] = [];
         for (const suit of suits) {
             for (const rank of ranks) {

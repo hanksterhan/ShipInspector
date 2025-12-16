@@ -4,8 +4,9 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
-import { cardStore } from "../../stores/index";
-import { SUITS, RANKS } from "../utilities";
+import { cardStore, equityStore } from "../../stores/index";
+import { SUITS, RANKS, holeToString, boardToString } from "../utilities";
+import { pokerService } from "../../services/index";
 import "../CardSelector";
 
 @customElement("hole-selector")
@@ -22,11 +23,64 @@ export class HoleSelector extends MobxLitElement {
             () => cardStore.selectedCard,
             (selectedCard) => {
                 if (selectedCard && cardStore.selectionStage === "complete") {
+                    const previousHoleCardsCount = cardStore.holeCards.filter(
+                        (hole) => hole !== undefined
+                    ).length;
                     cardStore.addHoleCardToSelection(selectedCard);
                     this.requestUpdate();
+
+                    // Check if a hand was just completed (both cards selected)
+                    const currentHoleCardsCount = cardStore.holeCards.filter(
+                        (hole) => hole !== undefined
+                    ).length;
+
+                    // Only calculate equity if we have at least 2 hands
+                    if (
+                        currentHoleCardsCount > previousHoleCardsCount &&
+                        currentHoleCardsCount >= 2
+                    ) {
+                        this.calculateHandEquity();
+                    }
                 }
             }
         );
+    }
+
+    async calculateHandEquity() {
+        try {
+            // Get all completed holes
+            const completedHoles = cardStore.holeCards.filter(
+                (hole) => hole !== undefined
+            );
+
+            // This should only be called when we have at least 2 hands,
+            // but add a safety check just in case
+            if (completedHoles.length < 2) {
+                return;
+            }
+
+            // Convert holes to string format for API
+            const players = completedHoles.map((hole) => holeToString(hole));
+
+            // Get board cards if any
+            const board = boardToString({ cards: cardStore.boardCards });
+
+            // Call the equity API with exact mode
+            const equityResponse = await pokerService.getHandEquity(
+                players,
+                board,
+                { mode: "exact" }
+            );
+
+            // Parse the response in the equity store
+            equityStore.parseEquityResponse(equityResponse);
+
+            // Format and print player odds to console
+            const oddsString = equityStore.formatPlayerOdds();
+            console.log(oddsString);
+        } catch (error) {
+            console.error("Error calculating hand equity:", error);
+        }
     }
 
     handleStartSelection() {

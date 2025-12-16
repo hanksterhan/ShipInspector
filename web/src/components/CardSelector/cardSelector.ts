@@ -72,72 +72,68 @@ export class CardSelector extends MobxLitElement {
                 <h3 class="stage-title">Select a Card</h3>
                 <div class="rank-grid">
                     <div class="rank-row">
-                        ${numberRanks.map(
-                            (rankData) => {
-                                const card: Card = {
-                                    rank: rankData.rank,
-                                    suit: cardStore.selectedSuit!,
-                                };
-                                const isSelected = deckStore.isCardSelected(card);
-                                return html`
-                                    <sp-action-button
-                                        class="rank-button"
-                                        size="s"
-                                        ?disabled=${isSelected}
-                                        ?selected=${isSelected}
-                                        @click=${() =>
-                                            this.handleRankClick(rankData.rank)}
-                                    >
-                                        <div class="rank-button-content">
-                                            <span class="rank-label"
-                                                >${rankData.label}</span
-                                            >
-                                            <span
-                                                class="rank-suit-icon"
-                                                style="color: ${selectedSuitData?.color ||
-                                                "#000"}"
-                                            >
-                                                ${selectedSuitData?.icon}
-                                            </span>
-                                        </div>
-                                    </sp-action-button>
-                                `;
-                            }
-                        )}
+                        ${numberRanks.map((rankData) => {
+                            const card: Card = {
+                                rank: rankData.rank,
+                                suit: cardStore.selectedSuit!,
+                            };
+                            const isSelected = deckStore.isCardSelected(card);
+                            return html`
+                                <sp-action-button
+                                    class="rank-button"
+                                    size="s"
+                                    ?disabled=${isSelected}
+                                    ?selected=${isSelected}
+                                    @click=${() =>
+                                        this.handleRankClick(rankData.rank)}
+                                >
+                                    <div class="rank-button-content">
+                                        <span class="rank-label"
+                                            >${rankData.label}</span
+                                        >
+                                        <span
+                                            class="rank-suit-icon"
+                                            style="color: ${selectedSuitData?.color ||
+                                            "#000"}"
+                                        >
+                                            ${selectedSuitData?.icon}
+                                        </span>
+                                    </div>
+                                </sp-action-button>
+                            `;
+                        })}
                     </div>
                     <div class="rank-row">
-                        ${faceRanks.map(
-                            (rankData) => {
-                                const card: Card = {
-                                    rank: rankData.rank,
-                                    suit: cardStore.selectedSuit!,
-                                };
-                                const isSelected = deckStore.isCardSelected(card);
-                                return html`
-                                    <sp-action-button
-                                        class="rank-button"
-                                        size="s"
-                                        ?disabled=${isSelected}
-                                        ?selected=${isSelected}
-                                        @click=${() =>
-                                            this.handleRankClick(rankData.rank)}
-                                    >
-                                        <div class="rank-button-content">
-                                            <span class="rank-label"
-                                                >${rankData.label}</span
-                                            >
-                                            <span
-                                                class="rank-suit-icon"
-                                                style="color: ${selectedSuitData?.color ||
-                                                "#000"}"
-                                            >
-                                                ${selectedSuitData?.icon}
-                                            </span>
-                                        </div>
-                                    </sp-action-button>
-                                `;
-                            }
-                        )}
+                        ${faceRanks.map((rankData) => {
+                            const card: Card = {
+                                rank: rankData.rank,
+                                suit: cardStore.selectedSuit!,
+                            };
+                            const isSelected = deckStore.isCardSelected(card);
+                            return html`
+                                <sp-action-button
+                                    class="rank-button"
+                                    size="s"
+                                    ?disabled=${isSelected}
+                                    ?selected=${isSelected}
+                                    @click=${() =>
+                                        this.handleRankClick(rankData.rank)}
+                                >
+                                    <div class="rank-button-content">
+                                        <span class="rank-label"
+                                            >${rankData.label}</span
+                                        >
+                                        <span
+                                            class="rank-suit-icon"
+                                            style="color: ${selectedSuitData?.color ||
+                                            "#000"}"
+                                        >
+                                            ${selectedSuitData?.icon}
+                                        </span>
+                                    </div>
+                                </sp-action-button>
+                            `;
+                        })}
                     </div>
                 </div>
                 <sp-action-button

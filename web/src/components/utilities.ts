@@ -48,3 +48,28 @@ export const RANKS: RankData[] = [
     { rank: 13, label: "K" },
     { rank: 14, label: "A" },
 ];
+
+/**
+ * Convert a Card object to poker string format (e.g., "14h" for Ace of Hearts)
+ */
+export function cardToString(card: { rank: number; suit: string }): string {
+    return `${card.rank}${card.suit}`;
+}
+
+/**
+ * Convert a Hole (2 cards) to poker string format (e.g., "14h 14d")
+ */
+export function holeToString(hole: {
+    cards: [{ rank: number; suit: string }, { rank: number; suit: string }];
+}): string {
+    return `${cardToString(hole.cards[0])} ${cardToString(hole.cards[1])}`;
+}
+
+/**
+ * Convert board cards to poker string format (e.g., "Kd 9h 2c")
+ */
+export function boardToString(board: {
+    cards: Array<{ rank: number; suit: string }>;
+}): string {
+    return board.cards.map(cardToString).join(" ");
+}

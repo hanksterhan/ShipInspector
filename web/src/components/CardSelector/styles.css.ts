@@ -141,7 +141,6 @@ export const styles = css`
         border-radius: var(--spectrum-global-dimension-size-100);
     }
 
-
     .rank-button-content {
         display: flex;
         flex-direction: column;
