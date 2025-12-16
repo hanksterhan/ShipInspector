@@ -2,7 +2,6 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { cardStore, deckStore } from "../../stores/index";
 import { settingsStore } from "../../stores/index";
 import { closeIcon } from "../../assets/index";
 
@@ -19,19 +18,17 @@ export class PokerOptions extends MobxLitElement {
     handleSliderChange = (event: Event) => {
         const target = event.target as HTMLInputElement;
         const value = parseInt(target.value, 10);
-        cardStore.setPlayers(value);
+        settingsStore.setPlayers(value);
     };
 
     handleCardSelectionModeChange = (
         mode: "Suit - Rank Selection" | "52 Cards"
     ) => {
-        cardStore.setCardSelectionMode(mode);
+        settingsStore.setCardSelectionMode(mode);
     };
 
     handleReset = () => {
-        cardStore.resetHoleSelection();
-        cardStore.setBoardCards([]);
-        deckStore.clearSelectedCards();
+        settingsStore.resetSettings();
     };
 
     render() {
@@ -52,10 +49,10 @@ export class PokerOptions extends MobxLitElement {
                         class="player-slider"
                         min=${MIN_PLAYERS}
                         max=${MAX_PLAYERS}
-                        value=${cardStore.players}
+                        value=${settingsStore.players}
                         step="1"
                         @input=${this.handleSliderChange}
-                        label="Number of players: ${cardStore.players}"
+                        label="Number of players: ${settingsStore.players}"
                     >
                     </sp-slider>
                     <sp-action-button
@@ -69,7 +66,7 @@ export class PokerOptions extends MobxLitElement {
                     <sp-field-label>Card selection mode</sp-field-label>
                     <sp-action-group
                         selects="single"
-                        .selected=${[cardStore.cardSelectionMode]}
+                        .selected=${[settingsStore.cardSelectionMode]}
                         @change=${(e: CustomEvent) => {
                             const target = e.target as any;
                             const selectedValue = Array.isArray(target.selected)

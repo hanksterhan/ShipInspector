@@ -15,10 +15,6 @@ export class CardStore {
     @observable
     holeCards: Hole[] = [];
 
-    //default number of players is 2 (heads up)
-    @observable
-    players: number = 2;
-
     // Card selection state for the card selector component
     @observable
     selectionStage: SelectionStage = "suit";
@@ -31,9 +27,6 @@ export class CardStore {
 
     @observable
     selectedCard: Card | null = null;
-
-    @observable
-    cardSelectionMode: "Suit - Rank Selection" | "52 Cards" = "52 Cards";
 
     @action
     setBoardCards(cards: Card[]) {
@@ -71,15 +64,6 @@ export class CardStore {
 
     get getHoleCards() {
         return this.holeCards;
-    }
-
-    @action
-    setPlayers(players: number) {
-        this.players = players;
-    }
-
-    get getPlayers() {
-        return this.players;
     }
 
     @action
@@ -163,13 +147,4 @@ export class CardStore {
         this.resetSelection();
     }
 
-    @action
-    setCardSelectionMode(mode: "Suit - Rank Selection" | "52 Cards") {
-        this.cardSelectionMode = mode;
-        console.log("Card selection mode set to:", mode);
-    }
-
-    get getCardSelectionMode() {
-        return this.cardSelectionMode;
-    }
 }

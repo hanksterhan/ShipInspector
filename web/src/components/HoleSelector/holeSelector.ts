@@ -4,7 +4,7 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
-import { cardStore, equityStore } from "../../stores/index";
+import { cardStore, equityStore, settingsStore } from "../../stores/index";
 import { SUITS, RANKS, holeToString, boardToString } from "../utilities";
 import { pokerService } from "../../services/index";
 import "../CardSelector";
@@ -88,7 +88,7 @@ export class HoleSelector extends MobxLitElement {
             (hole) => hole !== undefined
         ).length;
         const nextPlayer = selectedHolesCount;
-        if (nextPlayer < cardStore.players) {
+        if (nextPlayer < settingsStore.players) {
             cardStore.startHoleSelectionForPlayer(nextPlayer);
         }
     }
@@ -167,8 +167,8 @@ export class HoleSelector extends MobxLitElement {
         const selectedHolesCount = cardStore.holeCards.filter(
             (hole) => hole !== undefined
         ).length;
-        const canSelectMore = selectedHolesCount < cardStore.players;
-        const allHolesSelected = selectedHolesCount === cardStore.players;
+        const canSelectMore = selectedHolesCount < settingsStore.players;
+        const allHolesSelected = selectedHolesCount === settingsStore.players;
 
         return html`
             <div class="hole-selector-container">
