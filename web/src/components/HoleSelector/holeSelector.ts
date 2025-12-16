@@ -157,6 +157,7 @@ export class HoleSelector extends MobxLitElement {
                                     ${this.renderCard(hole.cards[0], 0)}
                                     ${this.renderCard(hole.cards[1], 1)}
                                 </div>
+                                <equity-display .playerIndex=${playerIndex}></equity-display>
                             </div>
                         `
                     )}
