@@ -93,7 +93,7 @@ export class EquityDisplay extends MobxLitElement {
         }
 
         // Check if player index is valid
-        const { win, tie, lose, samples } = equityStore.equityResult;
+        const { win, tie, samples } = equityStore.equityResult;
         if (this.playerIndex < 0 || this.playerIndex >= win.length) {
             return html`
                 <div class="equity-display empty">
@@ -103,9 +103,10 @@ export class EquityDisplay extends MobxLitElement {
         }
 
         // Display equity for this specific player
-        const winPercentage = (win[this.playerIndex] * 100).toFixed(2);
-        const tiePercentage = (tie[this.playerIndex] * 100).toFixed(2);
-        const losePercentage = (lose[this.playerIndex] * 100).toFixed(2);
+        const winPercentage = Math.round(win[this.playerIndex] * 100);
+        const tiePercentage = Math.round(tie[this.playerIndex] * 100);
+        // Only show tie if it's 1% or more
+        const hasTie = tiePercentage >= 1;
 
         return html`
             <div class="equity-display">
@@ -114,14 +115,12 @@ export class EquityDisplay extends MobxLitElement {
                         <span class="stat-label">Win:</span>
                         <span class="stat-value">${winPercentage}%</span>
                     </div>
-                    <div class="equity-stat tie">
-                        <span class="stat-label">Tie:</span>
-                        <span class="stat-value">${tiePercentage}%</span>
-                    </div>
-                    <div class="equity-stat lose">
-                        <span class="stat-label">Lose:</span>
-                        <span class="stat-value">${losePercentage}%</span>
-                    </div>
+                    ${hasTie ? html`
+                        <div class="equity-stat tie">
+                            <span class="stat-label">Tie:</span>
+                            <span class="stat-value">${tiePercentage}%</span>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="equity-footer">
                     <span class="samples-text">Samples: ${samples.toLocaleString()}</span>
