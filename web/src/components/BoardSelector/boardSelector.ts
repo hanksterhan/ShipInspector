@@ -32,12 +32,16 @@ export class BoardSelector extends MobxLitElement {
                     this.requestUpdate();
 
                     // Recalculate equity when board cards change
+                    // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
+                    // Don't calculate during partial flop selection (1-2 cards)
                     const currentBoardCardsCount = cardStore.boardCards.length;
-                    if (
+                    const shouldCalculate = 
                         currentBoardCardsCount > previousBoardCardsCount &&
-                        cardStore.holeCards.filter((h) => h !== undefined)
-                            .length >= 2
-                    ) {
+                        cardStore.holeCards.filter((h) => h !== undefined).length >= 2 &&
+                        (currentBoardCardsCount === 0 || currentBoardCardsCount === 3 || 
+                         currentBoardCardsCount === 4 || currentBoardCardsCount === 5);
+                    
+                    if (shouldCalculate) {
                         this.calculateHandEquity();
                     }
 
@@ -77,13 +81,26 @@ export class BoardSelector extends MobxLitElement {
                 return;
             }
 
+            // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
+            // Don't calculate during partial flop selection (1-2 cards)
+            const boardCardsCount = cardStore.boardCards.length;
+            if (boardCardsCount > 0 && boardCardsCount < 3) {
+                return;
+            }
+
             const players = completedHoles.map((hole) => holeToString(hole));
             const board = boardToString({ cards: cardStore.boardCards });
+
+            // Use Monte Carlo for pre-flop, exact for other scenarios
+            const isPreFlop = boardCardsCount === 0;
+            const options = isPreFlop 
+                ? { mode: "mc" as const, iterations: 50000 } 
+                : { mode: "exact" as const };
 
             const equityResponse = await pokerService.getHandEquity(
                 players,
                 board,
-                { mode: "exact" }
+                options
             );
 
             equityStore.parseEquityResponse(equityResponse);
@@ -108,7 +125,14 @@ export class BoardSelector extends MobxLitElement {
             cardStore.startBoardSelection();
         }
         // Recalculate equity after removal
-        if (cardStore.holeCards.filter((h) => h !== undefined).length >= 2) {
+        // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
+        const boardCardsCount = cardStore.boardCards.length;
+        const shouldCalculate = 
+            cardStore.holeCards.filter((h) => h !== undefined).length >= 2 &&
+            (boardCardsCount === 0 || boardCardsCount === 3 || 
+             boardCardsCount === 4 || boardCardsCount === 5);
+        
+        if (shouldCalculate) {
             this.calculateHandEquity();
         }
     }

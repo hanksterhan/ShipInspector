@@ -26,10 +26,17 @@ function cardsEqual(a: Card, b: Card): boolean {
 }
 
 /**
- * Check if a card exists in an array
+ * Create a Set of cards for fast lookup (using string representation)
  */
-function cardInArray(card: Card, array: Card[]): boolean {
-    return array.some(c => cardsEqual(c, card));
+function createCardSet(cards: readonly Card[]): Set<string> {
+    return new Set(cards.map(c => `${c.rank},${c.suit}`));
+}
+
+/**
+ * Check if a card exists in a set (optimized lookup)
+ */
+function cardInSet(card: Card, cardSet: Set<string>): boolean {
+    return cardSet.has(`${card.rank},${card.suit}`);
 }
 
 /**
@@ -90,8 +97,11 @@ function getRemainingDeck(
     knownCards.push(...board.cards);
     knownCards.push(...dead);
     
+    // Use Set for faster lookup
+    const knownCardSet = createCardSet(knownCards);
+    
     // Filter out known cards
-    return fullDeck.filter(card => !cardInArray(card, knownCards));
+    return fullDeck.filter(card => !cardInSet(card, knownCardSet));
 }
 
 /**
@@ -110,26 +120,6 @@ function combinations(n: number, k: number): number {
     return Math.round(result);
 }
 
-/**
- * Generate all combinations of k elements from array
- */
-function generateCombinations<T>(array: T[], k: number): T[][] {
-    if (k === 0) return [[]];
-    if (k === array.length) return [array];
-    if (k > array.length) return [];
-    
-    const result: T[][] = [];
-    
-    for (let i = 0; i <= array.length - k; i++) {
-        const head = array[i];
-        const tailCombos = generateCombinations(array.slice(i + 1), k - 1);
-        for (const tailCombo of tailCombos) {
-            result.push([head, ...tailCombo]);
-        }
-    }
-    
-    return result;
-}
 
 /**
  * Create a seeded random number generator
@@ -142,19 +132,6 @@ function createSeededRandom(seed: number): () => number {
     };
 }
 
-/**
- * Shuffle array using Fisher-Yates algorithm
- */
-function shuffle<T>(array: T[], random: () => number = Math.random): T[] {
-    const shuffled = [...array];
-    
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    
-    return shuffled;
-}
 
 /**
  * Evaluate a single board completion and determine winners
@@ -192,7 +169,51 @@ function evaluateBoard(
 }
 
 /**
+ * Iteratively enumerate all combinations without storing them all in memory
+ * This is much more memory-efficient for large combination counts
+ * Uses a recursive approach with callback to avoid storing all combinations
+ */
+function iterateCombinations<T>(
+    array: T[],
+    k: number,
+    callback: (combo: T[]) => void
+): void {
+    if (k === 0) {
+        callback([]);
+        return;
+    }
+    if (k === array.length) {
+        callback([...array]);
+        return;
+    }
+    if (k > array.length) {
+        return;
+    }
+    
+    // Recursive helper that builds combinations incrementally
+    function helper(start: number, combo: T[]): void {
+        if (combo.length === k) {
+            callback(combo);
+            return;
+        }
+        
+        // Number of remaining elements needed
+        const remaining = k - combo.length;
+        const maxStart = array.length - remaining;
+        
+        for (let i = start; i <= maxStart; i++) {
+            combo.push(array[i]);
+            helper(i + 1, combo);
+            combo.pop();
+        }
+    }
+    
+    helper(0, []);
+}
+
+/**
  * Exact enumeration: evaluate all possible board completions
+ * Uses iterative approach to avoid memory issues with large combination counts
  */
 function exactEnumeration(
     players: readonly Hole[],
@@ -203,13 +224,11 @@ function exactEnumeration(
     const numPlayers = players.length;
     const wins = new Array(numPlayers).fill(0);
     const ties = new Array(numPlayers).fill(0);
+    let totalCombos = 0;
     
-    // Generate all possible board completions
-    const boardCombinations = generateCombinations(remainingDeck, missing);
-    const totalCombos = boardCombinations.length;
-    
-    // Evaluate each combination
-    for (const combo of boardCombinations) {
+    // Iteratively evaluate each combination without storing them all
+    iterateCombinations(remainingDeck, missing, (combo) => {
+        totalCombos++;
         const completeBoard = [...board.cards, ...combo];
         const { winners, ties: isTie } = evaluateBoard(players, completeBoard);
         
@@ -223,7 +242,7 @@ function exactEnumeration(
             // Single winner
             wins[winners[0]] += 1;
         }
-    }
+    });
     
     // Convert to fractions
     const result: EquityResult = {
@@ -242,7 +261,35 @@ function exactEnumeration(
 }
 
 /**
+ * Reservoir sampling - efficiently sample k items from array without shuffling
+ * Much faster than shuffle for small k values
+ */
+function sampleWithoutReplacement<T>(array: readonly T[], k: number, random: () => number): T[] {
+    if (k >= array.length) {
+        return [...array];
+    }
+    
+    const result: T[] = [];
+    
+    // Fill reservoir with first k items
+    for (let i = 0; i < k; i++) {
+        result.push(array[i]);
+    }
+    
+    // Replace elements with gradually decreasing probability
+    for (let i = k; i < array.length; i++) {
+        const j = Math.floor(random() * (i + 1));
+        if (j < k) {
+            result[j] = array[i];
+        }
+    }
+    
+    return result;
+}
+
+/**
  * Monte Carlo simulation: randomly sample board completions
+ * Uses reservoir sampling for efficient random selection
  */
 function monteCarlo(
     players: readonly Hole[],
@@ -259,11 +306,14 @@ function monteCarlo(
     // Create random number generator (seeded or unseeded)
     const random = seed !== undefined ? createSeededRandom(seed) : Math.random;
     
-    // Sample iterations
+    // Pre-allocate array for board to avoid repeated allocations
+    const boardBase = board.cards;
+    
+    // Sample iterations - use reservoir sampling for better performance
     for (let iter = 0; iter < iterations; iter++) {
-        // Randomly sample missing cards
-        const shuffled = shuffle(remainingDeck, random);
-        const sampledBoard = [...board.cards, ...shuffled.slice(0, missing)];
+        // Use reservoir sampling (much faster than shuffle for small k)
+        const sampled = sampleWithoutReplacement(remainingDeck, missing, random);
+        const sampledBoard = [...boardBase, ...sampled];
         
         const { winners, ties: isTie } = evaluateBoard(players, sampledBoard);
         
@@ -364,7 +414,9 @@ export function computeEquity(
     } else if (mode === "mc") {
         useExact = false;
     } else if (mode === "auto") {
-        const maxCombos = opts.exactMaxCombos ?? 200_000;
+        // Increased threshold since we optimized exact enumeration to use less memory
+        // For pre-flop (5 cards missing), this will use Monte Carlo (C(48,5) = 1,712,304 > 1,000,000)
+        const maxCombos = opts.exactMaxCombos ?? 1_000_000;
         useExact = combos <= maxCombos;
     }
     

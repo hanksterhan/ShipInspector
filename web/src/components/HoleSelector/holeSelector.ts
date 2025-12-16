@@ -80,11 +80,17 @@ export class HoleSelector extends MobxLitElement {
             // Get board cards if any
             const board = boardToString({ cards: cardStore.boardCards });
 
-            // Call the equity API with exact mode
+            // Use Monte Carlo for pre-flop (empty board), exact for other scenarios
+            const isPreFlop = cardStore.boardCards.length === 0;
+            const options = isPreFlop 
+                ? { mode: "mc" as const, iterations: 50000 } 
+                : { mode: "exact" as const };
+
+            // Call the equity API
             const equityResponse = await pokerService.getHandEquity(
                 players,
                 board,
-                { mode: "exact" }
+                options
             );
 
             // Parse the response in the equity store

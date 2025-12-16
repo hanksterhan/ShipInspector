@@ -91,17 +91,32 @@ export class EquityStore {
         this.error = null;
 
         try {
+            // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
+            // Don't calculate during partial flop selection (1-2 cards)
+            const boardCardsCount = cardStore.boardCards.length;
+            if (boardCardsCount > 0 && boardCardsCount < 3) {
+                this.equityResult = null;
+                this.isLoading = false;
+                return;
+            }
+
             // Convert holes to string format
             const players = validHoles.map(holeToString);
 
             // Convert board to string format
             const board = boardToString({ cards: cardStore.boardCards });
 
+            // Use Monte Carlo for pre-flop (empty board), auto mode for other scenarios
+            const isPreFlop = boardCardsCount === 0;
+            const options = isPreFlop 
+                ? { mode: "mc" as const, iterations: 50000 } 
+                : {};
+
             // Call the API with abort signal
             const result = await pokerService.getHandEquity(
                 players,
                 board,
-                {},
+                options,
                 [],
                 abortController.signal
             );
