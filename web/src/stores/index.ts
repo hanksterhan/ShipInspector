@@ -2,6 +2,7 @@ import { MenuStore } from "./MenuStore";
 import { CardStore } from "./CardStore";
 import { DeckStore } from "./DeckStore";
 import { EquityStore } from "./EquityStore";
+import { SettingsStore } from "./SettingsStore";
 // PLOP: APPEND STORE IMPORTS
 
 export const menuStore = new MenuStore();
@@ -11,4 +12,6 @@ export * from "./DeckStore";
 export const deckStore = new DeckStore();
 export * from "./EquityStore";
 export const equityStore = new EquityStore();
+export * from "./SettingsStore";
+export const settingsStore = new SettingsStore();
 // PLOP: APPEND STORE EXPORTS

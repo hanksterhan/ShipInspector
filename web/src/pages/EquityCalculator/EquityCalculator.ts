@@ -93,8 +93,8 @@ export class EquityCalculator extends MobxLitElement {
 
     render() {
         return html`
-            <!-- <player-selector></player-selector>
-            <hole-selector></hole-selector> -->
+            <h1>Equity Calculator</h1>
+            <hole-selector></hole-selector>
             ${this.renderEquityResults()}
         `;
     }

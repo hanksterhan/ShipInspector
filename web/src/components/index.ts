@@ -4,5 +4,5 @@ export * from "./PlatformTable";
 export * from "./CardSelector";
 export * from "./HoleSelector";
 export * from "./BoardSelector";
-export * from "./PlayerSelector";
+export * from "./PokerOptions";
 // PLOP: APPEND COMPONENT EXPORTS

@@ -32,6 +32,9 @@ export class CardStore {
     @observable
     selectedCard: Card | null = null;
 
+    @observable
+    cardSelectionMode: "Suit - Rank Selection" | "52 Cards" = "52 Cards";
+
     @action
     setBoardCards(cards: Card[]) {
         this.boardCards = cards;
@@ -158,5 +161,15 @@ export class CardStore {
         this.selectedHoleCards = [];
         this.holeCardIndex = 0;
         this.resetSelection();
+    }
+
+    @action
+    setCardSelectionMode(mode: "Suit - Rank Selection" | "52 Cards") {
+        this.cardSelectionMode = mode;
+        console.log("Card selection mode set to:", mode);
+    }
+
+    get getCardSelectionMode() {
+        return this.cardSelectionMode;
     }
 }

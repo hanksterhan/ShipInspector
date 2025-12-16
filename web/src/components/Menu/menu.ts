@@ -8,6 +8,7 @@ import "@spectrum-web-components/icons-workflow/icons/sp-icon-rail-right-open.js
 import { menuStore } from "../../stores/index";
 import { pokerIcon, percentageIcon } from "../../assets";
 import { when } from "lit-html/directives/when.js";
+import { AppPages } from "web/src/stores/MenuStore/menuStore";
 
 interface MenuItemDetails {
     id: string;
@@ -36,7 +37,7 @@ export class Menu extends MobxLitElement {
     }
 
     @property({ type: String })
-    selectedPage: string = menuStore.selectedPage;
+    selectedPage: AppPages = menuStore.selectedPage;
 
     constructor() {
         super();
@@ -48,7 +49,7 @@ export class Menu extends MobxLitElement {
         );
     }
 
-    navigateTo(page: string) {
+    navigateTo(page: AppPages) {
         menuStore.setSelectedPage(page);
     }
 
@@ -59,7 +60,7 @@ export class Menu extends MobxLitElement {
                 static="black"
                 size="xl"
                 class=${isSelected ? "selected" : ""}
-                @click=${() => this.navigateTo(itemDetails.id)}
+                @click=${() => this.navigateTo(itemDetails.id as AppPages)}
             >
                 <div class="menu-item-container">
                     ${itemDetails.icon}
@@ -82,7 +83,8 @@ export class Menu extends MobxLitElement {
                                     .selectedPage === menuItem.id
                                     ? " selected"
                                     : ""}"
-                                @click=${() => this.navigateTo(menuItem.id)}
+                                @click=${() =>
+                                    this.navigateTo(menuItem.id as AppPages)}
                                 title=${menuItem.name}
                             >
                                 ${menuItem.icon}

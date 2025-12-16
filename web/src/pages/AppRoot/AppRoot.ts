@@ -4,8 +4,10 @@ import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
+import "../../components/index";
 
-import { menuStore } from "../../stores/index";
+import { menuStore, settingsStore } from "../../stores/index";
+import { gearIcon } from "../../assets/index";
 
 @customElement("app-root")
 export class AppRoot extends MobxLitElement {
@@ -23,13 +25,34 @@ export class AppRoot extends MobxLitElement {
                 <div class="app-root-flex-container">
                     <app-menu></app-menu>
                     <div class="app-root-content">
-                        ${menuStore.selectedPage === "equity-calculator"
-                            ? html`<poker-hands></poker-hands>`
-                            : ""}
-                        ${menuStore.selectedPage === "equity-calculator"
-                            ? html`<equity-calculator></equity-calculator>`
-                            : ""}
+                        ${(() => {
+                            switch (menuStore.selectedPage) {
+                                case "poker-hands":
+                                    return html`<poker-hands></poker-hands>`;
+                                case "equity-calculator":
+                                    return html`<equity-calculator></equity-calculator>`;
+                                default:
+                                    return html`<poker-hands></poker-hands>`;
+                            }
+                        })()}
                     </div>
+                    ${settingsStore.trayOpen
+                        ? html`<div class="settings-card">
+                              <poker-options></poker-options>
+                          </div>`
+                        : null}
+                    ${!settingsStore.trayOpen
+                        ? html`<sp-action-button
+                              class="settings-toggle-button"
+                              @click=${() => settingsStore.toggleTray()}
+                              quiet
+                              title="Settings"
+                          >
+                              <span slot="icon" class="settings-icon"
+                                  >${gearIcon}</span
+                              >
+                          </sp-action-button>`
+                        : null}
                 </div>
             </sp-theme>
         `;

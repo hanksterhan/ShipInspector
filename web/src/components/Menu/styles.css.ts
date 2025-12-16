@@ -16,6 +16,7 @@ export const styles = css`
         box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.25);
         overflow: hidden;
         box-sizing: border-box;
+        z-index: 100;
     }
 
     sp-button {
