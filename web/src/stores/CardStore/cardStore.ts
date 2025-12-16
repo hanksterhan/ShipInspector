@@ -154,5 +154,4 @@ export class CardStore {
         this.holeCardIndex = 0;
         this.resetSelection();
     }
-
 }

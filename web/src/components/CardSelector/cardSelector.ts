@@ -213,38 +213,42 @@ export class CardSelector extends MobxLitElement {
             <div class="selection-stage">
                 <h3 class="stage-title">Select a Card</h3>
                 <div class="cards-52-grid">
-                    ${SUITS.map((suitData) => html`
-                        <div class="suit-row">
-                            ${RANKS.map((rankData) => {
-                                const card: Card = {
-                                    rank: rankData.rank,
-                                    suit: suitData.suit,
-                                };
-                                const isSelected = deckStore.isCardSelected(card);
-                                return html`
-                                    <sp-action-button
-                                        class="card-52-button"
-                                        size="s"
-                                        ?disabled=${isSelected}
-                                        ?selected=${isSelected}
-                                        @click=${() => this.handleCardClick(card)}
-                                    >
-                                        <div class="card-52-button-content">
-                                            <span class="card-52-rank"
-                                                >${rankData.label}</span
-                                            >
-                                            <span
-                                                class="card-52-suit-icon"
-                                                style="color: ${suitData.color}"
-                                            >
-                                                ${suitData.icon}
-                                            </span>
-                                        </div>
-                                    </sp-action-button>
-                                `;
-                            })}
-                        </div>
-                    `)}
+                    ${SUITS.map(
+                        (suitData) => html`
+                            <div class="suit-row">
+                                ${RANKS.map((rankData) => {
+                                    const card: Card = {
+                                        rank: rankData.rank,
+                                        suit: suitData.suit,
+                                    };
+                                    const isSelected =
+                                        deckStore.isCardSelected(card);
+                                    return html`
+                                        <sp-action-button
+                                            class="card-52-button"
+                                            size="s"
+                                            ?disabled=${isSelected}
+                                            ?selected=${isSelected}
+                                            @click=${() =>
+                                                this.handleCardClick(card)}
+                                        >
+                                            <div class="card-52-button-content">
+                                                <span class="card-52-rank"
+                                                    >${rankData.label}</span
+                                                >
+                                                <span
+                                                    class="card-52-suit-icon"
+                                                    style="color: ${suitData.color}"
+                                                >
+                                                    ${suitData.icon}
+                                                </span>
+                                            </div>
+                                        </sp-action-button>
+                                    `;
+                                })}
+                            </div>
+                        `
+                    )}
                 </div>
             </div>
         `;

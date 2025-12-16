@@ -43,6 +43,6 @@ export class SettingsStore {
         deckStore.clearSelectedCards();
 
         this.setPlayers(2);
-        this.setCardSelectionMode("Suit - Rank Selection");
+        this.setCardSelectionMode("52 Cards");
     }
 }

@@ -136,8 +136,8 @@ export const styles = css`
 
     .selected-holes-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spectrum-global-dimension-size-300);
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
     }
 
@@ -145,23 +145,92 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: var(--spectrum-global-dimension-size-150);
-        padding: var(--spectrum-global-dimension-size-200);
+        gap: var(--spectrum-global-dimension-size-100);
+        padding: var(--spectrum-global-dimension-size-150);
         background-color: var(--spectrum-global-color-gray-50);
         border-radius: var(--spectrum-global-dimension-size-100);
         border: 1px solid var(--spectrum-global-color-gray-300);
+        min-width: 0;
+        overflow: hidden;
     }
 
     .player-label {
-        font-size: var(--spectrum-global-dimension-font-size-300);
+        font-size: var(--spectrum-global-dimension-font-size-200);
         font-weight: var(--spectrum-global-font-weight-bold);
         color: var(--spectrum-global-color-gray-800);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        text-align: center;
     }
 
     .player-hole-cards {
         display: flex;
-        gap: var(--spectrum-global-dimension-size-150);
+        gap: var(--spectrum-global-dimension-size-75);
         align-items: center;
         justify-content: center;
+        width: 100%;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .player-hole-container .hole-card,
+    .player-hole-container .hole-card-placeholder {
+        width: calc((100% - var(--spectrum-global-dimension-size-75)) / 2);
+        max-width: 120px;
+        height: auto;
+        min-width: 40px;
+        min-height: 0;
+        aspect-ratio: 5 / 7;
+        flex-shrink: 1;
+    }
+
+    .player-hole-container .hole-card-content {
+        padding: clamp(
+            var(--spectrum-global-dimension-size-75),
+            5%,
+            var(--spectrum-global-dimension-size-150)
+        );
+    }
+
+    .player-hole-container .hole-card-rank {
+        font-size: clamp(
+            var(--spectrum-global-dimension-font-size-200),
+            3.5%,
+            var(--spectrum-global-dimension-font-size-500)
+        );
+    }
+
+    .player-hole-container .hole-card-suit-icon {
+        width: clamp(16px, 5%, 32px);
+        height: clamp(16px, 5%, 32px);
+    }
+
+    @supports (container-type: inline-size) {
+        .player-hole-container {
+            container-type: inline-size;
+        }
+
+        .player-label {
+            font-size: clamp(
+                var(--spectrum-global-dimension-font-size-200),
+                2.5cqw,
+                var(--spectrum-global-dimension-font-size-300)
+            );
+        }
+
+        .player-hole-container .hole-card-rank {
+            font-size: clamp(
+                var(--spectrum-global-dimension-font-size-200),
+                4cqw,
+                var(--spectrum-global-dimension-font-size-500)
+            );
+        }
+
+        .player-hole-container .hole-card-suit-icon {
+            width: clamp(16px, 4cqw, 32px);
+            height: clamp(16px, 4cqw, 32px);
+        }
     }
 `;
