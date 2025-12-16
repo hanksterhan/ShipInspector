@@ -121,9 +121,9 @@ export const styles = css`
 
     .selected-holes-section {
         width: 100%;
-        margin-top: var(--spectrum-global-dimension-size-300);
-        padding-top: var(--spectrum-global-dimension-size-300);
-        border-top: 2px solid var(--spectrum-global-color-gray-300);
+        margin-bottom: var(--spectrum-global-dimension-size-300);
+        padding-bottom: var(--spectrum-global-dimension-size-300);
+        border-bottom: 2px solid var(--spectrum-global-color-gray-300);
     }
 
     .selected-holes-title {

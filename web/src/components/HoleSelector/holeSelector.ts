@@ -187,11 +187,9 @@ export class HoleSelector extends MobxLitElement {
 
         return html`
             <div class="hole-selector-container">
+                ${this.renderSelectedHoles()}
                 ${allHolesSelected
-                    ? html`
-                          ${this.renderSelectedHoles()}
-                          <board-selector></board-selector>
-                      `
+                    ? html` <board-selector></board-selector> `
                     : html`
                           <h3 class="hole-selector-title">
                               Player ${cardStore.currentPlayer + 1} Hand
@@ -247,7 +245,6 @@ export class HoleSelector extends MobxLitElement {
                                       `
                                     : html``}
                       `}
-                ${!allHolesSelected ? this.renderSelectedHoles() : ""}
             </div>
         `;
     }
