@@ -82,6 +82,14 @@ export class CardStore {
     }
 
     @action
+    setSelectedCard(card: Card) {
+        this.selectedCard = card;
+        this.selectedSuit = card.suit;
+        this.selectedRank = card.rank;
+        this.selectionStage = "complete";
+    }
+
+    @action
     resetSelection() {
         this.selectedSuit = null;
         this.selectedRank = null;

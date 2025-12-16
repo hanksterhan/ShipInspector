@@ -3,7 +3,7 @@ import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { CardSuit, CardRank, Card } from "@common/interfaces";
-import { cardStore, deckStore } from "../../stores/index";
+import { cardStore, deckStore, settingsStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 
 @customElement("card-selector")
@@ -25,6 +25,14 @@ export class CardSelector extends MobxLitElement {
                 deckStore.markCardAsSelected(card);
                 cardStore.setSelectedRank(rank);
             }
+        }
+    }
+
+    handleCardClick(card: Card) {
+        // Only allow selection if card is not already selected
+        if (!deckStore.isCardSelected(card)) {
+            deckStore.markCardAsSelected(card);
+            cardStore.setSelectedCard(card);
         }
     }
 
@@ -200,7 +208,61 @@ export class CardSelector extends MobxLitElement {
         `;
     }
 
+    render52CardsSelection(): TemplateResult {
+        return html`
+            <div class="selection-stage">
+                <h3 class="stage-title">Select a Card</h3>
+                <div class="cards-52-grid">
+                    ${SUITS.map((suitData) => html`
+                        <div class="suit-row">
+                            ${RANKS.map((rankData) => {
+                                const card: Card = {
+                                    rank: rankData.rank,
+                                    suit: suitData.suit,
+                                };
+                                const isSelected = deckStore.isCardSelected(card);
+                                return html`
+                                    <sp-action-button
+                                        class="card-52-button"
+                                        size="s"
+                                        ?disabled=${isSelected}
+                                        ?selected=${isSelected}
+                                        @click=${() => this.handleCardClick(card)}
+                                    >
+                                        <div class="card-52-button-content">
+                                            <span class="card-52-rank"
+                                                >${rankData.label}</span
+                                            >
+                                            <span
+                                                class="card-52-suit-icon"
+                                                style="color: ${suitData.color}"
+                                            >
+                                                ${suitData.icon}
+                                            </span>
+                                        </div>
+                                    </sp-action-button>
+                                `;
+                            })}
+                        </div>
+                    `)}
+                </div>
+            </div>
+        `;
+    }
+
     render() {
+        // Check if we're in "52 Cards" mode
+        if (settingsStore.cardSelectionMode === "52 Cards") {
+            return html`
+                <div class="card-selector-container">
+                    ${cardStore.selectionStage === "complete"
+                        ? this.renderCompleteSelection()
+                        : this.render52CardsSelection()}
+                </div>
+            `;
+        }
+
+        // Default "Suit - Rank Selection" mode
         return html`
             <div class="card-selector-container">
                 ${cardStore.selectionStage === "suit"

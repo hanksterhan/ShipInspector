@@ -245,6 +245,68 @@ export const styles = css`
         }
     }
 
+    /* 52 Cards Selection Mode Styles */
+    .cards-52-grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spectrum-global-dimension-size-200);
+        width: 100%;
+        max-width: 1000px;
+    }
+
+    .suit-row {
+        display: flex;
+        gap: var(--spectrum-global-dimension-size-100);
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    sp-action-button.card-52-button {
+        width: 50px;
+        height: 70px;
+        min-width: 50px;
+        max-width: 50px;
+        min-height: 70px;
+        max-height: 70px;
+        padding: var(--spectrum-global-dimension-size-75) !important;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 5 / 7;
+        border-radius: var(--spectrum-global-dimension-size-100);
+    }
+
+    .card-52-button-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spectrum-global-dimension-size-50);
+        width: 100%;
+        height: 100%;
+    }
+
+    .card-52-rank {
+        font-size: var(--spectrum-global-dimension-font-size-300);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        line-height: 1;
+    }
+
+    .card-52-suit-icon {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-52-suit-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
     @media (max-width: 600px) {
         .suit-grid {
             grid-template-columns: repeat(2, 1fr);
@@ -280,6 +342,24 @@ export const styles = css`
         .suit-icon {
             width: 40px;
             height: 40px;
+        }
+
+        sp-action-button.card-52-button {
+            width: 40px;
+            height: 56px;
+            min-width: 40px;
+            max-width: 40px;
+            min-height: 56px;
+            max-height: 56px;
+        }
+
+        .card-52-rank {
+            font-size: var(--spectrum-global-dimension-font-size-200);
+        }
+
+        .card-52-suit-icon {
+            width: 12px;
+            height: 12px;
         }
     }
 `;
