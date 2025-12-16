@@ -113,6 +113,32 @@ export class BoardSelector extends MobxLitElement {
         }
     }
 
+    handleNewHand() {
+        // Reset all hole cards and board cards
+        cardStore.holeCards.forEach((hole) => {
+            if (hole) {
+                hole.cards.forEach((card) => {
+                    deckStore.markCardAsUnselected(card);
+                });
+            }
+        });
+        cardStore.boardCards.forEach((card) => {
+            deckStore.markCardAsUnselected(card);
+        });
+        cardStore.resetHoleSelection();
+        cardStore.setBoardCards([]);
+        cardStore.resetBoardSelection();
+    }
+
+    handleNewBoard() {
+        // Reset only board cards
+        cardStore.boardCards.forEach((card) => {
+            deckStore.markCardAsUnselected(card);
+        });
+        cardStore.setBoardCards([]);
+        cardStore.resetBoardSelection();
+    }
+
     getSelectionInstruction(): string {
         const boardCardsCount = cardStore.boardCards.length;
         if (boardCardsCount < 3) {
@@ -174,7 +200,25 @@ export class BoardSelector extends MobxLitElement {
 
         return html`
             <div class="board-selector-container">
-                <h3 class="board-selector-title">Board Cards</h3>
+                <div class="board-header">
+                    <h3 class="board-selector-title">Board Cards</h3>
+                    <div class="board-actions">
+                        <sp-action-button
+                            class="new-board-button"
+                            size="s"
+                            @click=${this.handleNewBoard}
+                        >
+                            New board
+                        </sp-action-button>
+                        <sp-action-button
+                            class="new-hand-button"
+                            size="s"
+                            @click=${this.handleNewHand}
+                        >
+                            New hand
+                        </sp-action-button>
+                    </div>
+                </div>
                 <div class="board-cards-preview">
                     ${boardSlots.map(({ card, index }) =>
                         this.renderCard(card, index)

@@ -1,5 +1,4 @@
 import { action, makeObservable, observable } from "mobx";
-import { cardStore, deckStore } from "../index";
 
 export class SettingsStore {
     @observable
@@ -38,10 +37,6 @@ export class SettingsStore {
 
     @action
     resetSettings() {
-        cardStore.resetHoleSelection();
-        cardStore.setBoardCards([]);
-        deckStore.clearSelectedCards();
-
         this.setPlayers(2);
         this.setCardSelectionMode("52 Cards");
     }

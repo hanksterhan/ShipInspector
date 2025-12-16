@@ -20,11 +20,26 @@ export const styles = css`
         z-index: 1;
     }
 
+    .board-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: var(--spectrum-global-dimension-size-200);
+    }
+
     .board-selector-title {
         margin: 0;
         font-size: var(--spectrum-global-dimension-font-size-400);
         font-weight: var(--spectrum-global-font-weight-bold);
         color: var(--spectrum-global-color-gray-800);
+        flex: 1;
+    }
+
+    .board-actions {
+        display: flex;
+        gap: var(--spectrum-global-dimension-size-100);
+        align-items: center;
     }
 
     .board-cards-preview {
