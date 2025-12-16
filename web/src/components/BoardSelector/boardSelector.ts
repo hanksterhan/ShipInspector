@@ -4,9 +4,8 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
-import { cardStore, equityStore, deckStore } from "../../stores/index";
-import { SUITS, RANKS, boardToString, holeToString } from "../utilities";
-import { pokerService } from "../../services/index";
+import { cardStore, deckStore } from "../../stores/index";
+import { SUITS, RANKS } from "../utilities";
 import "../CardSelector";
 
 @customElement("board-selector")
@@ -27,23 +26,11 @@ export class BoardSelector extends MobxLitElement {
                     cardStore.selectionStage === "complete" &&
                     cardStore.boardCardIndex < 5
                 ) {
-                    const previousBoardCardsCount = cardStore.boardCards.length;
                     cardStore.addBoardCardToSelection(selectedCard);
                     this.requestUpdate();
 
-                    // Recalculate equity when board cards change
-                    // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
-                    // Don't calculate during partial flop selection (1-2 cards)
-                    const currentBoardCardsCount = cardStore.boardCards.length;
-                    const shouldCalculate = 
-                        currentBoardCardsCount > previousBoardCardsCount &&
-                        cardStore.holeCards.filter((h) => h !== undefined).length >= 2 &&
-                        (currentBoardCardsCount === 0 || currentBoardCardsCount === 3 || 
-                         currentBoardCardsCount === 4 || currentBoardCardsCount === 5);
-                    
-                    if (shouldCalculate) {
-                        this.calculateHandEquity();
-                    }
+                    // Equity calculation will be triggered automatically by EquityDisplay's reaction
+                    // which watches cardStore.boardCards for changes
 
                     // Auto-start next selection if cards are still missing
                     if (cardStore.boardCards.length < 5) {
@@ -71,46 +58,6 @@ export class BoardSelector extends MobxLitElement {
         );
     }
 
-    async calculateHandEquity() {
-        try {
-            const completedHoles = cardStore.holeCards.filter(
-                (hole) => hole !== undefined
-            );
-
-            if (completedHoles.length < 2) {
-                return;
-            }
-
-            // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
-            // Don't calculate during partial flop selection (1-2 cards)
-            const boardCardsCount = cardStore.boardCards.length;
-            if (boardCardsCount > 0 && boardCardsCount < 3) {
-                return;
-            }
-
-            const players = completedHoles.map((hole) => holeToString(hole));
-            const board = boardToString({ cards: cardStore.boardCards });
-
-            // Use Monte Carlo for pre-flop, exact for other scenarios
-            const isPreFlop = boardCardsCount === 0;
-            const options = isPreFlop 
-                ? { mode: "mc" as const, iterations: 50000 } 
-                : { mode: "exact" as const };
-
-            const equityResponse = await pokerService.getHandEquity(
-                players,
-                board,
-                options
-            );
-
-            equityStore.parseEquityResponse(equityResponse);
-            const oddsString = equityStore.formatPlayerOdds();
-            console.log(oddsString);
-        } catch (error) {
-            console.error("Error calculating hand equity:", error);
-        }
-    }
-
     handleStartSelection() {
         if (cardStore.boardCards.length < 5) {
             cardStore.startBoardSelection();
@@ -124,17 +71,8 @@ export class BoardSelector extends MobxLitElement {
         if (cardStore.boardCards.length < 5) {
             cardStore.startBoardSelection();
         }
-        // Recalculate equity after removal
-        // Only calculate for pre-flop (0 cards), full flop (3 cards), turn (4 cards), or river (5 cards)
-        const boardCardsCount = cardStore.boardCards.length;
-        const shouldCalculate = 
-            cardStore.holeCards.filter((h) => h !== undefined).length >= 2 &&
-            (boardCardsCount === 0 || boardCardsCount === 3 || 
-             boardCardsCount === 4 || boardCardsCount === 5);
-        
-        if (shouldCalculate) {
-            this.calculateHandEquity();
-        }
+        // Equity calculation will be triggered automatically by EquityDisplay's reaction
+        // which watches cardStore.boardCards for changes
     }
 
     handleNewHand() {

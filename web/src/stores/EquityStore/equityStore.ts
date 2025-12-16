@@ -1,4 +1,4 @@
-import { action, makeObservable, observable } from "mobx";
+import { action, makeObservable, observable, reaction } from "mobx";
 import {
     EquityResult,
     CalculateEquityResponse,
@@ -31,9 +31,40 @@ export class EquityStore {
     samples: number = 0;
 
     private currentAbortController: AbortController | null = null;
+    private reactionDisposer: (() => void) | null = null;
 
     constructor() {
         makeObservable(this);
+
+        // Single centralized reaction that watches for card changes
+        // This ensures only one reaction triggers calculations, even if multiple EquityDisplay components exist
+        this.reactionDisposer = reaction(
+            () => [
+                cardStore.holeCards.length,
+                cardStore.holeCards.map((h) => (h ? h.cards : null)),
+                cardStore.boardCards.length,
+                cardStore.boardCards,
+            ],
+            () => {
+                // Check if we have at least 2 players with hole cards
+                const validHoles = cardStore.holeCards.filter(
+                    (hole) => hole !== undefined && hole !== null
+                );
+
+                if (validHoles.length >= 2) {
+                    // Trigger calculation - it will cancel any in-flight request
+                    this.calculateEquity();
+                }
+            },
+            { fireImmediately: true }
+        );
+    }
+
+    dispose() {
+        if (this.reactionDisposer) {
+            this.reactionDisposer();
+            this.reactionDisposer = null;
+        }
     }
 
     @action
@@ -108,8 +139,8 @@ export class EquityStore {
 
             // Use Monte Carlo for pre-flop (empty board), auto mode for other scenarios
             const isPreFlop = boardCardsCount === 0;
-            const options = isPreFlop 
-                ? { mode: "mc" as const, iterations: 50000 } 
+            const options = isPreFlop
+                ? { mode: "mc" as const, iterations: 50000 }
                 : {};
 
             // Call the API with abort signal

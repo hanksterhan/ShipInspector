@@ -14,11 +14,20 @@ export class CardStore {
     // index of Hole cards indicates the player's index
     @observable
     // holeCards: Hole[] = [];
-    holeCards: Hole[] = [{
-        cards: [{ rank: 6, suit: "c" }, { rank: 7, suit: "c" }]
-    }, {
-        cards: [{ rank: 6, suit: "d" }, { rank: 7, suit: "d" }]
-    }];
+    holeCards: Hole[] = [
+        {
+            cards: [
+                { rank: 6, suit: "c" },
+                { rank: 7, suit: "c" },
+            ],
+        },
+        {
+            cards: [
+                { rank: 6, suit: "d" },
+                { rank: 7, suit: "d" },
+            ],
+        },
+    ];
 
     // Card selection state for the card selector component
     @observable

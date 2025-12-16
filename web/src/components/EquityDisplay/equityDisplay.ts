@@ -2,7 +2,6 @@ import { html, TemplateResult } from "lit";
 import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { reaction } from "mobx";
 import { equityStore, cardStore } from "../../stores/index";
 
 @customElement("equity-display")
@@ -15,40 +14,14 @@ export class EquityDisplay extends MobxLitElement {
     @property({ type: Number })
     playerIndex: number = 0;
 
-    private reactionDisposer: (() => void) | null = null;
-
     connectedCallback() {
         super.connectedCallback();
-        
-        // Watch for changes in hole cards or board cards and trigger equity calculation
-        this.reactionDisposer = reaction(
-            () => [
-                cardStore.holeCards.length,
-                cardStore.holeCards.map(h => h ? h.cards : null),
-                cardStore.boardCards.length,
-                cardStore.boardCards,
-            ],
-            () => {
-                // Check if we have at least 2 players with hole cards
-                const validHoles = cardStore.holeCards.filter(
-                    (hole) => hole !== undefined && hole !== null
-                );
-                
-                if (validHoles.length >= 2) {
-                    // Trigger calculation - it will cancel any in-flight request
-                    equityStore.calculateEquity();
-                }
-            },
-            { fireImmediately: false }
-        );
+        // Reaction is now handled centrally in EquityStore to prevent duplicate calls
+        // Even if multiple EquityDisplay components exist (one per player), only one reaction triggers calculations
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        if (this.reactionDisposer) {
-            this.reactionDisposer();
-            this.reactionDisposer = null;
-        }
     }
 
     render(): TemplateResult {
@@ -56,7 +29,10 @@ export class EquityDisplay extends MobxLitElement {
         if (equityStore.isLoading) {
             return html`
                 <div class="equity-display loading">
-                    <sp-progress-circle indeterminate size="s"></sp-progress-circle>
+                    <sp-progress-circle
+                        indeterminate
+                        size="s"
+                    ></sp-progress-circle>
                     <span class="loading-text">Calculating equity...</span>
                 </div>
             `;
@@ -76,15 +52,17 @@ export class EquityDisplay extends MobxLitElement {
             const validHoles = cardStore.holeCards.filter(
                 (hole) => hole !== undefined && hole !== null
             );
-            
+
             if (validHoles.length < 2) {
                 return html`
                     <div class="equity-display empty">
-                        <span class="empty-text">Select at least 2 player hands</span>
+                        <span class="empty-text"
+                            >Select at least 2 player hands</span
+                        >
                     </div>
                 `;
             }
-            
+
             return html`
                 <div class="equity-display empty">
                     <span class="empty-text">No equity data</span>
@@ -115,15 +93,21 @@ export class EquityDisplay extends MobxLitElement {
                         <span class="stat-label">Win:</span>
                         <span class="stat-value">${winPercentage}%</span>
                     </div>
-                    ${hasTie ? html`
-                        <div class="equity-stat tie">
-                            <span class="stat-label">Tie:</span>
-                            <span class="stat-value">${tiePercentage}%</span>
-                        </div>
-                    ` : ''}
+                    ${hasTie
+                        ? html`
+                              <div class="equity-stat tie">
+                                  <span class="stat-label">Tie:</span>
+                                  <span class="stat-value"
+                                      >${tiePercentage}%</span
+                                  >
+                              </div>
+                          `
+                        : ""}
                 </div>
                 <div class="equity-footer">
-                    <span class="samples-text">Samples: ${samples.toLocaleString()}</span>
+                    <span class="samples-text"
+                        >Samples: ${samples.toLocaleString()}</span
+                    >
                 </div>
             </div>
         `;
