@@ -13,12 +13,14 @@ export class HttpClient {
     private async request(
         method: string,
         url: string,
-        body?: any
+        body?: any,
+        signal?: AbortSignal
     ): Promise<any> {
         const response = await fetch(`${this.baseUrl}${url}`, {
             method,
             headers: this.headers,
             body: body ? JSON.stringify(body) : null,
+            signal,
         });
 
         if (!response.ok) {
@@ -29,20 +31,20 @@ export class HttpClient {
         return response.json();
     }
 
-    async get(url: string): Promise<any> {
-        return this.request("GET", url);
+    async get(url: string, signal?: AbortSignal): Promise<any> {
+        return this.request("GET", url, undefined, signal);
     }
 
-    async post(url: string, body: any): Promise<any> {
-        return this.request("POST", url, body);
+    async post(url: string, body: any, signal?: AbortSignal): Promise<any> {
+        return this.request("POST", url, body, signal);
     }
 
-    async put(url: string, body: any): Promise<any> {
-        return this.request("PUT", url, body);
+    async put(url: string, body: any, signal?: AbortSignal): Promise<any> {
+        return this.request("PUT", url, body, signal);
     }
 
-    async patch(url: string, body: any): Promise<any> {
-        return this.request("PATCH", url, body);
+    async patch(url: string, body: any, signal?: AbortSignal): Promise<any> {
+        return this.request("PATCH", url, body, signal);
     }
 }
 

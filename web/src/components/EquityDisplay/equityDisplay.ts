@@ -29,17 +29,13 @@ export class EquityDisplay extends MobxLitElement {
                 cardStore.boardCards,
             ],
             () => {
-                // Skip if already loading to prevent duplicate calls
-                if (equityStore.isLoading) {
-                    return;
-                }
-                
                 // Check if we have at least 2 players with hole cards
                 const validHoles = cardStore.holeCards.filter(
                     (hole) => hole !== undefined && hole !== null
                 );
                 
                 if (validHoles.length >= 2) {
+                    // Trigger calculation - it will cancel any in-flight request
                     equityStore.calculateEquity();
                 }
             },

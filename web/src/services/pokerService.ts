@@ -19,14 +19,19 @@ export class PokerService {
         players: string[],
         board: string,
         options: EquityOptions = {},
-        dead: string[] = []
+        dead: string[] = [],
+        signal?: AbortSignal
     ): Promise<CalculateEquityResponse> {
-        const response = await httpClient.post(POKER_ENDPOINTS.getHandEquity, {
-            players,
-            board,
-            options,
-            dead,
-        });
+        const response = await httpClient.post(
+            POKER_ENDPOINTS.getHandEquity,
+            {
+                players,
+                board,
+                options,
+                dead,
+            },
+            signal
+        );
         return response as CalculateEquityResponse;
     }
 
