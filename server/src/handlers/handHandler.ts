@@ -15,6 +15,11 @@ import {
     ApiErrorResponse,
 } from "@common/interfaces";
 import { hand, computeEquity } from "../integrations/hand";
+import {
+    equityCalculationCounter,
+    handComparisonCounter,
+    getBoardState,
+} from "../config/metrics";
 
 class HandHandler {
     /**
@@ -126,6 +131,20 @@ class HandHandler {
             const handRank2 = hand.evaluate7(allCards2);
             const comparison = hand.compareRanks(handRank1, handRank2);
 
+            const result =
+                comparison > 0
+                    ? "hand1_wins"
+                    : comparison < 0
+                      ? "hand2_wins"
+                      : "tie";
+
+            // Record metric for hand comparison
+            const boardState = getBoardState(boardCards.cards.length);
+            handComparisonCounter.add(1, {
+                board_state: boardState,
+                result: result,
+            });
+
             const response: CompareHandsResponse = {
                 hand1: {
                     hole: holeCards1.cards,
@@ -136,12 +155,7 @@ class HandHandler {
                     rank: handRank2,
                 },
                 comparison: {
-                    result:
-                        comparison > 0
-                            ? "hand1_wins"
-                            : comparison < 0
-                              ? "hand2_wins"
-                              : "tie",
+                    result: result,
                     value: comparison,
                 },
             };
@@ -190,6 +204,15 @@ class HandHandler {
                 options,
                 parsedDead
             );
+
+            // Record metric for equity calculation
+            const boardState = getBoardState(parsedBoard.cards.length);
+            const calculationMode = options.mode || "auto";
+            equityCalculationCounter.add(1, {
+                players: parsedPlayers.length.toString(),
+                board_state: boardState,
+                calculation_mode: calculationMode,
+            });
 
             const response: CalculateEquityResponse = {
                 equity: equityResult,
