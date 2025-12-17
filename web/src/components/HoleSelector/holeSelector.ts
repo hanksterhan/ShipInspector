@@ -7,7 +7,6 @@ import { Card } from "@common/interfaces";
 import { cardStore, settingsStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 import "../CardSelector";
-import "../BoardSelector";
 
 @customElement("hole-selector")
 export class HoleSelector extends MobxLitElement {
@@ -84,39 +83,6 @@ export class HoleSelector extends MobxLitElement {
         `;
     }
 
-    renderSelectedHoles(): TemplateResult {
-        const holesWithIndices = cardStore.holeCards
-            .map((hole, index) => ({ hole, playerIndex: index }))
-            .filter((item) => item.hole !== undefined);
-
-        if (holesWithIndices.length === 0) {
-            return html``;
-        }
-
-        return html`
-            <div class="selected-holes-section">
-                <div class="selected-holes-grid">
-                    ${holesWithIndices.map(
-                        ({ hole, playerIndex }) => html`
-                            <div class="player-hole-container">
-                                <div class="player-label">
-                                    Player ${playerIndex + 1}
-                                </div>
-                                <div class="player-hole-cards">
-                                    ${this.renderCard(hole.cards[0], 0)}
-                                    ${this.renderCard(hole.cards[1], 1)}
-                                </div>
-                                <equity-display
-                                    .playerIndex=${playerIndex}
-                                ></equity-display>
-                            </div>
-                        `
-                    )}
-                </div>
-            </div>
-        `;
-    }
-
     render() {
         const firstCard = cardStore.selectedHoleCards[0] || null;
         const secondCard = cardStore.selectedHoleCards[1] || null;
@@ -135,68 +101,60 @@ export class HoleSelector extends MobxLitElement {
             (hole) => hole !== undefined
         ).length;
         const canSelectMore = selectedHolesCount < settingsStore.players;
-        const allHolesSelected = selectedHolesCount === settingsStore.players;
 
         return html`
             <div class="hole-selector-container">
-                ${this.renderSelectedHoles()}
-                ${allHolesSelected
-                    ? html` <board-selector></board-selector> `
-                    : html`
-                          <h3 class="hole-selector-title">
-                              Player ${cardStore.currentPlayer + 1} Hand
-                          </h3>
-                          <div class="hole-cards-preview">
-                              ${this.renderCard(
-                                  firstCard || existingHole?.cards[0] || null,
-                                  0
-                              )}
-                              ${this.renderCard(
-                                  secondCard || existingHole?.cards[1] || null,
-                                  1
-                              )}
+                <h3 class="hole-selector-title">
+                    Player ${cardStore.currentPlayer + 1} Hand
+                </h3>
+                <div class="hole-cards-preview">
+                    ${this.renderCard(
+                        firstCard || existingHole?.cards[0] || null,
+                        0
+                    )}
+                    ${this.renderCard(
+                        secondCard || existingHole?.cards[1] || null,
+                        1
+                    )}
+                </div>
+                ${isSelectingFirst
+                    ? html`
+                          <div class="selection-instruction">
+                              Select the first card
                           </div>
-                          ${isSelectingFirst
-                              ? html`
-                                    <div class="selection-instruction">
-                                        Select the first card
-                                    </div>
-                                    <card-selector></card-selector>
-                                `
-                              : isSelectingSecond
-                                ? html`
-                                      <div class="selection-instruction">
-                                          Select the second card
-                                      </div>
-                                      <card-selector></card-selector>
-                                  `
-                                : hasExistingHole && canSelectMore
-                                  ? html`
-                                        <div class="hole-complete-message">
-                                            Player
-                                            ${cardStore.currentPlayer + 1} Hand
-                                        </div>
-                                        <sp-action-button
-                                            class="start-selection-button"
-                                            size="m"
-                                            @click=${this.handleStartSelection}
-                                        >
-                                            Select Next Player
-                                        </sp-action-button>
-                                    `
-                                  : canSelectMore
-                                    ? html`
-                                          <sp-action-button
-                                              class="start-selection-button"
-                                              size="m"
-                                              @click=${this
-                                                  .handleStartSelection}
-                                          >
-                                              Start Selection
-                                          </sp-action-button>
-                                      `
-                                    : html``}
-                      `}
+                          <card-selector></card-selector>
+                      `
+                    : isSelectingSecond
+                      ? html`
+                            <div class="selection-instruction">
+                                Select the second card
+                            </div>
+                            <card-selector></card-selector>
+                        `
+                      : hasExistingHole && canSelectMore
+                        ? html`
+                              <div class="hole-complete-message">
+                                  Player ${cardStore.currentPlayer + 1} Hand
+                              </div>
+                              <sp-action-button
+                                  class="start-selection-button"
+                                  size="m"
+                                  @click=${this.handleStartSelection}
+                              >
+                                  Select Next Player
+                              </sp-action-button>
+                          `
+                        : canSelectMore
+                          ? html`
+                                <sp-action-button
+                                    class="start-selection-button"
+                                    size="m"
+                                    @click=${this.handleStartSelection}
+                                >
+                                    Start Selection
+                                </sp-action-button>
+                            `
+                          : html``}
             </div>
         `;
     }
