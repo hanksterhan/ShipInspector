@@ -17,9 +17,7 @@ export class PokerHands extends MobxLitElement {
     placeholderProperty: string = "";
 
     render() {
-        return html`
-            <hole-selector></hole-selector>
-        `;
+        return html` <hole-selector></hole-selector> `;
     }
 }
 

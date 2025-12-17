@@ -14,9 +14,7 @@ export class EquityCalculator extends MobxLitElement {
     }
 
     render() {
-        return html`
-            <hole-selector></hole-selector>
-        `;
+        return html` <hole-selector></hole-selector> `;
     }
 }
 
