@@ -8,6 +8,7 @@ import {
     CardSuit,
 } from "@common/interfaces";
 import { hand } from "./hand";
+import { getCanonicalBoardKey } from "./symmetry";
 
 /**
  * Create a full 52-card deck
@@ -224,7 +225,18 @@ function iterateCombinations<T>(
 
 /**
  * Exact enumeration: evaluate all possible board completions
- * Uses iterative approach to avoid memory issues with large combination counts
+ * Uses symmetry reduction to group isomorphic board combinations
+ * 
+ * Strategy:
+ * 1. First pass: Group board combinations by canonical key (symmetry reduction)
+ * 2. Second pass: Evaluate each unique canonical board once, multiply by count
+ * 
+ * This provides significant speedup, especially for pre-flop calculations where
+ * many board combinations are isomorphic (equivalent up to suit permutation).
+ * 
+ * Symmetry reduction is applied at two levels:
+ * - Board combination grouping (this function)
+ * - Hand evaluation caching (hand.evaluate7() memoization)
  */
 function exactEnumeration(
     players: readonly Hole[],
@@ -233,27 +245,47 @@ function exactEnumeration(
     missing: number
 ): EquityResult {
     const numPlayers = players.length;
+    
+    // Group board combinations by canonical key
+    // Map: canonicalKey -> { representative board, count }
+    const canonicalGroups = new Map<
+        string,
+        { board: Card[]; count: number }
+    >();
+
+    // First pass: group all board combinations by canonical form
+    iterateCombinations(remainingDeck, missing, (combo) => {
+        const completeBoard = [...board.cards, ...combo];
+        const canonicalKey = getCanonicalBoardKey(completeBoard, players);
+
+        if (!canonicalGroups.has(canonicalKey)) {
+            canonicalGroups.set(canonicalKey, {
+                board: completeBoard,
+                count: 0,
+            });
+        }
+        canonicalGroups.get(canonicalKey)!.count++;
+    });
+
+    // Second pass: evaluate each canonical board once and multiply by count
     const wins = new Array(numPlayers).fill(0);
     const ties = new Array(numPlayers).fill(0);
     let totalCombos = 0;
 
-    // Iteratively evaluate each combination without storing them all
-    iterateCombinations(remainingDeck, missing, (combo) => {
-        totalCombos++;
-        const completeBoard = [...board.cards, ...combo];
-        const { winners, ties: isTie } = evaluateBoard(players, completeBoard);
+    for (const { board: canonicalBoard, count } of canonicalGroups.values()) {
+        totalCombos += count;
+        const { winners, ties: isTie } = evaluateBoard(players, canonicalBoard);
 
+        // Multiply results by the number of isomorphic combinations
         if (isTie) {
-            // Split the pot equally among tied players
-            const tieValue = 1 / winners.length;
+            const tieValue = (1 / winners.length) * count;
             for (const winnerIndex of winners) {
                 ties[winnerIndex] += tieValue;
             }
         } else {
-            // Single winner
-            wins[winners[0]] += 1;
+            wins[winners[0]] += count;
         }
-    });
+    }
 
     // Convert to fractions
     const result: EquityResult = {

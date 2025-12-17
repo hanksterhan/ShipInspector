@@ -81,10 +81,10 @@ export class EquityDisplay extends MobxLitElement {
         }
 
         // Display equity for this specific player
-        const winPercentage = Math.round(win[this.playerIndex] * 100);
-        const tiePercentage = Math.round(tie[this.playerIndex] * 100);
-        // Only show tie if it's 1% or more
-        const hasTie = tiePercentage >= 1;
+        const winPercentage = (win[this.playerIndex] * 100).toFixed(2);
+        const tiePercentage = (tie[this.playerIndex] * 100).toFixed(2);
+        // Only show tie if it's 0.01% or more
+        const hasTie = parseFloat(tiePercentage) >= 0.01;
 
         return html`
             <div class="equity-display">

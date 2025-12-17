@@ -551,4 +551,84 @@ describe("Hand", () => {
             expect(hand.compareRanks(hand1, hand2)).toBe(0);
         });
     });
+
+    describe("Symmetry Reduction (Memoization)", () => {
+        beforeEach(() => {
+            // Clear cache before each test
+            hand.clearCache();
+        });
+
+        it("should cache evaluations of isomorphic hands", () => {
+            // These hands are isomorphic (same ranks, different suits)
+            // Using 9-8-7-6-5-4-3 to get a 9-high straight flush (not royal flush)
+            const hand1: Card[] = [
+                parseCard("9h"),
+                parseCard("8h"),
+                parseCard("7h"),
+                parseCard("6h"),
+                parseCard("5h"),
+                parseCard("4h"),
+                parseCard("3h"),
+            ];
+
+            const hand2: Card[] = [
+                parseCard("9s"),
+                parseCard("8s"),
+                parseCard("7s"),
+                parseCard("6s"),
+                parseCard("5s"),
+                parseCard("4s"),
+                parseCard("3s"),
+            ];
+
+            // Both should evaluate to the same result
+            const result1 = hand.evaluate7(hand1);
+            const result2 = hand.evaluate7(hand2);
+
+            expect(result1).toEqual(result2);
+            expect(result1.category).toBe(8); // Straight flush
+
+            // Cache should have been used (check stats)
+            const stats = hand.getCacheStats();
+            // Should have cached at least one evaluation
+            expect(stats.size).toBeGreaterThan(0);
+        });
+
+        it("should return cached result for identical hand", () => {
+            // Using 9-8-7-6-5-4-3 to get a 9-high straight flush (not royal flush)
+            const cards: Card[] = [
+                parseCard("9h"),
+                parseCard("8h"),
+                parseCard("7h"),
+                parseCard("6h"),
+                parseCard("5h"),
+                parseCard("4h"),
+                parseCard("3h"),
+            ];
+
+            const result1 = hand.evaluate7(cards);
+            const result2 = hand.evaluate7([...cards]); // Same cards, new array
+
+            expect(result1).toEqual(result2);
+            expect(result1.category).toBe(8); // Straight flush
+        });
+
+        it("should handle cache clearing", () => {
+            const cards: Card[] = [
+                parseCard("14h"),
+                parseCard("13h"),
+                parseCard("12h"),
+                parseCard("11h"),
+                parseCard("10h"),
+                parseCard("9h"),
+                parseCard("8h"),
+            ];
+
+            hand.evaluate7(cards);
+            expect(hand.getCacheStats().size).toBeGreaterThan(0);
+
+            hand.clearCache();
+            expect(hand.getCacheStats().size).toBe(0);
+        });
+    });
 });

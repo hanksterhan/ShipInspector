@@ -1,14 +1,26 @@
 import { Card, HandRank, CardRank } from "@common/interfaces";
+import { getCanonicalKey } from "./symmetry";
 
 class Hand {
+    // Cache for isomorphic hand evaluations (key: canonical card string, value: HandRank)
+    private evaluationCache = new Map<string, HandRank>();
+
     /**
      * Evaluate a 7-card hand to determine the best 5-card hand
+     * Uses symmetry reduction via memoization to cache isomorphic evaluations
      * @param cards7 - The 7 cards to evaluate
      * @returns The HandRank object for the best 5-card hand
      */
     evaluate7(cards7: Card[]): HandRank {
         if (cards7.length !== 7) {
             throw new Error("evaluate7 requires exactly 7 cards");
+        }
+
+        // Check cache using canonical key (symmetry reduction)
+        const cacheKey = getCanonicalKey(cards7);
+        const cached = this.evaluationCache.get(cacheKey);
+        if (cached !== undefined) {
+            return cached;
         }
 
         // Generate all combinations of 5 cards from 7
@@ -23,7 +35,24 @@ class Hand {
             }
         }
 
+        // Cache the result
+        this.evaluationCache.set(cacheKey, bestHand);
+
         return bestHand;
+    }
+
+    /**
+     * Clear the evaluation cache (useful for memory management)
+     */
+    clearCache(): void {
+        this.evaluationCache.clear();
+    }
+
+    /**
+     * Get cache statistics
+     */
+    getCacheStats(): { size: number } {
+        return { size: this.evaluationCache.size };
     }
 
     /**
