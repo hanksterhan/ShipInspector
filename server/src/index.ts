@@ -1,3 +1,7 @@
+// OpenTelemetry must be initialized BEFORE any other imports
+import { initializeTelemetry } from "./config/telemetry";
+initializeTelemetry();
+
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -19,10 +23,14 @@ app.use(express.json());
 app.use(apiLogger);
 
 // Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "Poker Utilities API Documentation",
-}));
+app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+        customCss: ".swagger-ui .topbar { display: none }",
+        customSiteTitle: "Poker Utilities API Documentation",
+    })
+);
 
 Object.values(routers).forEach((router) => {
     app.use(router);

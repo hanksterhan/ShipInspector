@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # OpenTelemetry Collector - receives traces, metrics, and logs
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-collector-logs:/tmp  # For file exporters
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics endpoint
+      - "8889:8889"   # Prometheus exporter metrics
+    depends_on:
+      - clickhouse
+      - prometheus
+    networks:
+      - observability
+
+  # ClickHouse - for logs and traces storage
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"   # HTTP interface
+      - "9000:9000"   # Native protocol
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse-init:/docker-entrypoint-initdb.d
+    environment:
+      CLICKHOUSE_DB: observability
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+    networks:
+      - observability
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus - for metrics storage and querying
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - observability
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Grafana - for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"   # Using 3001 to avoid conflict with your server on 3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    depends_on:
+      - prometheus
+      - clickhouse
+    networks:
+      - observability
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  observability:
+    driver: bridge
+
+volumes:
+  clickhouse_data:
+  prometheus_data:
+  grafana_data:
+

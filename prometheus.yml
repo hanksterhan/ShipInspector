@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'local'
+    environment: 'development'
+
+scrape_configs:
+  # Scrape the OpenTelemetry Collector's Prometheus metrics endpoint
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+        labels:
+          service: 'otel-collector'
+
+  # Scrape your application metrics (if you expose them directly)
+  - job_name: 'ship-inspector-server'
+    static_configs:
+      - targets: ['host.docker.internal:8888']
+        labels:
+          service: 'ship-inspector-server'
+

@@ -4,9 +4,15 @@ import { hand } from "./hand";
 describe("Hand", () => {
     describe("evaluate7", () => {
         it("should throw error if not exactly 7 cards", () => {
-            expect(() => hand.evaluate7([])).toThrow("evaluate7 requires exactly 7 cards");
-            expect(() => hand.evaluate7([parseCard("2c")])).toThrow("evaluate7 requires exactly 7 cards");
-            expect(() => hand.evaluate7(new Array(8).fill(parseCard("2c")))).toThrow("evaluate7 requires exactly 7 cards");
+            expect(() => hand.evaluate7([])).toThrow(
+                "evaluate7 requires exactly 7 cards"
+            );
+            expect(() => hand.evaluate7([parseCard("2c")])).toThrow(
+                "evaluate7 requires exactly 7 cards"
+            );
+            expect(() =>
+                hand.evaluate7(new Array(8).fill(parseCard("2c")))
+            ).toThrow("evaluate7 requires exactly 7 cards");
         });
 
         describe("Royal Flush", () => {
@@ -440,7 +446,7 @@ describe("Hand", () => {
                 const hand1: HandRank = { category: 7, tiebreak: [13, 14] }; // Kings with Ace
                 const hand2: HandRank = { category: 7, tiebreak: [13, 12] }; // Kings with Queen
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
+
                 const hand3: HandRank = { category: 7, tiebreak: [14, 13] }; // Aces with King
                 expect(hand.compareRanks(hand3, hand1)).toBe(1);
             });
@@ -449,17 +455,26 @@ describe("Hand", () => {
                 const hand1: HandRank = { category: 6, tiebreak: [14, 13] }; // Aces over Kings
                 const hand2: HandRank = { category: 6, tiebreak: [14, 12] }; // Aces over Queens
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
+
                 const hand3: HandRank = { category: 6, tiebreak: [13, 14] }; // Kings over Aces
                 expect(hand.compareRanks(hand1, hand3)).toBe(1); // Aces over Kings beats Kings over Aces
             });
 
             it("should compare flush by highest cards", () => {
-                const hand1: HandRank = { category: 5, tiebreak: [14, 13, 12, 11, 9] };
-                const hand2: HandRank = { category: 5, tiebreak: [14, 13, 12, 11, 8] };
+                const hand1: HandRank = {
+                    category: 5,
+                    tiebreak: [14, 13, 12, 11, 9],
+                };
+                const hand2: HandRank = {
+                    category: 5,
+                    tiebreak: [14, 13, 12, 11, 8],
+                };
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
-                const hand3: HandRank = { category: 5, tiebreak: [14, 13, 12, 10, 9] };
+
+                const hand3: HandRank = {
+                    category: 5,
+                    tiebreak: [14, 13, 12, 10, 9],
+                };
                 expect(hand.compareRanks(hand1, hand3)).toBe(1); // 11 beats 10
             });
 
@@ -467,7 +482,7 @@ describe("Hand", () => {
                 const hand1: HandRank = { category: 4, tiebreak: [10] }; // 10-high
                 const hand2: HandRank = { category: 4, tiebreak: [9] }; // 9-high
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
+
                 const hand3: HandRank = { category: 4, tiebreak: [5] }; // Wheel
                 expect(hand.compareRanks(hand1, hand3)).toBe(1); // 10-high beats wheel
             });
@@ -476,7 +491,7 @@ describe("Hand", () => {
                 const hand1: HandRank = { category: 3, tiebreak: [10, 14, 13] }; // Tens with A-K
                 const hand2: HandRank = { category: 3, tiebreak: [10, 14, 12] }; // Tens with A-Q
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
+
                 const hand3: HandRank = { category: 3, tiebreak: [14, 13, 12] }; // Aces
                 expect(hand.compareRanks(hand3, hand1)).toBe(1);
             });
@@ -485,29 +500,47 @@ describe("Hand", () => {
                 const hand1: HandRank = { category: 2, tiebreak: [14, 13, 12] }; // A-K with Q
                 const hand2: HandRank = { category: 2, tiebreak: [14, 13, 11] }; // A-K with J
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
+
                 const hand3: HandRank = { category: 2, tiebreak: [14, 12, 13] }; // A-Q with K
                 expect(hand.compareRanks(hand1, hand3)).toBe(1); // A-K beats A-Q
-                
+
                 const hand4: HandRank = { category: 2, tiebreak: [13, 12, 14] }; // K-Q with A
                 expect(hand.compareRanks(hand1, hand4)).toBe(1); // A-K beats K-Q
             });
 
             it("should compare pair by rank then kickers", () => {
-                const hand1: HandRank = { category: 1, tiebreak: [10, 14, 13, 12] }; // Tens with A-K-Q
-                const hand2: HandRank = { category: 1, tiebreak: [10, 14, 13, 11] }; // Tens with A-K-J
+                const hand1: HandRank = {
+                    category: 1,
+                    tiebreak: [10, 14, 13, 12],
+                }; // Tens with A-K-Q
+                const hand2: HandRank = {
+                    category: 1,
+                    tiebreak: [10, 14, 13, 11],
+                }; // Tens with A-K-J
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
-                const hand3: HandRank = { category: 1, tiebreak: [14, 13, 12, 11] }; // Aces
+
+                const hand3: HandRank = {
+                    category: 1,
+                    tiebreak: [14, 13, 12, 11],
+                }; // Aces
                 expect(hand.compareRanks(hand3, hand1)).toBe(1);
             });
 
             it("should compare high card by highest cards", () => {
-                const hand1: HandRank = { category: 0, tiebreak: [14, 13, 12, 11, 9] };
-                const hand2: HandRank = { category: 0, tiebreak: [14, 13, 12, 11, 8] };
+                const hand1: HandRank = {
+                    category: 0,
+                    tiebreak: [14, 13, 12, 11, 9],
+                };
+                const hand2: HandRank = {
+                    category: 0,
+                    tiebreak: [14, 13, 12, 11, 8],
+                };
                 expect(hand.compareRanks(hand1, hand2)).toBe(1);
-                
-                const hand3: HandRank = { category: 0, tiebreak: [14, 13, 12, 10, 9] };
+
+                const hand3: HandRank = {
+                    category: 0,
+                    tiebreak: [14, 13, 12, 10, 9],
+                };
                 expect(hand.compareRanks(hand1, hand3)).toBe(1);
             });
         });

@@ -6,7 +6,8 @@ const options: swaggerJsdoc.Options = {
         info: {
             title: "Poker Utilities API",
             version: "1.0.0",
-            description: "API for poker hand evaluation and equity calculation utilities",
+            description:
+                "API for poker hand evaluation and equity calculation utilities",
             contact: {
                 name: "API Support",
             },
@@ -24,7 +25,8 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         rank: {
                             type: "integer",
-                            description: "Card rank (2-14, where 11=Jack, 12=Queen, 13=King, 14=Ace)",
+                            description:
+                                "Card rank (2-14, where 11=Jack, 12=Queen, 13=King, 14=Ace)",
                             minimum: 2,
                             maximum: 14,
                             example: 14,
@@ -32,7 +34,8 @@ const options: swaggerJsdoc.Options = {
                         suit: {
                             type: "string",
                             enum: ["c", "d", "h", "s"],
-                            description: "Card suit (c=clubs, d=diamonds, h=hearts, s=spades)",
+                            description:
+                                "Card suit (c=clubs, d=diamonds, h=hearts, s=spades)",
                             example: "h",
                         },
                     },
@@ -43,7 +46,8 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         category: {
                             type: "integer",
-                            description: "Hand category: 0=High Card, 1=Pair, 2=Two Pair, 3=Three of a Kind, 4=Straight, 5=Flush, 6=Full House, 7=Four of a Kind, 8=Straight Flush, 9=Royal Flush",
+                            description:
+                                "Hand category: 0=High Card, 1=Pair, 2=Two Pair, 3=Three of a Kind, 4=Straight, 5=Flush, 6=Full House, 7=Four of a Kind, 8=Straight Flush, 9=Royal Flush",
                             minimum: 0,
                             maximum: 9,
                             example: 6,
@@ -55,7 +59,8 @@ const options: swaggerJsdoc.Options = {
                                 minimum: 2,
                                 maximum: 14,
                             },
-                            description: "Tiebreaker cards for comparing hands of the same category",
+                            description:
+                                "Tiebreaker cards for comparing hands of the same category",
                             example: [14, 13],
                         },
                     },
@@ -67,25 +72,29 @@ const options: swaggerJsdoc.Options = {
                         mode: {
                             type: "string",
                             enum: ["auto", "exact", "mc"],
-                            description: "Calculation mode: 'auto' chooses based on combo count, 'exact' enumerates all possibilities, 'mc' uses Monte Carlo simulation",
+                            description:
+                                "Calculation mode: 'auto' chooses based on combo count, 'exact' enumerates all possibilities, 'mc' uses Monte Carlo simulation",
                             default: "auto",
                             example: "auto",
                         },
                         iterations: {
                             type: "integer",
-                            description: "Number of iterations for Monte Carlo simulation",
+                            description:
+                                "Number of iterations for Monte Carlo simulation",
                             default: 10000,
                             minimum: 1,
                             example: 10000,
                         },
                         seed: {
                             type: "integer",
-                            description: "Seed for random number generator (for reproducible results)",
+                            description:
+                                "Seed for random number generator (for reproducible results)",
                             example: 12345,
                         },
                         exactMaxCombos: {
                             type: "integer",
-                            description: "Maximum combinations before falling back to Monte Carlo in auto mode",
+                            description:
+                                "Maximum combinations before falling back to Monte Carlo in auto mode",
                             default: 200000,
                             example: 200000,
                         },
@@ -101,7 +110,8 @@ const options: swaggerJsdoc.Options = {
                                 minimum: 0,
                                 maximum: 1,
                             },
-                            description: "Win percentage per player (fraction 0-1)",
+                            description:
+                                "Win percentage per player (fraction 0-1)",
                             example: [0.85, 0.15],
                         },
                         tie: {
@@ -111,7 +121,8 @@ const options: swaggerJsdoc.Options = {
                                 minimum: 0,
                                 maximum: 1,
                             },
-                            description: "Tie percentage per player (fraction 0-1)",
+                            description:
+                                "Tie percentage per player (fraction 0-1)",
                             example: [0.0, 0.0],
                         },
                         lose: {
@@ -121,12 +132,14 @@ const options: swaggerJsdoc.Options = {
                                 minimum: 0,
                                 maximum: 1,
                             },
-                            description: "Lose percentage per player (fraction 0-1)",
+                            description:
+                                "Lose percentage per player (fraction 0-1)",
                             example: [0.15, 0.85],
                         },
                         samples: {
                             type: "integer",
-                            description: "Number of board completions evaluated",
+                            description:
+                                "Number of board completions evaluated",
                             example: 990,
                         },
                     },
@@ -138,12 +151,14 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         hole: {
                             type: "string",
-                            description: "Hole cards as space-separated string (e.g., '14h 14d' for pocket aces)",
+                            description:
+                                "Hole cards as space-separated string (e.g., '14h 14d' for pocket aces)",
                             example: "14h 14d",
                         },
                         board: {
                             type: "string",
-                            description: "Board cards as space-separated string (optional, e.g., '12h 11h 10h 9h 8h')",
+                            description:
+                                "Board cards as space-separated string (optional, e.g., '12h 11h 10h 9h 8h')",
                             example: "12h 11h 10h 9h 8h",
                             default: "",
                         },
@@ -186,7 +201,8 @@ const options: swaggerJsdoc.Options = {
                         },
                         board: {
                             type: "string",
-                            description: "Board cards as space-separated string",
+                            description:
+                                "Board cards as space-separated string",
                             example: "12h 11h 10h 9h 8h",
                             default: "",
                         },
@@ -233,7 +249,8 @@ const options: swaggerJsdoc.Options = {
                                 },
                                 value: {
                                     type: "integer",
-                                    description: "1 if hand1 wins, -1 if hand2 wins, 0 if tie",
+                                    description:
+                                        "1 if hand1 wins, -1 if hand2 wins, 0 if tie",
                                     example: 1,
                                 },
                             },
@@ -250,13 +267,15 @@ const options: swaggerJsdoc.Options = {
                             items: {
                                 type: "string",
                             },
-                            description: "Array of hole card strings (one per player)",
+                            description:
+                                "Array of hole card strings (one per player)",
                             minItems: 2,
                             example: ["14h 14d", "13h 13d"],
                         },
                         board: {
                             type: "string",
-                            description: "Board cards as space-separated string (optional)",
+                            description:
+                                "Board cards as space-separated string (optional)",
                             example: "12h 11h 10h",
                             default: "",
                         },
@@ -268,7 +287,8 @@ const options: swaggerJsdoc.Options = {
                             items: {
                                 type: "string",
                             },
-                            description: "Array of dead card strings (known excluded cards)",
+                            description:
+                                "Array of dead card strings (known excluded cards)",
                             example: ["9h", "8h"],
                         },
                     },
@@ -322,4 +342,3 @@ const options: swaggerJsdoc.Options = {
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
-

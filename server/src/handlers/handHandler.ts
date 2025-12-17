@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { 
-    Card, 
-    Hole, 
+import {
+    Card,
+    Hole,
     HandRank,
     parseCard,
     parseHole,
@@ -12,7 +12,7 @@ import {
     CompareHandsResponse,
     CalculateEquityRequest,
     CalculateEquityResponse,
-    ApiErrorResponse
+    ApiErrorResponse,
 } from "@common/interfaces";
 import { hand, computeEquity } from "../integrations/hand";
 
@@ -20,9 +20,9 @@ class HandHandler {
     /**
      * Evaluate a hand (hole cards + board)
      * POST /poker/hand/evaluate
-     * 
+     *
      * Body: { hole: "14h 14d", board?: "12h 11h 10h 9h 8h" }
-     * 
+     *
      * Note: For best results, provide 7 cards total (2 hole + 5 board).
      * If fewer cards are provided, the function will evaluate the best hand
      * from the available cards, but results may not be accurate for incomplete boards.
@@ -30,28 +30,30 @@ class HandHandler {
     evaluateHand = async (req: Request, res: Response) => {
         try {
             const { hole, board = "" }: EvaluateHandRequest = req.body;
-            
+
             if (!hole) {
-                const errorResponse: ApiErrorResponse = { error: "Hole cards are required" };
+                const errorResponse: ApiErrorResponse = {
+                    error: "Hole cards are required",
+                };
                 return res.status(400).json(errorResponse);
             }
 
             const holeCards = parseHole(hole);
             const boardCards = parseBoard(board || "");
-            
+
             // Combine hole and board cards
             const allCards = [...holeCards.cards, ...boardCards.cards];
-            
+
             if (allCards.length < 2) {
-                const errorResponse: ApiErrorResponse = { 
-                    error: "Need at least 2 cards (hole cards) to evaluate" 
+                const errorResponse: ApiErrorResponse = {
+                    error: "Need at least 2 cards (hole cards) to evaluate",
                 };
                 return res.status(400).json(errorResponse);
             }
 
             if (allCards.length > 7) {
-                const errorResponse: ApiErrorResponse = { 
-                    error: "Cannot evaluate more than 7 cards" 
+                const errorResponse: ApiErrorResponse = {
+                    error: "Cannot evaluate more than 7 cards",
                 };
                 return res.status(400).json(errorResponse);
             }
@@ -66,12 +68,12 @@ class HandHandler {
                 // But actually, we should just evaluate the 5-card hand
                 // Since evaluate7 requires 7 cards, we'll pad with dummy cards that won't affect the result
                 // Actually, this is complex. Let's just require 7 cards for now.
-                return res.status(400).json({ 
-                    error: "Please provide exactly 7 cards (2 hole + 5 board) for accurate evaluation" 
+                return res.status(400).json({
+                    error: "Please provide exactly 7 cards (2 hole + 5 board) for accurate evaluation",
                 });
             } else {
-                const errorResponse: ApiErrorResponse = { 
-                    error: `Currently requires exactly 7 cards for evaluation. You provided ${allCards.length} cards (2 hole + ${boardCards.cards.length} board).` 
+                const errorResponse: ApiErrorResponse = {
+                    error: `Currently requires exactly 7 cards for evaluation. You provided ${allCards.length} cards (2 hole + ${boardCards.cards.length} board).`,
                 };
                 return res.status(400).json(errorResponse);
             }
@@ -83,8 +85,8 @@ class HandHandler {
             };
             res.status(200).json(response);
         } catch (error: any) {
-            const errorResponse: ApiErrorResponse = { 
-                error: error.message || "Failed to evaluate hand" 
+            const errorResponse: ApiErrorResponse = {
+                error: error.message || "Failed to evaluate hand",
             };
             res.status(400).json(errorResponse);
         }
@@ -97,10 +99,10 @@ class HandHandler {
     compareHands = async (req: Request, res: Response) => {
         try {
             const { hole1, hole2, board = "" }: CompareHandsRequest = req.body;
-            
+
             if (!hole1 || !hole2) {
-                const errorResponse: ApiErrorResponse = { 
-                    error: "Both hole1 and hole2 are required" 
+                const errorResponse: ApiErrorResponse = {
+                    error: "Both hole1 and hole2 are required",
                 };
                 return res.status(400).json(errorResponse);
             }
@@ -108,14 +110,14 @@ class HandHandler {
             const holeCards1 = parseHole(hole1);
             const holeCards2 = parseHole(hole2);
             const boardCards = parseBoard(board || "");
-            
+
             // Combine cards for each player
             const allCards1 = [...holeCards1.cards, ...boardCards.cards];
             const allCards2 = [...holeCards2.cards, ...boardCards.cards];
-            
+
             if (allCards1.length !== 7 || allCards2.length !== 7) {
-                const errorResponse: ApiErrorResponse = { 
-                    error: "Both players need exactly 7 cards (2 hole + 5 board)" 
+                const errorResponse: ApiErrorResponse = {
+                    error: "Both players need exactly 7 cards (2 hole + 5 board)",
                 };
                 return res.status(400).json(errorResponse);
             }
@@ -134,14 +136,19 @@ class HandHandler {
                     rank: handRank2,
                 },
                 comparison: {
-                    result: comparison > 0 ? "hand1_wins" : comparison < 0 ? "hand2_wins" : "tie",
+                    result:
+                        comparison > 0
+                            ? "hand1_wins"
+                            : comparison < 0
+                              ? "hand2_wins"
+                              : "tie",
                     value: comparison,
                 },
             };
             res.status(200).json(response);
         } catch (error: any) {
-            const errorResponse: ApiErrorResponse = { 
-                error: error.message || "Failed to compare hands" 
+            const errorResponse: ApiErrorResponse = {
+                error: error.message || "Failed to compare hands",
             };
             res.status(400).json(errorResponse);
         }
@@ -153,19 +160,28 @@ class HandHandler {
      */
     calculateEquity = async (req: Request, res: Response) => {
         try {
-            const { players, board = "", options = {}, dead = [] }: CalculateEquityRequest = req.body;
-            
+            const {
+                players,
+                board = "",
+                options = {},
+                dead = [],
+            }: CalculateEquityRequest = req.body;
+
             if (!players || players.length < 2) {
-                const errorResponse: ApiErrorResponse = { 
-                    error: "At least 2 players are required" 
+                const errorResponse: ApiErrorResponse = {
+                    error: "At least 2 players are required",
                 };
                 return res.status(400).json(errorResponse);
             }
 
             // Parse all inputs
-            const parsedPlayers: Hole[] = players.map(holeStr => parseHole(holeStr));
+            const parsedPlayers: Hole[] = players.map((holeStr) =>
+                parseHole(holeStr)
+            );
             const parsedBoard = parseBoard(board || "");
-            const parsedDead: Card[] = dead.map(cardStr => parseCard(cardStr));
+            const parsedDead: Card[] = dead.map((cardStr) =>
+                parseCard(cardStr)
+            );
 
             // Calculate equity
             const equityResult = computeEquity(
@@ -177,14 +193,14 @@ class HandHandler {
 
             const response: CalculateEquityResponse = {
                 equity: equityResult,
-                players: parsedPlayers.map(p => p.cards),
+                players: parsedPlayers.map((p) => p.cards),
                 board: parsedBoard.cards,
                 dead: parsedDead,
             };
             res.status(200).json(response);
         } catch (error: any) {
-            const errorResponse: ApiErrorResponse = { 
-                error: error.message || "Failed to calculate equity" 
+            const errorResponse: ApiErrorResponse = {
+                error: error.message || "Failed to calculate equity",
             };
             res.status(400).json(errorResponse);
         }
