@@ -21,3 +21,13 @@ datasources:
       password: ""
     editable: true
 
+  - name: Pyroscope
+    type: grafana-pyroscope-datasource
+    access: proxy
+    url: http://pyroscope:4040
+    isDefault: false
+    editable: true
+    jsonData:
+      minStep: "1s"
+      backendType: "phlare"
+

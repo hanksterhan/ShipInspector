@@ -2,6 +2,10 @@
 import { initializeTelemetry } from "./config/telemetry";
 initializeTelemetry();
 
+// Pyroscope profiling should also be initialized early
+import { initializePyroscope, shutdownPyroscope } from "./config/pyroscope";
+initializePyroscope();
+
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -45,4 +49,15 @@ app.use(errorHandler);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
+});
+
+// Gracefully shutdown Pyroscope on process termination
+process.on("SIGTERM", () => {
+    shutdownPyroscope();
+    process.exit(0);
+});
+
+process.on("SIGINT", () => {
+    shutdownPyroscope();
+    process.exit(0);
 });

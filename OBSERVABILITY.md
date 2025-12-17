@@ -9,6 +9,7 @@ The observability stack consists of:
 - **OpenTelemetry Collector**: Receives traces, metrics, and logs from your application and routes them to appropriate backends
 - **ClickHouse**: Stores traces and logs
 - **Prometheus**: Stores metrics
+- **Pyroscope**: Continuous profiling for performance analysis
 - **Grafana**: Visualizes data from all sources
 
 All services run in Docker containers for easy local development.
@@ -35,6 +36,7 @@ All services run in Docker containers for easy local development.
    - OpenTelemetry Collector on port 4317 (gRPC) and 4318 (HTTP)
    - ClickHouse on ports 8123 (HTTP) and 9000 (native)
    - Prometheus on port 9090
+   - Pyroscope on port 4040
    - Grafana on port 3001
 
 3. **Start your server**:
@@ -48,6 +50,7 @@ All services run in Docker containers for easy local development.
 4. **Access the services**:
    - **Grafana**: http://localhost:3001 (admin/ShipInspector)
    - **Prometheus**: http://localhost:9090
+   - **Pyroscope**: http://localhost:4040
    - **ClickHouse HTTP**: http://localhost:8123
 
 ## Configuration
@@ -58,6 +61,13 @@ You can configure OpenTelemetry using environment variables:
 
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP endpoint URL (default: `http://localhost:4318`)
 - `SERVICE_NAME`: Service name for traces/metrics (default: `ship-inspector-server`)
+- `SERVICE_VERSION`: Service version (default: `1.0.0`)
+- `NODE_ENV`: Environment name (default: `development`)
+
+You can configure Pyroscope using environment variables:
+
+- `PYROSCOPE_SERVER_URL`: Pyroscope server URL (default: `http://localhost:4040`)
+- `SERVICE_NAME`: Service name for profiling (default: `ship-inspector-server`)
 - `SERVICE_VERSION`: Service version (default: `1.0.0`)
 - `NODE_ENV`: Environment name (default: `development`)
 
@@ -81,6 +91,14 @@ ClickHouse is initialized with:
 - `traces` table for trace data
 - `logs` table for log data
 - 7-day TTL (data older than 7 days is automatically deleted)
+
+### Pyroscope
+
+Pyroscope provides continuous profiling for performance analysis:
+- CPU profiling to identify hot paths and bottlenecks
+- Memory profiling to detect memory leaks and high allocations
+- Automatic profiling with minimal overhead
+- Integrated with Grafana for visualization
 
 ## Using OpenTelemetry in Your Code
 
@@ -170,7 +188,20 @@ ORDER BY timestamp DESC;
 Access Grafana at http://localhost:3001 and:
 1. Go to Dashboards
 2. Import the default dashboard or create your own
-3. Explore data from Prometheus and ClickHouse datasources
+3. Explore data from Prometheus, ClickHouse, and Pyroscope datasources
+
+### Pyroscope Profiling
+
+Access Pyroscope UI at http://localhost:4040 to:
+- View real-time CPU and memory profiles
+- Analyze performance over time
+- Identify hot functions and bottlenecks
+- Compare profiles across different time ranges
+
+In Grafana, you can also:
+- Use the Pyroscope datasource to create profiling visualizations
+- Correlate profiling data with metrics and traces
+- Set up alerts based on profiling data
 
 ## Troubleshooting
 
@@ -180,6 +211,7 @@ Check if ports are already in use:
 - 4317, 4318: OTLP ports
 - 8123, 9000: ClickHouse
 - 9090: Prometheus
+- 4040: Pyroscope
 - 3001: Grafana
 
 ### No data appearing
@@ -240,4 +272,5 @@ For production deployment, consider:
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [ClickHouse Documentation](https://clickhouse.com/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
+- [Pyroscope Documentation](https://grafana.com/docs/pyroscope/latest/)
 
