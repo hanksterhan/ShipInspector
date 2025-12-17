@@ -33,10 +33,10 @@ export const handComparisonCounter = meter.createCounter(
  * Helper function to determine board state from number of board cards
  */
 export function getBoardState(boardLength: number): string {
+    console.log("boardLength", boardLength);
     if (boardLength === 0) return "preflop";
     if (boardLength === 3) return "flop";
     if (boardLength === 4) return "turn";
     if (boardLength === 5) return "river";
     return "complete";
 }
-

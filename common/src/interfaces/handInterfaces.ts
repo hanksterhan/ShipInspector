@@ -70,7 +70,7 @@ export function parseHole(hole: string): Hole {
  * @returns The Board object
  */
 export function parseBoard(board: string): Board {
-    const cards = board.split(" ");
+    const cards = board.split(" ").filter(card => card.trim() !== "");
     return { cards: cards.map(parseCard) };
 }
 
