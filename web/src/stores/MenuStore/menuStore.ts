@@ -9,22 +9,9 @@ export class MenuStore {
     @observable
     selectedPage: AppPages = "equity-calculator";
 
-    @observable
-    menuVisible: boolean = true;
-
     @action
     setSelectedPage(page: AppPages) {
         this.selectedPage = page;
-    }
-
-    @action
-    setMenuVisible(visible: boolean) {
-        this.menuVisible = visible;
-    }
-
-    @action
-    toggleMenuVisible() {
-        this.menuVisible = !this.menuVisible;
     }
 
     get getSelectedPage() {

@@ -10,12 +10,12 @@ export const styles = css`
 
     .app-root-flex-container {
         display: flex;
-        height: 100vh;
+        flex-direction: column;
+        min-height: 100vh;
         position: relative;
     }
     .app-root-content {
         flex: 1;
-        overflow: auto;
         overflow-x: hidden;
         position: relative;
         z-index: 1;

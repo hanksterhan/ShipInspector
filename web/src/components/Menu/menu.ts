@@ -3,11 +3,9 @@ import { customElement, property } from "lit/decorators.js";
 import { styles } from "./styles.css";
 import { reaction } from "mobx";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import "@spectrum-web-components/icons-workflow/icons/sp-icon-rail-right-open.js";
 
 import { menuStore } from "../../stores/index";
 import { pokerIcon, percentageIcon } from "../../assets";
-import { when } from "lit-html/directives/when.js";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
 
 interface MenuItemDetails {
@@ -72,50 +70,10 @@ export class Menu extends MobxLitElement {
 
     render() {
         return html`
-            <div class="header-bar${menuStore.menuVisible ? " collapsed" : ""}">
+            <div class="header-bar">
                 ${MENU_ITEMS.map((menuItem: MenuItemDetails) => {
-                    if (menuStore.menuVisible) {
-                        return html`
-                            <sp-button
-                                static="black"
-                                size="xl"
-                                class="collapsed-menu-item${this
-                                    .selectedPage === menuItem.id
-                                    ? " selected"
-                                    : ""}"
-                                @click=${() =>
-                                    this.navigateTo(menuItem.id as AppPages)}
-                                title=${menuItem.name}
-                            >
-                                ${menuItem.icon}
-                            </sp-button>
-                        `;
-                    } else {
-                        return this.generateMenuItem(menuItem);
-                    }
+                    return this.generateMenuItem(menuItem);
                 })}
-                <sp-action-button
-                    class="collapse-menu-btn"
-                    @click=${() => menuStore.toggleMenuVisible()}
-                    label="Collapse menu"
-                    quiet
-                    icon-only
-                >
-                    ${when(
-                        menuStore.menuVisible,
-                        () =>
-                            html`<sp-icon-rail-right-close
-                                slot="icon"
-                                class="menu-icon"
-                            ></sp-icon-rail-right-close>`,
-                        () => html`
-                            <sp-icon-rail-right-open
-                                slot="icon"
-                                class="menu-icon"
-                            ></sp-icon-rail-right-open>
-                        `
-                    )}
-                </sp-action-button>
             </div>
         `;
     }
