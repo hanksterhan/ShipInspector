@@ -9,7 +9,8 @@
         "watch": "nodemon --watch src --exec \"npm run start\" \"npm run copy-assets\"",
         "lint": "prettier --write \"src/**/*.ts\"",
         "test": "jest",
-        "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/"
+        "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/",
+        "generate-metrics": "node scripts/generate-metrics-data.js"
     },
     "keywords": [],
     "author": "",
