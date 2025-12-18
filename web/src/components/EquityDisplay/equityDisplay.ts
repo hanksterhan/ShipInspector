@@ -14,6 +14,12 @@ export class EquityDisplay extends MobxLitElement {
     @property({ type: Number })
     playerIndex: number = 0;
 
+    @property({ type: String })
+    mode?: "mc" | "exact";
+
+    @property({ type: String })
+    label?: string;
+
     connectedCallback() {
         super.connectedCallback();
         // Reaction is now handled centrally in EquityStore to prevent duplicate calls
@@ -25,10 +31,35 @@ export class EquityDisplay extends MobxLitElement {
     }
 
     render(): TemplateResult {
+        // Determine which result to use based on mode
+        const result =
+            this.mode === "mc"
+                ? equityStore.equityResultMC
+                : this.mode === "exact"
+                  ? equityStore.equityResultExact
+                  : equityStore.equityResult;
+
+        const isLoading =
+            this.mode === "mc"
+                ? equityStore.isLoadingMC
+                : this.mode === "exact"
+                  ? equityStore.isLoadingExact
+                  : equityStore.isLoading;
+
+        const error =
+            this.mode === "mc"
+                ? equityStore.errorMC
+                : this.mode === "exact"
+                  ? equityStore.errorExact
+                  : equityStore.error;
+
         // Show loading state
-        if (equityStore.isLoading) {
+        if (isLoading) {
             return html`
                 <div class="equity-display loading">
+                    ${this.label
+                        ? html`<div class="equity-label">${this.label}</div>`
+                        : ""}
                     <sp-progress-circle
                         indeterminate
                         size="s"
@@ -39,16 +70,19 @@ export class EquityDisplay extends MobxLitElement {
         }
 
         // Show error state
-        if (equityStore.error) {
+        if (error) {
             return html`
                 <div class="equity-display error">
-                    <span class="error-text">Error: ${equityStore.error}</span>
+                    ${this.label
+                        ? html`<div class="equity-label">${this.label}</div>`
+                        : ""}
+                    <span class="error-text">Error: ${error}</span>
                 </div>
             `;
         }
 
         // Check if we have equity results
-        if (!equityStore.equityResult) {
+        if (!result) {
             const validHoles = cardStore.holeCards.filter(
                 (hole) => hole !== undefined && hole !== null
             );
@@ -56,6 +90,9 @@ export class EquityDisplay extends MobxLitElement {
             if (validHoles.length < 2) {
                 return html`
                     <div class="equity-display empty">
+                        ${this.label
+                            ? html`<div class="equity-label">${this.label}</div>`
+                            : ""}
                         <span class="empty-text"
                             >Select at least 2 player hands</span
                         >
@@ -65,16 +102,22 @@ export class EquityDisplay extends MobxLitElement {
 
             return html`
                 <div class="equity-display empty">
+                    ${this.label
+                        ? html`<div class="equity-label">${this.label}</div>`
+                        : ""}
                     <span class="empty-text">No equity data</span>
                 </div>
             `;
         }
 
         // Check if player index is valid
-        const { win, tie, samples } = equityStore.equityResult;
+        const { win, tie, samples } = result;
         if (this.playerIndex < 0 || this.playerIndex >= win.length) {
             return html`
                 <div class="equity-display empty">
+                    ${this.label
+                        ? html`<div class="equity-label">${this.label}</div>`
+                        : ""}
                     <span class="empty-text">Invalid player index</span>
                 </div>
             `;
@@ -88,6 +131,9 @@ export class EquityDisplay extends MobxLitElement {
 
         return html`
             <div class="equity-display">
+                ${this.label
+                    ? html`<div class="equity-label">${this.label}</div>`
+                    : ""}
                 <div class="equity-stats">
                     <div class="equity-stat win">
                         <span class="stat-label">Win:</span>

@@ -10,6 +10,15 @@ export const styles = css`
         border-radius: 0.25rem;
     }
 
+    .equity-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--spectrum-global-color-gray-800);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
     .equity-display.loading {
         flex-direction: row;
         align-items: center;

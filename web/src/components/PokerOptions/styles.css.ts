@@ -87,14 +87,43 @@ export const styles = css`
         font-weight: var(--spectrum-global-font-weight-medium);
     }
 
+    .mode-selectors-row {
+        display: flex;
+        flex-direction: row;
+        gap: var(--spectrum-global-dimension-size-300);
+        width: 100%;
+        align-items: flex-start;
+    }
+
     .card-selection-mode-container {
         display: flex;
         flex-direction: column;
         gap: var(--spectrum-global-dimension-size-150);
-        width: 100%;
+        flex: 1;
+        padding: var(--spectrum-global-dimension-size-200);
+        background-color: var(--spectrum-global-color-gray-50);
+        border-radius: var(--spectrum-global-dimension-size-100);
+        border: 1px solid var(--spectrum-global-color-gray-200);
+    }
+
+    .equity-calculation-mode-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spectrum-global-dimension-size-150);
+        flex: 1;
+        padding: var(--spectrum-global-dimension-size-200);
+        background-color: var(--spectrum-global-color-gray-50);
+        border-radius: var(--spectrum-global-dimension-size-100);
+        border: 1px solid var(--spectrum-global-color-gray-200);
     }
 
     .selection-mode-buttons {
         width: auto;
+    }
+
+    @media (max-width: 768px) {
+        .mode-selectors-row {
+            flex-direction: column;
+        }
     }
 `;

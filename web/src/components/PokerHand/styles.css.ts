@@ -131,6 +131,13 @@ export const styles = css`
         font-weight: var(--spectrum-global-font-weight-medium);
     }
 
+    .equity-displays-stacked {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spectrum-global-dimension-size-100);
+        width: 100%;
+    }
+
     @supports (container-type: inline-size) {
         .player-hole-container {
             container-type: inline-size;

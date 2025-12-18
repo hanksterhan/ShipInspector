@@ -226,14 +226,14 @@ function iterateCombinations<T>(
 /**
  * Exact enumeration: evaluate all possible board completions
  * Uses symmetry reduction to group isomorphic board combinations
- * 
+ *
  * Strategy:
  * 1. First pass: Group board combinations by canonical key (symmetry reduction)
  * 2. Second pass: Evaluate each unique canonical board once, multiply by count
- * 
+ *
  * This provides significant speedup, especially for pre-flop calculations where
  * many board combinations are isomorphic (equivalent up to suit permutation).
- * 
+ *
  * Symmetry reduction is applied at two levels:
  * - Board combination grouping (this function)
  * - Hand evaluation caching (hand.evaluate7() memoization)
@@ -245,13 +245,10 @@ function exactEnumeration(
     missing: number
 ): EquityResult {
     const numPlayers = players.length;
-    
+
     // Group board combinations by canonical key
     // Map: canonicalKey -> { representative board, count }
-    const canonicalGroups = new Map<
-        string,
-        { board: Card[]; count: number }
-    >();
+    const canonicalGroups = new Map<string, { board: Card[]; count: number }>();
 
     // First pass: group all board combinations by canonical form
     iterateCombinations(remainingDeck, missing, (combo) => {

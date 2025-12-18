@@ -4,7 +4,7 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
-import { cardStore, deckStore } from "../../stores/index";
+import { cardStore, deckStore, equityStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 import "../CardSelector";
 
@@ -90,6 +90,8 @@ export class BoardSelector extends MobxLitElement {
         cardStore.resetHoleSelection();
         cardStore.setBoardCards([]);
         cardStore.resetBoardSelection();
+        // Reset equity calculations
+        equityStore.reset();
     }
 
     handleNewBoard() {
