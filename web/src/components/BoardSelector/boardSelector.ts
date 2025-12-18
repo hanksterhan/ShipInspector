@@ -1,6 +1,6 @@
 import { html, TemplateResult } from "lit";
 import { styles } from "./styles.css";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
@@ -14,6 +14,9 @@ export class BoardSelector extends MobxLitElement {
     static get styles() {
         return styles;
     }
+
+    @property({ type: Boolean })
+    private isOpen: boolean | undefined = undefined;
 
     constructor() {
         super();
@@ -151,10 +154,23 @@ export class BoardSelector extends MobxLitElement {
         `;
     }
 
+    handleAccordionToggle = (event: Event) => {
+        const target = event.target as any;
+        // Spectrum accordion-item fires toggle event with detail.open
+        const detail = (event as CustomEvent).detail;
+        if (detail && typeof detail.open === "boolean") {
+            this.isOpen = detail.open;
+        } else if (target && typeof target.open === "boolean") {
+            this.isOpen = target.open;
+        }
+        this.requestUpdate();
+    };
+
     render() {
         const boardCards = cardStore.boardCards;
         const canSelectMore = boardCards.length < 5;
         const allBoardCardsSelected = boardCards.length === 5;
+        const hasBoardCards = boardCards.length > 0;
 
         // Create array of 5 slots (flop: 0-2, turn: 3, river: 4)
         const boardSlots = Array.from({ length: 5 }, (_, i) => ({
@@ -162,46 +178,61 @@ export class BoardSelector extends MobxLitElement {
             index: i,
         }));
 
+        // Auto-open accordion if board has cards or if user is selecting
+        // Default to closed for pre-flop focus
+        const defaultOpen = hasBoardCards || canSelectMore;
+        const accordionOpen =
+            this.isOpen !== undefined ? this.isOpen : defaultOpen;
+
         return html`
             <div class="board-selector-container">
-                <div class="board-header">
-                    <h3 class="board-selector-title">Board Cards</h3>
-                    <div class="board-actions">
-                        <sp-action-button
-                            class="new-board-button"
-                            size="s"
-                            @click=${this.handleNewBoard}
-                        >
-                            New board
-                        </sp-action-button>
-                        <sp-action-button
-                            class="new-hand-button"
-                            size="s"
-                            @click=${this.handleNewHand}
-                        >
-                            New hand
-                        </sp-action-button>
-                    </div>
-                </div>
-                <div class="board-cards-preview">
-                    ${boardSlots.map(({ card, index }) =>
-                        this.renderCard(card, index)
-                    )}
-                </div>
-                ${canSelectMore
-                    ? html`
-                          <div class="selection-instruction">
-                              ${this.getSelectionInstruction()}
-                          </div>
-                          <card-selector></card-selector>
-                      `
-                    : allBoardCardsSelected
-                      ? html`
-                            <div class="board-complete-message">
-                                Board Complete (5 cards)
+                <sp-accordion>
+                    <sp-accordion-item
+                        label="Board Cards"
+                        .open=${accordionOpen}
+                        @toggle=${this.handleAccordionToggle}
+                    >
+                        <div class="board-content">
+                            <div class="board-header">
+                                <div class="board-actions">
+                                    <sp-action-button
+                                        class="new-board-button"
+                                        size="s"
+                                        @click=${this.handleNewBoard}
+                                    >
+                                        New board
+                                    </sp-action-button>
+                                    <sp-action-button
+                                        class="new-hand-button"
+                                        size="s"
+                                        @click=${this.handleNewHand}
+                                    >
+                                        New hand
+                                    </sp-action-button>
+                                </div>
                             </div>
-                        `
-                      : html``}
+                            <div class="board-cards-preview">
+                                ${boardSlots.map(({ card, index }) =>
+                                    this.renderCard(card, index)
+                                )}
+                            </div>
+                            ${canSelectMore
+                                ? html`
+                                      <div class="selection-instruction">
+                                          ${this.getSelectionInstruction()}
+                                      </div>
+                                      <card-selector></card-selector>
+                                  `
+                                : allBoardCardsSelected
+                                  ? html`
+                                        <div class="board-complete-message">
+                                            Board Complete (5 cards)
+                                        </div>
+                                    `
+                                  : html``}
+                        </div>
+                    </sp-accordion-item>
+                </sp-accordion>
             </div>
         `;
     }
