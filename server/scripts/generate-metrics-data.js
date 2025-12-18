@@ -25,6 +25,12 @@ const equityTestCases = [
         description: "Preflop - Pocket Aces vs Pocket Kings (MC)",
     },
     {
+        players: ["14h 14d", "14c 13c"],
+        board: "",
+        options: { mode: "exact" },
+        description: "Preflop - Pocket Aces vs AKs (Exact)",
+    },
+    {
         players: ["12h 12d", "11h 11d"],
         board: "",
         options: { mode: "auto" },
