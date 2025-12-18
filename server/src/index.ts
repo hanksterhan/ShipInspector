@@ -13,7 +13,7 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 
 import * as routers from "./routes";
-import { apiLogger, errorHandler } from "./middlewares";
+import { apiLogger, telemetryLogger, errorHandler } from "./middlewares";
 import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
@@ -24,7 +24,8 @@ const app = express();
 app.use(cors());
 
 app.use(express.json());
-app.use(apiLogger);
+app.use(apiLogger); // Console logging for debugging
+app.use(telemetryLogger); // OpenTelemetry tracing
 
 // Swagger UI
 app.use(

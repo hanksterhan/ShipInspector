@@ -9,6 +9,8 @@ import {
 } from "@common/interfaces";
 import { hand } from "./hand";
 import { getCanonicalBoardKey } from "./symmetry";
+import { trace } from "@opentelemetry/api";
+import { getBoardState } from "../../config/metrics";
 
 /**
  * Create a full 52-card deck
@@ -408,38 +410,56 @@ export function computeEquity(
 
     // If board is complete (5 cards), deterministic showdown
     if (boardLength === 5) {
-        const { winners, ties: isTie } = evaluateBoard(players, board.cards);
+        const tracer = trace.getTracer("equity-calculator");
+        const boardState = getBoardState(boardLength);
+        const span = tracer.startSpan("equity.calculate", {
+            attributes: {
+                "equity.method": "complete",
+                "equity.players": numPlayers,
+                "equity.board_state": boardState,
+            },
+        });
 
-        const result: EquityResult = {
-            win: new Array(numPlayers).fill(0),
-            tie: new Array(numPlayers).fill(0),
-            lose: new Array(numPlayers).fill(0),
-            samples: 1,
-        };
+        try {
+            const { winners, ties: isTie } = evaluateBoard(
+                players,
+                board.cards
+            );
 
-        if (isTie) {
-            const tieValue = 1 / winners.length;
-            for (const winnerIndex of winners) {
-                result.tie[winnerIndex] = tieValue;
-                result.lose[winnerIndex] = 1 - tieValue;
-            }
-            // Non-winners lose
-            for (let i = 0; i < numPlayers; i++) {
-                if (!winners.includes(i)) {
-                    result.lose[i] = 1;
+            const result: EquityResult = {
+                win: new Array(numPlayers).fill(0),
+                tie: new Array(numPlayers).fill(0),
+                lose: new Array(numPlayers).fill(0),
+                samples: 1,
+            };
+
+            if (isTie) {
+                const tieValue = 1 / winners.length;
+                for (const winnerIndex of winners) {
+                    result.tie[winnerIndex] = tieValue;
+                    result.lose[winnerIndex] = 1 - tieValue;
+                }
+                // Non-winners lose
+                for (let i = 0; i < numPlayers; i++) {
+                    if (!winners.includes(i)) {
+                        result.lose[i] = 1;
+                    }
+                }
+            } else {
+                result.win[winners[0]] = 1;
+                // All others lose
+                for (let i = 0; i < numPlayers; i++) {
+                    if (i !== winners[0]) {
+                        result.lose[i] = 1;
+                    }
                 }
             }
-        } else {
-            result.win[winners[0]] = 1;
-            // All others lose
-            for (let i = 0; i < numPlayers; i++) {
-                if (i !== winners[0]) {
-                    result.lose[i] = 1;
-                }
-            }
+
+            span.setAttribute("equity.samples", result.samples);
+            return result;
+        } finally {
+            span.end();
         }
-
-        return result;
     }
 
     // Calculate missing cards and remaining deck
@@ -470,18 +490,41 @@ export function computeEquity(
         useExact = combos <= maxCombos;
     }
 
-    // Run calculation
-    if (useExact) {
-        return exactEnumeration(players, board, remainingDeck, missing);
-    } else {
-        const iterations = opts.iterations ?? 10_000;
-        return monteCarlo(
-            players,
-            board,
-            remainingDeck,
-            missing,
-            iterations,
-            opts.seed
-        );
+    // Create trace span for equity calculation
+    const tracer = trace.getTracer("equity-calculator");
+    const boardState = getBoardState(boardLength);
+    const actualMethod = useExact ? "exact" : "mc";
+    const span = tracer.startSpan("equity.calculate", {
+        attributes: {
+            "equity.method": actualMethod,
+            "equity.players": numPlayers,
+            "equity.board_state": boardState,
+            "equity.mode": mode,
+            "equity.combinations": combos,
+        },
+    });
+
+    try {
+        // Run calculation
+        let result: EquityResult;
+        if (useExact) {
+            result = exactEnumeration(players, board, remainingDeck, missing);
+        } else {
+            const iterations = opts.iterations ?? 10_000;
+            span.setAttribute("equity.monte_carlo.iterations", iterations);
+            result = monteCarlo(
+                players,
+                board,
+                remainingDeck,
+                missing,
+                iterations,
+                opts.seed
+            );
+        }
+
+        span.setAttribute("equity.samples", result.samples);
+        return result;
+    } finally {
+        span.end();
     }
 }

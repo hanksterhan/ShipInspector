@@ -14,8 +14,10 @@ services:
       - "8888:8888"   # Prometheus metrics endpoint
       - "8889:8889"   # Prometheus exporter metrics
     depends_on:
-      - clickhouse
-      - prometheus
+      clickhouse:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
     networks:
       - observability
 
@@ -28,6 +30,7 @@ services:
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - ./clickhouse-init:/docker-entrypoint-initdb.d
+      - ./clickhouse-init/users.xml:/etc/clickhouse-server/users.d/users.xml
     environment:
       CLICKHOUSE_DB: observability
       CLICKHOUSE_USER: default

@@ -31,10 +31,12 @@ processors:
 
 exporters:
   # Export traces to ClickHouse
+  # Uses default otel_traces table (automatically created by exporter)
   clickhouse:
     endpoint: tcp://clickhouse:9000
     database: observability
     timeout: 5s
+    # traces_table_name: otel_traces  # Default, can be omitted
     retry_on_failure:
       enabled: true
       initial_interval: 5s

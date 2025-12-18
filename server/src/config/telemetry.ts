@@ -48,6 +48,12 @@ export function initializeTelemetry(): NodeSDK {
                 "@opentelemetry/instrumentation-fs": {
                     enabled: false, // Disable file system instrumentation to reduce noise
                 },
+                "@opentelemetry/instrumentation-http": {
+                    enabled: true, // Keep HTTP instrumentation for outbound requests
+                },
+                "@opentelemetry/instrumentation-express": {
+                    enabled: false, // Disable Express auto-instrumentation since we're manually creating spans
+                },
             }),
         ],
         metricReader: new PeriodicExportingMetricReader({

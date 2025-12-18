@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <users>
+        <default>
+            <!-- Passwordless authentication - no password tag means no password required -->
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </default>
+    </users>
+</clickhouse>
+
