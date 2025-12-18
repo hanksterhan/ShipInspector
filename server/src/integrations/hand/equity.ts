@@ -8,7 +8,6 @@ import {
     CardSuit,
 } from "@common/interfaces";
 import { hand } from "./hand";
-import { getCanonicalBoardKey } from "./symmetry";
 import { trace } from "@opentelemetry/api";
 import { getBoardState } from "../../config/metrics";
 
@@ -227,18 +226,16 @@ function iterateCombinations<T>(
 
 /**
  * Exact enumeration: evaluate all possible board completions
- * Uses symmetry reduction to group isomorphic board combinations
  *
- * Strategy:
- * 1. First pass: Group board combinations by canonical key (symmetry reduction)
- * 2. Second pass: Evaluate each unique canonical board once, multiply by count
+ * This function iterates through all possible board completions and evaluates
+ * each one. The hand evaluation itself uses memoization (via hand.evaluate7())
+ * which provides caching for isomorphic hand evaluations, giving us some
+ * performance benefit without the complexity of board-level symmetry reduction.
  *
- * This provides significant speedup, especially for pre-flop calculations where
- * many board combinations are isomorphic (equivalent up to suit permutation).
- *
- * Symmetry reduction is applied at two levels:
- * - Board combination grouping (this function)
- * - Hand evaluation caching (hand.evaluate7() memoization)
+ * Performance optimizations:
+ * - Hand evaluation caching (hand.evaluate7() memoization) - automatically handles
+ *   isomorphic hand evaluations
+ * - Efficient combination iteration (no memory overhead)
  */
 function exactEnumeration(
     players: readonly Hole[],
@@ -247,44 +244,25 @@ function exactEnumeration(
     missing: number
 ): EquityResult {
     const numPlayers = players.length;
-
-    // Group board combinations by canonical key
-    // Map: canonicalKey -> { representative board, count }
-    const canonicalGroups = new Map<string, { board: Card[]; count: number }>();
-
-    // First pass: group all board combinations by canonical form
-    iterateCombinations(remainingDeck, missing, (combo) => {
-        const completeBoard = [...board.cards, ...combo];
-        const canonicalKey = getCanonicalBoardKey(completeBoard, players);
-
-        if (!canonicalGroups.has(canonicalKey)) {
-            canonicalGroups.set(canonicalKey, {
-                board: completeBoard,
-                count: 0,
-            });
-        }
-        canonicalGroups.get(canonicalKey)!.count++;
-    });
-
-    // Second pass: evaluate each canonical board once and multiply by count
     const wins = new Array(numPlayers).fill(0);
     const ties = new Array(numPlayers).fill(0);
     let totalCombos = 0;
 
-    for (const { board: canonicalBoard, count } of canonicalGroups.values()) {
-        totalCombos += count;
-        const { winners, ties: isTie } = evaluateBoard(players, canonicalBoard);
+    // Evaluate all board combinations
+    iterateCombinations(remainingDeck, missing, (combo) => {
+        const completeBoard = [...board.cards, ...combo];
+        const { winners, ties: isTie } = evaluateBoard(players, completeBoard);
+        totalCombos++;
 
-        // Multiply results by the number of isomorphic combinations
         if (isTie) {
-            const tieValue = (1 / winners.length) * count;
+            const tieValue = 1 / winners.length;
             for (const winnerIndex of winners) {
                 ties[winnerIndex] += tieValue;
             }
         } else {
-            wins[winners[0]] += count;
+            wins[winners[0]] += 1;
         }
-    }
+    });
 
     // Convert to fractions
     const result: EquityResult = {

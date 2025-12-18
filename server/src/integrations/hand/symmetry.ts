@@ -310,11 +310,18 @@ export function getCanonicalBoardKey(
     }
 
     // Create canonical representation
-    // Strategy: For each rank, sort cards by whether they match hole suits, then by suit
-    // This ensures consistent ordering
+    // Strategy: For each rank, create a pattern that identifies isomorphic boards.
+    // Two boards are isomorphic if they have:
+    // 1. Same ranks
+    // 2. Same pattern of suit relationships to hole cards (matching vs non-matching)
+    // 3. Same counts of matching/non-matching suits per rank
+    //
+    // We assign suit indices based on the pattern position, not the actual suit value.
+    // Matching suits get indices 0-3, non-matching suits get indices 4-7.
     const canonicalCards: Array<{ rank: CardRank; suitIndex: number }> = [];
     const suitMapping = new Map<CardSuit, number>();
-    let nextSuitIndex = 0;
+    let nextMatchingIndex = 0;
+    let nextNonMatchingIndex = 4;
 
     // Process ranks in sorted order for consistency
     const sortedRanks = Array.from(rankGroups.keys()).sort((a, b) => a - b);
@@ -322,23 +329,50 @@ export function getCanonicalBoardKey(
     for (const rank of sortedRanks) {
         const cardsOfRank = rankGroups.get(rank)!;
 
-        // Sort cards: first those that match hole suits, then others
-        // Within each group, sort by suit for consistency
-        cardsOfRank.sort((a, b) => {
-            const aMatches = holeSuits.has(a.suit);
-            const bMatches = holeSuits.has(b.suit);
-            if (aMatches !== bMatches) {
-                return aMatches ? -1 : 1; // Matching suits first
-            }
-            return a.suit.localeCompare(b.suit); // Then by suit name
-        });
-
-        // Assign suit indices
+        // Separate cards into matching and non-matching groups
+        const matchingCards: Card[] = [];
+        const nonMatchingCards: Card[] = [];
+        
         for (const card of cardsOfRank) {
-            if (!suitMapping.has(card.suit)) {
-                suitMapping.set(card.suit, nextSuitIndex);
-                nextSuitIndex++;
+            if (holeSuits.has(card.suit)) {
+                matchingCards.push(card);
+            } else {
+                nonMatchingCards.push(card);
             }
+        }
+
+        // Sort each group by suit for consistency (ensures deterministic ordering)
+        matchingCards.sort((a, b) => a.suit.localeCompare(b.suit));
+        nonMatchingCards.sort((a, b) => a.suit.localeCompare(b.suit));
+
+        // Assign suit indices based on pattern position
+        // Matching suits: assign indices 0, 1, 2, 3 based on order in pattern
+        // Non-matching suits: assign indices 4, 5, 6, 7 based on order in pattern
+        for (let i = 0; i < matchingCards.length; i++) {
+            const card = matchingCards[i];
+            if (!suitMapping.has(card.suit)) {
+                suitMapping.set(card.suit, nextMatchingIndex);
+                nextMatchingIndex++;
+            }
+        }
+
+        for (let i = 0; i < nonMatchingCards.length; i++) {
+            const card = nonMatchingCards[i];
+            if (!suitMapping.has(card.suit)) {
+                suitMapping.set(card.suit, nextNonMatchingIndex);
+                nextNonMatchingIndex++;
+            }
+        }
+
+        // Create canonical cards: for each card, use its assigned suit index
+        // But we need to preserve the pattern: matching suits first, then non-matching
+        for (const card of matchingCards) {
+            canonicalCards.push({
+                rank: card.rank,
+                suitIndex: suitMapping.get(card.suit)!,
+            });
+        }
+        for (const card of nonMatchingCards) {
             canonicalCards.push({
                 rank: card.rank,
                 suitIndex: suitMapping.get(card.suit)!,
