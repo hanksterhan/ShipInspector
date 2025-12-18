@@ -45,11 +45,7 @@ exporters:
   # Note: ClickHouse logs exporter is not available in the base collector
   # We'll use file exporter for logs instead, or you can use a custom build
 
-  # File exporter for traces (backup/debugging)
-  file/traces:
-    path: /tmp/traces.json
-
-  # File exporter for logs (backup/debugging)
+  # File exporter for logs (backup/debugging only - consider removing in production)
   file/logs:
     path: /tmp/logs.json
 
@@ -72,8 +68,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch, resource]
-      exporters: [debug, file/traces]
-      # clickhouse exporter temporarily disabled due to auth issues
+      exporters: [clickhouse, debug]
+      # file/traces exporter removed - traces now stored in ClickHouse database
     
     metrics:
       receivers: [otlp, prometheus]
