@@ -4,7 +4,7 @@ import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { reaction } from "mobx";
 import { Card } from "@common/interfaces";
-import { cardStore, deckStore, equityStore } from "../../stores/index";
+import { cardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 import "../CardSelector";
 
@@ -78,33 +78,6 @@ export class BoardSelector extends MobxLitElement {
         // which watches cardStore.boardCards for changes
     }
 
-    handleNewHand() {
-        // Reset all hole cards and board cards
-        cardStore.holeCards.forEach((hole) => {
-            if (hole) {
-                hole.cards.forEach((card) => {
-                    deckStore.markCardAsUnselected(card);
-                });
-            }
-        });
-        cardStore.boardCards.forEach((card) => {
-            deckStore.markCardAsUnselected(card);
-        });
-        cardStore.resetHoleSelection();
-        cardStore.setBoardCards([]);
-        cardStore.resetBoardSelection();
-        // Reset equity calculations
-        equityStore.reset();
-    }
-
-    handleNewBoard() {
-        // Reset only board cards
-        cardStore.boardCards.forEach((card) => {
-            deckStore.markCardAsUnselected(card);
-        });
-        cardStore.setBoardCards([]);
-        cardStore.resetBoardSelection();
-    }
 
     getSelectionInstruction(): string {
         const boardCardsCount = cardStore.boardCards.length;
@@ -193,24 +166,6 @@ export class BoardSelector extends MobxLitElement {
                         @toggle=${this.handleAccordionToggle}
                     >
                         <div class="board-content">
-                            <div class="board-header">
-                                <div class="board-actions">
-                                    <sp-action-button
-                                        class="new-board-button"
-                                        size="s"
-                                        @click=${this.handleNewBoard}
-                                    >
-                                        New board
-                                    </sp-action-button>
-                                    <sp-action-button
-                                        class="new-hand-button"
-                                        size="s"
-                                        @click=${this.handleNewHand}
-                                    >
-                                        New hand
-                                    </sp-action-button>
-                                </div>
-                            </div>
                             <div class="board-cards-preview">
                                 ${boardSlots.map(({ card, index }) =>
                                     this.renderCard(card, index)

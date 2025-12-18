@@ -5,7 +5,7 @@ export const styles = css`
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         background-color: var(--spectrum-gray-900);
         padding: 0.375rem 1rem;
         width: 100%;
@@ -15,6 +15,21 @@ export const styles = css`
         box-sizing: border-box;
         z-index: 100;
         gap: 0.25rem;
+    }
+
+    .menu-items {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.25rem;
+        flex: 1;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spectrum-global-dimension-size-100);
     }
 
     sp-button {

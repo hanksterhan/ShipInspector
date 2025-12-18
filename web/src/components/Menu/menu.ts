@@ -4,7 +4,7 @@ import { styles } from "./styles.css";
 import { reaction } from "mobx";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
-import { menuStore } from "../../stores/index";
+import { menuStore, cardStore, deckStore, equityStore, settingsStore } from "../../stores/index";
 import { pokerIcon, percentageIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
 
@@ -51,6 +51,37 @@ export class Menu extends MobxLitElement {
         menuStore.setSelectedPage(page);
     }
 
+    handleNewHand() {
+        // Clear all selected cards
+        deckStore.clearSelectedCards();
+        // Reset all hole cards and board cards
+        cardStore.resetHoleSelection();
+        cardStore.setBoardCards([]);
+        cardStore.resetBoardSelection();
+        // Reset equity calculations
+        equityStore.reset();
+    }
+
+    handleNewBoard() {
+        // Reset only board cards
+        cardStore.boardCards.forEach((card) => {
+            deckStore.markCardAsUnselected(card);
+        });
+        cardStore.setBoardCards([]);
+        cardStore.resetBoardSelection();
+    }
+
+    get isBoardSelectorVisible(): boolean {
+        // Board selector is visible when:
+        // 1. We're on the poker-hands page
+        // 2. All holes are selected
+        const selectedHolesCount = cardStore.holeCards.filter(
+            (hole) => hole !== undefined
+        ).length;
+        const allHolesSelected = selectedHolesCount === settingsStore.players;
+        return menuStore.selectedPage === "poker-hands" && allHolesSelected;
+    }
+
     generateMenuItem(itemDetails: MenuItemDetails): TemplateResult {
         const isSelected = this.selectedPage === itemDetails.id;
         return html`
@@ -71,9 +102,28 @@ export class Menu extends MobxLitElement {
     render() {
         return html`
             <div class="header-bar">
-                ${MENU_ITEMS.map((menuItem: MenuItemDetails) => {
-                    return this.generateMenuItem(menuItem);
-                })}
+                <div class="menu-items">
+                    ${MENU_ITEMS.map((menuItem: MenuItemDetails) => {
+                        return this.generateMenuItem(menuItem);
+                    })}
+                </div>
+                <div class="action-buttons">
+                    <sp-action-button
+                        class="new-board-button"
+                        size="s"
+                        ?disabled=${!this.isBoardSelectorVisible}
+                        @click=${this.handleNewBoard}
+                    >
+                        New board
+                    </sp-action-button>
+                    <sp-action-button
+                        class="new-hand-button"
+                        size="s"
+                        @click=${this.handleNewHand}
+                    >
+                        New hand
+                    </sp-action-button>
+                </div>
             </div>
         `;
     }

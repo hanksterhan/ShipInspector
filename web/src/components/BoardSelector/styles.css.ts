@@ -51,20 +51,6 @@ export const styles = css`
         gap: var(--spectrum-global-dimension-size-300);
     }
 
-    .board-header {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        width: 100%;
-        gap: var(--spectrum-global-dimension-size-200);
-    }
-
-    .board-actions {
-        display: flex;
-        gap: var(--spectrum-global-dimension-size-100);
-        align-items: center;
-    }
-
     .board-cards-preview {
         display: flex;
         gap: var(--spectrum-global-dimension-size-200);
