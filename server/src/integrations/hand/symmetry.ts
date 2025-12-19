@@ -332,7 +332,7 @@ export function getCanonicalBoardKey(
         // Separate cards into matching and non-matching groups
         const matchingCards: Card[] = [];
         const nonMatchingCards: Card[] = [];
-        
+
         for (const card of cardsOfRank) {
             if (holeSuits.has(card.suit)) {
                 matchingCards.push(card);

@@ -4,40 +4,29 @@ import Database from "better-sqlite3";
 const dbFilePath = path.resolve(__dirname, "../../../../src/data/database.db");
 const db = new Database(dbFilePath, { verbose: console.log });
 
+// Equity cache table for poker hand equity calculations
 db.exec(`
-    CREATE TABLE IF NOT EXISTS leagues (
-        league_id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        num_teams INTEGER NOT NULL,
-        scoring_type TEXT NOT NULL,
-        sport TEXT NOT NULL,
-        season INTEGER NOT NULL
+    CREATE TABLE IF NOT EXISTS equity_cache (
+        key TEXT PRIMARY KEY,
+        win TEXT NOT NULL,  -- JSON array
+        tie TEXT NOT NULL,  -- JSON array
+        lose TEXT NOT NULL, -- JSON array
+        samples INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        last_accessed INTEGER NOT NULL,
+        access_count INTEGER DEFAULT 0
     )
 `);
 
+// Create indexes for equity cache
 db.exec(`
-    CREATE TABLE IF NOT EXISTS teams (
-        team_id TEXT PRIMARY KEY,
-        league_id TEXT,
-        name TEXT NOT NULL,
-        url TEXT NOT NULL,
-        team_logo_url TEXT NOT NULL,
-        number_of_moves INTEGER NOT NULL,
-        number_of_trades INTEGER NOT NULL,
-        points_for INTEGER NOT NULL,
-        points_against INTEGER NOT NULL,
-        rank INTEGER NOT NULL,
-        playoff_seed INTEGER NOT NULL,
-        wins INTEGER NOT NULL,
-        losses INTEGER NOT NULL,
-        ties INTEGER NOT NULL,
-        percentage REAL NOT NULL,
-        draft_grade TEXT NOT NULL,
-        draft_recap_url TEXT NOT NULL,
-        manager_name TEXT NOT NULL,
-        manager_image_url TEXT NOT NULL,
-        FOREIGN KEY (league_id) REFERENCES leagues(league_id)
-    )
+    CREATE INDEX IF NOT EXISTS idx_equity_last_accessed 
+    ON equity_cache(last_accessed)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_equity_access_count 
+    ON equity_cache(access_count)
 `);
 
 export default db;

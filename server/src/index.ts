@@ -18,6 +18,10 @@ import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
+// Equity cache is automatically initialized on first use (SQLite)
+// Database location: server/data/equity_cache.db
+// To use custom path, set EQUITY_CACHE_DB_PATH environment variable
+
 const port = process.env.PORT || 3000;
 
 const app = express();

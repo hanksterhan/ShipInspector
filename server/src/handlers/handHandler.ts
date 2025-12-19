@@ -14,7 +14,8 @@ import {
     CalculateEquityResponse,
     ApiErrorResponse,
 } from "@common/interfaces";
-import { hand, computeEquity } from "../integrations/hand";
+import { hand } from "../integrations/hand";
+import { computeEquityWithCache } from "../integrations/hand/equityLookup";
 import {
     equityCalculationCounter,
     handComparisonCounter,
@@ -197,8 +198,9 @@ class HandHandler {
                 parseCard(cardStr)
             );
 
-            // Calculate equity
-            const equityResult = computeEquity(
+            // Calculate equity (with lookup table caching for performance)
+            // Use computeEquityWithCache for automatic caching, or computeEquity for no cache
+            const equityResult = computeEquityWithCache(
                 parsedPlayers,
                 parsedBoard,
                 options,
