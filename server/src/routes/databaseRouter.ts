@@ -30,7 +30,10 @@ function createRouter(): IRouter {
      *           minimum: 1
      *           maximum: 169
      *           default: 50
-     *         description: Number of top starting hands to seed (default: 50). Each hand will be matched against all other hands, creating (handCount * (handCount - 1)) / 2 unique matchups.
+     *         description: |
+     *           Number of top starting hands to seed (default: 50).
+     *           Each hand will be matched against all other hands,
+     *           creating handCount times (handCount minus 1) divided by 2 unique matchups.
      *     responses:
      *       '202':
      *         description: Seeding started successfully
