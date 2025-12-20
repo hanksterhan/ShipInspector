@@ -1,7 +1,17 @@
 import path from "path";
+import fs from "fs";
 import Database from "better-sqlite3";
 
-const dbFilePath = path.resolve(__dirname, "../../../../src/data/database.db");
+// Resolve path relative to server directory (works for both src and dist)
+const serverDir = path.resolve(__dirname, "../..");
+const dataDir = path.join(serverDir, "data");
+const dbFilePath = path.join(dataDir, "equity_cache.db");
+
+// Ensure data directory exists
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
 const db = new Database(dbFilePath, { verbose: console.log });
 
 // Equity cache table for poker hand equity calculations

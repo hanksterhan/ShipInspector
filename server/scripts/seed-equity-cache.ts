@@ -312,11 +312,11 @@ async function seedEquityCache(): Promise<void> {
             // Show progress
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
             const pct = ((processed / total) * 100).toFixed(1);
-            const rate = (processed / ((Date.now() - startTime) / 1000)).toFixed(1);
+            const rate = (processed / parseFloat(elapsed)).toFixed(1);
             const eta = ((total - processed) / parseFloat(rate)).toFixed(0);
 
             console.log(
-                `[${processed}/${total}] ✅ ${matchup.hand1.name} vs ${matchup.hand2.name} | ${pct}% | Rate: ${rate}/s | ETA: ${eta}s | Cached: ${cached} | Computed: ${computed}`
+                `[${processed}/${total}] ✅ ${matchup.hand1.name} vs ${matchup.hand2.name} | ${pct}% | Elapsed: ${elapsed}s | Rate: ${rate}/s | ETA: ${eta}s | Cached: ${cached} | Computed: ${computed}`
             );
         } catch (error: any) {
             console.error(

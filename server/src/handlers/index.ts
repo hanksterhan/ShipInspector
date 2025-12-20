@@ -1,2 +1,2 @@
 export * from "./handHandler";
-// export * from "./databaseHandler";
+export * from "./databaseHandler";
