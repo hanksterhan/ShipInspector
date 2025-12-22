@@ -64,3 +64,46 @@ export interface ApiErrorResponse {
     error: string;
 }
 
+// Hand Replay API
+import { HandReplay } from "./replayInterfaces";
+
+// Save Hand Replay
+export interface SaveHandReplayRequest {
+    replay: HandReplay;
+}
+
+export interface SaveHandReplayResponse {
+    id: string;
+    replay: HandReplay;
+}
+
+// Load Hand Replay
+export interface LoadHandReplayRequest {
+    id: string;
+}
+
+export interface LoadHandReplayResponse {
+    replay: HandReplay;
+}
+
+// List Hand Replays
+export interface ListHandReplaysRequest {
+    limit?: number;
+    offset?: number;
+    search?: string; // Optional search by title
+}
+
+export interface ListHandReplaysResponse {
+    replays: HandReplay[];
+    total: number;
+}
+
+// Delete Hand Replay
+export interface DeleteHandReplayRequest {
+    id: string;
+}
+
+export interface DeleteHandReplayResponse {
+    success: boolean;
+}
+

@@ -1,10 +1,11 @@
 import { html } from "lit";
 import { styles } from "./styles.css";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
+import { replayStore } from "../../stores/index";
 
 @customElement("poker-hands")
 export class PokerHands extends MobxLitElement {
@@ -13,11 +14,49 @@ export class PokerHands extends MobxLitElement {
         return styles;
     }
 
-    @property({ type: String })
-    placeholderProperty: string = "";
+    async handleSave() {
+        try {
+            await replayStore.saveReplay();
+            alert("Hand saved successfully!");
+        } catch (error: any) {
+            alert(`Failed to save: ${error.message}`);
+        }
+    }
 
     render() {
-        return html` <poker-hand></poker-hand> `;
+        return html`
+            <div class="poker-hands-container">
+                <h1>Poker Hand Replay</h1>
+                ${replayStore.error
+                    ? html`
+                          <div class="error-message">
+                              Error: ${replayStore.error}
+                          </div>
+                      `
+                    : ""}
+                <replay-configuration></replay-configuration>
+                ${replayStore.currentReplay
+                    ? html`
+                          <div class="replay-content">
+                              <player-management></player-management>
+                              <player-cards-input></player-cards-input>
+                              <street-viewer></street-viewer>
+                              <betting-action-input></betting-action-input>
+                              <div class="actions-bar">
+                                  <button
+                                      @click=${this.handleSave}
+                                      ?disabled=${replayStore.isLoading}
+                                  >
+                                      ${replayStore.isLoading
+                                          ? "Saving..."
+                                          : "Save Hand"}
+                                  </button>
+                              </div>
+                          </div>
+                      `
+                    : ""}
+            </div>
+        `;
     }
 }
 

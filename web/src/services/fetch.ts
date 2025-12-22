@@ -24,8 +24,24 @@ export class HttpClient {
         });
 
         if (!response.ok) {
-            const error = await response.text();
-            throw new Error(error);
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch {
+                // If JSON parsing fails, try text
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                } catch {
+                    // Use default error message
+                }
+            }
+            throw new Error(errorMessage);
         }
 
         return response.json();
@@ -45,6 +61,10 @@ export class HttpClient {
 
     async patch(url: string, body: any, signal?: AbortSignal): Promise<any> {
         return this.request("PATCH", url, body, signal);
+    }
+
+    async delete(url: string, signal?: AbortSignal): Promise<any> {
+        return this.request("DELETE", url, undefined, signal);
     }
 }
 

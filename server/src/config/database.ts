@@ -39,4 +39,49 @@ db.exec(`
     ON equity_cache(access_count)
 `);
 
+// Hand replays table for storing poker hand replays
+db.exec(`
+    CREATE TABLE IF NOT EXISTS hand_replays (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        date INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        
+        -- Table Configuration
+        table_size INTEGER NOT NULL,
+        button_position INTEGER NOT NULL,
+        small_blind REAL NOT NULL,
+        big_blind REAL NOT NULL,
+        
+        -- Hand Data (stored as JSON)
+        players TEXT NOT NULL,
+        streets TEXT NOT NULL,
+        board TEXT NOT NULL,
+        dead_cards TEXT NOT NULL,
+        winners TEXT,
+        pot_distribution TEXT,
+        showdown INTEGER,
+        
+        -- Metadata
+        metadata TEXT
+    )
+`);
+
+// Create indexes for hand replays
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_hand_replays_created_at 
+    ON hand_replays(created_at DESC)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_hand_replays_date 
+    ON hand_replays(date DESC)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_hand_replays_title 
+    ON hand_replays(title)
+`);
+
 export default db;
