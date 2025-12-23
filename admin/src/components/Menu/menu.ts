@@ -6,7 +6,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import { menuStore, authStore, routerStore } from "../../stores/index";
 import { AppPages } from "../../stores/MenuStore/menuStore";
-import { inviteIcon, docsIcon } from "../../assets";
+import { inviteIcon, docsIcon, anchorIcon } from "../../assets";
 
 interface MenuItemDetails {
     id: string;
@@ -73,6 +73,10 @@ export class Menu extends MobxLitElement {
     render() {
         return html`
             <div class="header-bar">
+                <div class="app-logo">
+                    <span class="logo-icon">${anchorIcon}</span>
+                    <h1>Admiral</h1>
+                </div>
                 <div class="menu-items">
                     ${MENU_ITEMS.map((menuItem: MenuItemDetails) => {
                         return this.generateMenuItem(menuItem);
