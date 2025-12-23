@@ -118,11 +118,18 @@ export class AppRoot extends MobxLitElement {
                                 menuStore.selectedPage !== "invite-management"
                             ) {
                                 menuStore.setSelectedPage("invite-management");
+                            } else if (
+                                route === "/swagger-docs" &&
+                                menuStore.selectedPage !== "swagger-docs"
+                            ) {
+                                menuStore.setSelectedPage("swagger-docs");
                             }
 
                             switch (route) {
                                 case "/invite-management":
                                     return html`<invite-management></invite-management>`;
+                                case "/swagger-docs":
+                                    return html`<swagger-docs></swagger-docs>`;
                                 default:
                                     return html`<login-page></login-page>`;
                             }

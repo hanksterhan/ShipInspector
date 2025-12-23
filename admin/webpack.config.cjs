@@ -27,6 +27,10 @@ module.exports = {
         alias: {
             "@common": path.resolve(__dirname, "../common/"),
         },
+        fallback: {
+            "stream": false,
+            "buffer": false,
+        },
     },
     output: {
         filename: "bundle.js",

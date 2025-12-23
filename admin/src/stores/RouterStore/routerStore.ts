@@ -1,6 +1,6 @@
 import { makeObservable, observable, action } from "mobx";
 
-export type Route = "/" | "/login" | "/invite-management";
+export type Route = "/" | "/login" | "/invite-management" | "/swagger-docs";
 
 export class RouterStore {
     @observable
@@ -36,6 +36,8 @@ export class RouterStore {
             this.currentRoute = "/";
         } else if (path === "/invite-management") {
             this.currentRoute = "/invite-management";
+        } else if (path === "/swagger-docs") {
+            this.currentRoute = "/swagger-docs";
         } else {
             // Default to root
             this.currentRoute = "/";

@@ -1,6 +1,6 @@
 import { action, makeObservable, observable } from "mobx";
 
-export type AppPages = "invite-management";
+export type AppPages = "invite-management" | "swagger-docs";
 export class MenuStore {
     constructor() {
         makeObservable(this);
