@@ -23,22 +23,59 @@ export class LoginPage extends MobxLitElement {
     @state()
     private confirmPassword = "";
 
+    private getPasswordValue(): string {
+        // Get the actual value from the DOM element in case password manager
+        // filled it without triggering input events
+        // Query for the sp-textfield element itself (not its shadow root)
+        const passwordField = this.shadowRoot?.querySelector(
+            'sp-textfield[id="password"]'
+        ) as any;
+        // sp-textfield exposes .value property directly
+        return passwordField?.value ?? this.password;
+    }
+
+    private getEmailValue(): string {
+        // Get the actual value from the DOM element in case password manager
+        // filled it without triggering input events
+        const emailField = this.shadowRoot?.querySelector(
+            'sp-textfield[id="email"]'
+        ) as any;
+        return emailField?.value ?? this.email;
+    }
+
+    private getConfirmPasswordValue(): string {
+        const confirmField = this.shadowRoot?.querySelector(
+            'sp-textfield[id="confirmPassword"]'
+        ) as any;
+        return confirmField?.value ?? this.confirmPassword;
+    }
+
     private async handleSubmit(): Promise<void> {
         authStore.clearError();
 
+        // Read values directly from DOM to catch password manager autofills
+        const email = this.getEmailValue();
+        const password = this.getPasswordValue();
+        const confirmPassword = this.getConfirmPasswordValue();
+
+        // Update state to keep it in sync
+        this.email = email;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
+
         if (this.isLoginMode) {
             try {
-                await authStore.login(this.email, this.password);
+                await authStore.login(email, password);
             } catch (error) {
                 // Error is handled by the store
             }
         } else {
-            if (this.password !== this.confirmPassword) {
+            if (password !== confirmPassword) {
                 authStore.error = "Passwords do not match";
                 return;
             }
             try {
-                await authStore.register(this.email, this.password);
+                await authStore.register(email, password);
             } catch (error) {
                 // Error is handled by the store
             }
@@ -84,6 +121,9 @@ export class LoginPage extends MobxLitElement {
                                 @input=${(e: any) => {
                                     this.email = e.target.value;
                                 }}
+                                @change=${(e: any) => {
+                                    this.email = e.target.value;
+                                }}
                                 @keydown=${this.handleKeyDown}
                                 autocomplete="email"
                             ></sp-textfield>
@@ -97,6 +137,9 @@ export class LoginPage extends MobxLitElement {
                                 placeholder="Enter your password"
                                 .value=${this.password}
                                 @input=${(e: any) => {
+                                    this.password = e.target.value;
+                                }}
+                                @change=${(e: any) => {
                                     this.password = e.target.value;
                                 }}
                                 @keydown=${this.handleKeyDown}
@@ -116,6 +159,10 @@ export class LoginPage extends MobxLitElement {
                                           placeholder="Confirm your password"
                                           .value=${this.confirmPassword}
                                           @input=${(e: any) => {
+                                              this.confirmPassword =
+                                                  e.target.value;
+                                          }}
+                                          @change=${(e: any) => {
                                               this.confirmPassword =
                                                   e.target.value;
                                           }}

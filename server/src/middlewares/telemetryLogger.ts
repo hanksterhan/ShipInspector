@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { context, trace } from "@opentelemetry/api";
 import { logs } from "@opentelemetry/api-logs";
+import { sanitizeObject } from "./sanitize";
 
 const PATHS_TO_SKIP = [
     "/favicon.ico",
@@ -39,7 +40,9 @@ export async function telemetryLogger(
     // Add request body for POST/PUT/PATCH requests (with size limit to avoid huge payloads)
     if (["POST", "PUT", "PATCH"].includes(req.method) && req.body) {
         try {
-            const bodyStr = JSON.stringify(req.body);
+            // Sanitize sensitive fields before logging
+            const sanitizedBody = sanitizeObject(req.body);
+            const bodyStr = JSON.stringify(sanitizedBody);
             // Limit body size to 10KB to avoid huge span attributes
             if (bodyStr.length <= 10240) {
                 spanAttributes["http.request.body"] = bodyStr;
@@ -67,6 +70,8 @@ export async function telemetryLogger(
 
     // Log request start
     const logger = logs.getLogger("express-logger");
+    // Sanitize request body before logging
+    const sanitizedBody = req.body ? sanitizeObject(req.body) : req.body;
     logger.emit({
         severityNumber: 9, // INFO
         severityText: "INFO",
@@ -74,7 +79,7 @@ export async function telemetryLogger(
         attributes: {
             method: req.method,
             url: req.originalUrl,
-            body: JSON.stringify(req.body),
+            body: JSON.stringify(sanitizedBody),
         },
     });
 
