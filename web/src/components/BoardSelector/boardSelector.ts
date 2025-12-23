@@ -78,7 +78,6 @@ export class BoardSelector extends MobxLitElement {
         // which watches cardStore.boardCards for changes
     }
 
-
     getSelectionInstruction(): string {
         const boardCardsCount = cardStore.boardCards.length;
         if (boardCardsCount < 3) {

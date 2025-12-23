@@ -440,9 +440,7 @@ export class EquityStore {
         const hasExactCached = this.hasCachedResult("exact", cacheKey);
 
         // Create separate AbortControllers for each request (only if needed)
-        const abortControllerMC = hasMCCached
-            ? null
-            : new AbortController();
+        const abortControllerMC = hasMCCached ? null : new AbortController();
         const abortControllerExact = hasExactCached
             ? null
             : new AbortController();
@@ -487,29 +485,29 @@ export class EquityStore {
                           }
                       });
               })()
-            .catch((err) => {
-                if (
-                    abortControllerMC &&
-                    !abortControllerMC.signal.aborted &&
-                    !(err instanceof Error && err.name === "AbortError")
-                ) {
-                    this.errorMC =
-                        err instanceof Error
-                            ? err.message
-                            : "Failed to calculate equity (Monte Carlo)";
-                    this.equityResultMC = null;
-                }
-            })
-            .finally(() => {
-                if (
-                    !hasMCCached &&
-                    abortControllerMC &&
-                    this.currentAbortControllerMC === abortControllerMC
-                ) {
-                    this.isLoadingMC = false;
-                    this.currentAbortControllerMC = null;
-                }
-            });
+                  .catch((err) => {
+                      if (
+                          abortControllerMC &&
+                          !abortControllerMC.signal.aborted &&
+                          !(err instanceof Error && err.name === "AbortError")
+                      ) {
+                          this.errorMC =
+                              err instanceof Error
+                                  ? err.message
+                                  : "Failed to calculate equity (Monte Carlo)";
+                          this.equityResultMC = null;
+                      }
+                  })
+                  .finally(() => {
+                      if (
+                          !hasMCCached &&
+                          abortControllerMC &&
+                          this.currentAbortControllerMC === abortControllerMC
+                      ) {
+                          this.isLoadingMC = false;
+                          this.currentAbortControllerMC = null;
+                      }
+                  });
 
         const exactPromise = hasExactCached
             ? Promise.resolve()
@@ -530,33 +528,38 @@ export class EquityStore {
                           ) {
                               const endTime = performance.now();
                               this.calculationTimeExact = endTime - startTime;
-                              this.parseEquityResponse(result, "exact", cacheKey);
+                              this.parseEquityResponse(
+                                  result,
+                                  "exact",
+                                  cacheKey
+                              );
                           }
                       });
               })()
-            .catch((err) => {
-                if (
-                    abortControllerExact &&
-                    !abortControllerExact.signal.aborted &&
-                    !(err instanceof Error && err.name === "AbortError")
-                ) {
-                    this.errorExact =
-                        err instanceof Error
-                            ? err.message
-                            : "Failed to calculate equity (Exact)";
-                    this.equityResultExact = null;
-                }
-            })
-            .finally(() => {
-                if (
-                    !hasExactCached &&
-                    abortControllerExact &&
-                    this.currentAbortControllerExact === abortControllerExact
-                ) {
-                    this.isLoadingExact = false;
-                    this.currentAbortControllerExact = null;
-                }
-            });
+                  .catch((err) => {
+                      if (
+                          abortControllerExact &&
+                          !abortControllerExact.signal.aborted &&
+                          !(err instanceof Error && err.name === "AbortError")
+                      ) {
+                          this.errorExact =
+                              err instanceof Error
+                                  ? err.message
+                                  : "Failed to calculate equity (Exact)";
+                          this.equityResultExact = null;
+                      }
+                  })
+                  .finally(() => {
+                      if (
+                          !hasExactCached &&
+                          abortControllerExact &&
+                          this.currentAbortControllerExact ===
+                              abortControllerExact
+                      ) {
+                          this.isLoadingExact = false;
+                          this.currentAbortControllerExact = null;
+                      }
+                  });
 
         // Wait for both requests to complete (or fail)
         await Promise.all([mcPromise, exactPromise]);

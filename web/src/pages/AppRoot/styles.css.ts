@@ -81,4 +81,11 @@ export const styles = css`
         width: 100%;
         max-width: 600px;
     }
+
+    .loading-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
 `;
