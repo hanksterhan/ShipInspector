@@ -9,6 +9,7 @@ import {
     getUserById,
     createUser,
     userExists,
+    isAdmin,
 } from "../services/userService";
 import {
     userRegistrationCounter,
@@ -62,6 +63,21 @@ export async function login(req: Request, res: Response): Promise<void> {
             });
             res.status(401).json({
                 error: "Invalid email or password",
+            });
+            return;
+        }
+
+        // Check if this is an admin app request (via custom header)
+        const isAdminAppRequest = req.headers["x-admin-app"] === "true";
+        
+        // If request is from admin app, verify user is admin
+        if (isAdminAppRequest && user.role !== "admin") {
+            userLoginCounter.add(1, {
+                status: "failure",
+                failure_reason: "non_admin_access_attempt",
+            });
+            res.status(403).json({
+                error: "Admin access required. This application is only available to administrators.",
             });
             return;
         }
@@ -179,6 +195,22 @@ export async function register(req: Request, res: Response): Promise<void> {
         // Create user in database
         const user = await createUser(emailLower, password);
 
+        // Check if this is an admin app request (via custom header)
+        const isAdminAppRequest = req.headers["x-admin-app"] === "true";
+        
+        // If request is from admin app, verify user is admin
+        // Note: New registrations default to 'user' role, so they will always fail
+        if (isAdminAppRequest && user.role !== "admin") {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "non_admin_registration_attempt",
+            });
+            res.status(403).json({
+                error: "Admin access required. This application is only available to administrators.",
+            });
+            return;
+        }
+
         // Mark invite code as used
         const codeMarked = markInviteCodeAsUsed(inviteCode, emailLower);
         if (!codeMarked) {
@@ -236,6 +268,57 @@ export function getCurrentUser(req: Request, res: Response): void {
         return;
     }
 
+    // Check if this is an admin app request (via custom header)
+    const isAdminAppRequest = req.headers["x-admin-app"] === "true";
+    
+    // If request is from admin app, verify user is admin
+    if (isAdminAppRequest && user.role !== "admin") {
+        res.status(403).json({
+            error: "Admin access required",
+        });
+        return;
+    }
+
+    res.json({
+        user: {
+            userId: user.userId,
+            email: user.email,
+            role: user.role,
+        },
+    });
+}
+
+/**
+ * Get current admin user info (requires admin authentication)
+ * This is a dedicated endpoint for admin app that always requires admin role
+ */
+export function getCurrentAdminUser(req: Request, res: Response): void {
+    const session = req.session as any;
+
+    if (!session.userId || !session.email) {
+        res.status(401).json({
+            error: "Not authenticated",
+        });
+        return;
+    }
+
+    // Get user from database to ensure we have current role
+    const user = getUserById(session.userId);
+    if (!user) {
+        res.status(401).json({
+            error: "User not found",
+        });
+        return;
+    }
+
+    // Always require admin role for this endpoint
+    if (user.role !== "admin") {
+        res.status(403).json({
+            error: "Admin access required",
+        });
+        return;
+    }
+
     res.json({
         user: {
             userId: user.userId,
@@ -269,5 +352,6 @@ export const authHandler = {
     login,
     register,
     getCurrentUser,
+    getCurrentAdminUser,
     logout,
 };

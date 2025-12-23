@@ -5,7 +5,7 @@ const AUTH_ENDPOINTS = {
     login: "/auth/login",
     register: "/auth/register",
     logout: "/auth/logout",
-    getCurrentUser: "/auth/me",
+    getCurrentUser: "/admin/auth/me", 
 };
 
 export class AuthService {

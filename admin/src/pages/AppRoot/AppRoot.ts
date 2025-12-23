@@ -40,8 +40,25 @@ export class AppRoot extends MobxLitElement {
             `;
         }
 
-        // Route guard: redirect to login if trying to access protected route without auth
+        // Route guard: redirect to login if trying to access protected route without auth or not admin
         if (!isAuthenticated && routerStore.isAuthenticatedRoute) {
+            routerStore.navigate("/");
+            return html`
+                <sp-theme
+                    system="spectrum"
+                    color="light"
+                    scale="medium"
+                    dir="ltr"
+                >
+                    <div class="loading-container">
+                        <sp-progress-circle indeterminate></sp-progress-circle>
+                    </div>
+                </sp-theme>
+            `;
+        }
+
+        // Additional guard: if authenticated but not admin, redirect to login
+        if (authStore.user && authStore.user.role !== "admin") {
             routerStore.navigate("/");
             return html`
                 <sp-theme

@@ -4,9 +4,11 @@ export class HttpClient {
 
     constructor(baseUrl: string, headers?: HeadersInit) {
         this.baseUrl = baseUrl;
-        this.headers = headers || {
+        this.headers = {
             "Content-Type": "application/json",
             Accept: "application/json",
+            "X-Admin-App": "true", // Identify requests from admin app
+            ...headers,
         };
     }
 

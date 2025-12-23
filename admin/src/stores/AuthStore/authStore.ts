@@ -4,6 +4,7 @@ import { authService } from "../../services/authService";
 export interface User {
     userId: string;
     email: string;
+    role: string;
 }
 
 export class AuthStore {
@@ -28,6 +29,17 @@ export class AuthStore {
         this.error = null;
         try {
             const user = await authService.getCurrentUser();
+            // Only allow admin users in the admin app
+            if (user.role !== "admin") {
+                // Clear session for non-admin users
+                await authService.logout();
+                runInAction(() => {
+                    this.user = null;
+                    this.isLoading = false;
+                    this.error = "Admin access required";
+                });
+                return;
+            }
             runInAction(() => {
                 this.user = user;
                 this.isLoading = false;
@@ -53,6 +65,17 @@ export class AuthStore {
         this.error = null;
         try {
             const user = await authService.login(email, password);
+            // Only allow admin users in the admin app
+            if (user.role !== "admin") {
+                // Logout non-admin users immediately
+                await authService.logout();
+                runInAction(() => {
+                    this.user = null;
+                    this.isLoading = false;
+                    this.error = "Admin access required. This application is only available to administrators.";
+                });
+                return;
+            }
             runInAction(() => {
                 this.user = user;
                 this.isLoading = false;
@@ -85,6 +108,17 @@ export class AuthStore {
                 password,
                 inviteCode
             );
+            // Only allow admin users in the admin app
+            if (user.role !== "admin") {
+                // Logout non-admin users immediately
+                await authService.logout();
+                runInAction(() => {
+                    this.user = null;
+                    this.isLoading = false;
+                    this.error = "Admin access required. This application is only available to administrators.";
+                });
+                return;
+            }
             runInAction(() => {
                 this.user = user;
                 this.isLoading = false;
@@ -131,6 +165,6 @@ export class AuthStore {
     }
 
     get isAuthenticated(): boolean {
-        return this.user !== null;
+        return this.user !== null && this.user.role === "admin";
     }
 }
