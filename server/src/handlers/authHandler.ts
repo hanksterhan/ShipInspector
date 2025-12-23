@@ -4,6 +4,11 @@ import {
     getInviteCode,
     markInviteCodeAsUsed,
 } from "../services/inviteCodeService";
+import {
+    userRegistrationCounter,
+    userLoginCounter,
+    totalUsersGauge,
+} from "../config/metrics";
 
 // Simple in-memory user store
 // In production, this should be replaced with a proper database
@@ -33,9 +38,14 @@ async function initializeDefaultUser(): Promise<void> {
 }
 
 // Initialize on module load
-initializeDefaultUser().catch((err) => {
-    console.error("Failed to initialize default user:", err);
-});
+initializeDefaultUser()
+    .then(() => {
+        // Initialize total users gauge with current user count
+        totalUsersGauge.add(users.size);
+    })
+    .catch((err) => {
+        console.error("Failed to initialize default user:", err);
+    });
 
 /**
  * Login handler - validates credentials and creates session
@@ -62,6 +72,10 @@ export async function login(req: Request, res: Response): Promise<void> {
 
         const user = users.get(email.toLowerCase());
         if (!user) {
+            userLoginCounter.add(1, {
+                status: "failure",
+                failure_reason: "user_not_found",
+            });
             res.status(401).json({
                 error: "Invalid email or password",
             });
@@ -73,6 +87,10 @@ export async function login(req: Request, res: Response): Promise<void> {
             user.passwordHash
         );
         if (!isValidPassword) {
+            userLoginCounter.add(1, {
+                status: "failure",
+                failure_reason: "invalid_credentials",
+            });
             res.status(401).json({
                 error: "Invalid email or password",
             });
@@ -82,6 +100,11 @@ export async function login(req: Request, res: Response): Promise<void> {
         // Create session
         (req.session as any).userId = user.userId;
         (req.session as any).email = user.email;
+
+        // Record successful login
+        userLoginCounter.add(1, {
+            status: "success",
+        });
 
         res.json({
             user: {
@@ -112,6 +135,10 @@ export async function register(req: Request, res: Response): Promise<void> {
         }
 
         if (!inviteCode) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "missing_invite_code",
+            });
             res.status(400).json({
                 error: "Invite code is required",
             });
@@ -121,6 +148,10 @@ export async function register(req: Request, res: Response): Promise<void> {
         // Validate invite code
         const invite = getInviteCode(inviteCode);
         if (!invite) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "invalid_invite_code",
+            });
             res.status(400).json({
                 error: "Invalid invite code",
             });
@@ -128,6 +159,10 @@ export async function register(req: Request, res: Response): Promise<void> {
         }
 
         if (invite.used) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "invite_code_already_used",
+            });
             res.status(400).json({
                 error: "Invite code has already been used",
             });
@@ -137,6 +172,10 @@ export async function register(req: Request, res: Response): Promise<void> {
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "invalid_email_format",
+            });
             res.status(400).json({
                 error: "Invalid email format",
             });
@@ -145,6 +184,10 @@ export async function register(req: Request, res: Response): Promise<void> {
 
         const emailLower = email.toLowerCase();
         if (users.has(emailLower)) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "email_already_registered",
+            });
             res.status(409).json({
                 error: "Email already registered",
             });
@@ -152,6 +195,10 @@ export async function register(req: Request, res: Response): Promise<void> {
         }
 
         if (password.length < 6) {
+            userRegistrationCounter.add(1, {
+                status: "failure",
+                failure_reason: "password_too_short",
+            });
             res.status(400).json({
                 error: "Password must be at least 6 characters",
             });
@@ -177,6 +224,12 @@ export async function register(req: Request, res: Response): Promise<void> {
                 `Failed to mark invite code ${inviteCode} as used for ${emailLower}`
             );
         }
+
+        // Record successful registration and update user count
+        userRegistrationCounter.add(1, {
+            status: "success",
+        });
+        totalUsersGauge.add(1);
 
         // Create session
         (req.session as any).userId = user.userId;

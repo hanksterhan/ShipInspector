@@ -30,6 +30,36 @@ export const handComparisonCounter = meter.createCounter(
 );
 
 /**
+ * Counter for user registrations (signups)
+ * Tags:
+ * - status: success, failure
+ * - failure_reason: invalid_invite_code, email_exists, invalid_email, etc.
+ */
+export const userRegistrationCounter = meter.createCounter(
+    "auth.registrations",
+    {
+        description: "Total number of user registration attempts",
+    }
+);
+
+/**
+ * Counter for user logins
+ * Tags:
+ * - status: success, failure
+ * - failure_reason: invalid_credentials, user_not_found, etc.
+ */
+export const userLoginCounter = meter.createCounter("auth.logins", {
+    description: "Total number of user login attempts",
+});
+
+/**
+ * Gauge for total number of registered users
+ */
+export const totalUsersGauge = meter.createUpDownCounter("auth.users.total", {
+    description: "Total number of registered users",
+});
+
+/**
  * Helper function to determine board state from number of board cards
  */
 export function getBoardState(boardLength: number): string {
