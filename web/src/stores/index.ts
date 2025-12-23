@@ -3,6 +3,7 @@ import { CardStore } from "./CardStore";
 import { DeckStore } from "./DeckStore";
 import { EquityStore } from "./EquityStore";
 import { SettingsStore } from "./SettingsStore";
+import { ReplayStore } from "./ReplayStore";
 // PLOP: APPEND STORE IMPORTS
 
 export const menuStore = new MenuStore();
@@ -14,4 +15,6 @@ export * from "./EquityStore";
 export const equityStore = new EquityStore();
 export * from "./SettingsStore";
 export const settingsStore = new SettingsStore();
+export * from "./ReplayStore";
+export const replayStore = new ReplayStore();
 // PLOP: APPEND STORE EXPORTS
