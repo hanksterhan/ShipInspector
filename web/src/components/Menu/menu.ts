@@ -13,7 +13,7 @@ import {
     authStore,
     routerStore,
 } from "../../stores/index";
-import { pokerIcon, percentageIcon } from "../../assets";
+import { pokerIcon, percentageIcon, boatIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
 
 interface MenuItemDetails {
@@ -112,6 +112,10 @@ export class Menu extends MobxLitElement {
     render() {
         return html`
             <div class="header-bar">
+                <div class="app-logo">
+                    <span class="logo-icon">${boatIcon}</span>
+                    <h1>Ship Inspector</h1>
+                </div>
                 <div class="menu-items">
                     ${MENU_ITEMS.map((menuItem: MenuItemDetails) => {
                         return this.generateMenuItem(menuItem);
