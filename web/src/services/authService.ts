@@ -17,10 +17,15 @@ export class AuthService {
         return response.user;
     }
 
-    async register(email: string, password: string): Promise<User> {
+    async register(
+        email: string,
+        password: string,
+        inviteCode: string
+    ): Promise<User> {
         const response = await httpClient.post(AUTH_ENDPOINTS.register, {
             email,
             password,
+            inviteCode,
         });
         return response.user;
     }

@@ -50,5 +50,35 @@ export function optionalAuth(
     next();
 }
 
+/**
+ * Verify admin access middleware
+ * Checks if user has an active session and is an admin
+ */
+export function requireAdmin(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): void {
+    const session = req.session as any;
+
+    if (!session.userId || !session.email) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+    }
+
+    // Check if user is admin (default admin email)
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+    if (session.email.toLowerCase() !== adminEmail.toLowerCase()) {
+        res.status(403).json({ error: "Admin access required" });
+        return;
+    }
+
+    req.user = {
+        userId: session.userId,
+        email: session.email,
+    };
+    next();
+}
+
 // Keep old function name for backward compatibility during migration
 export const authenticateToken = authenticateSession;

@@ -39,4 +39,27 @@ db.exec(`
     ON equity_cache(access_count)
 `);
 
+// Invite codes table for registration
+db.exec(`
+    CREATE TABLE IF NOT EXISTS invite_codes (
+        code TEXT PRIMARY KEY,
+        used INTEGER DEFAULT 0,
+        used_by_email TEXT,
+        used_at INTEGER,
+        created_at INTEGER NOT NULL,
+        created_by TEXT
+    )
+`);
+
+// Create indexes for invite codes
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_invite_codes_used 
+    ON invite_codes(used)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_invite_codes_created_at 
+    ON invite_codes(created_at)
+`);
+
 export default db;

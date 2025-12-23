@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import {
+    getInviteCode,
+    markInviteCodeAsUsed,
+} from "../services/inviteCodeService";
 
 // Simple in-memory user store
 // In production, this should be replaced with a proper database
@@ -98,11 +102,34 @@ export async function login(req: Request, res: Response): Promise<void> {
  */
 export async function register(req: Request, res: Response): Promise<void> {
     try {
-        const { email, password } = req.body;
+        const { email, password, inviteCode } = req.body;
 
         if (!email || !password) {
             res.status(400).json({
                 error: "Email and password are required",
+            });
+            return;
+        }
+
+        if (!inviteCode) {
+            res.status(400).json({
+                error: "Invite code is required",
+            });
+            return;
+        }
+
+        // Validate invite code
+        const invite = getInviteCode(inviteCode);
+        if (!invite) {
+            res.status(400).json({
+                error: "Invalid invite code",
+            });
+            return;
+        }
+
+        if (invite.used) {
+            res.status(400).json({
+                error: "Invite code has already been used",
             });
             return;
         }
@@ -141,6 +168,15 @@ export async function register(req: Request, res: Response): Promise<void> {
         };
 
         users.set(emailLower, user);
+
+        // Mark invite code as used
+        const codeMarked = markInviteCodeAsUsed(inviteCode, emailLower);
+        if (!codeMarked) {
+            // This shouldn't happen if we validated above, but handle it anyway
+            console.error(
+                `Failed to mark invite code ${inviteCode} as used for ${emailLower}`
+            );
+        }
 
         // Create session
         (req.session as any).userId = user.userId;

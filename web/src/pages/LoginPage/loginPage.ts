@@ -25,6 +25,9 @@ export class LoginPage extends MobxLitElement {
     private confirmPassword = "";
 
     @state()
+    private inviteCode = "";
+
+    @state()
     private showPassword = false;
 
     @state()
@@ -92,6 +95,13 @@ export class LoginPage extends MobxLitElement {
         return confirmField?.value ?? this.confirmPassword;
     }
 
+    private getInviteCodeValue(): string {
+        const inviteField = this.shadowRoot?.querySelector(
+            'sp-textfield[id="inviteCode"]'
+        ) as any;
+        return inviteField?.value ?? this.inviteCode;
+    }
+
     private async handleSubmit(): Promise<void> {
         authStore.clearError();
 
@@ -99,11 +109,13 @@ export class LoginPage extends MobxLitElement {
         const email = this.getEmailValue();
         const password = this.getPasswordValue();
         const confirmPassword = this.getConfirmPasswordValue();
+        const inviteCode = this.getInviteCodeValue();
 
         // Update state to keep it in sync
         this.email = email;
         this.password = password;
         this.confirmPassword = confirmPassword;
+        this.inviteCode = inviteCode;
 
         if (this.isLoginMode) {
             try {
@@ -119,7 +131,7 @@ export class LoginPage extends MobxLitElement {
             }
             this.passwordMatchError = "";
             try {
-                await authStore.register(email, password);
+                await authStore.register(email, password, inviteCode);
             } catch (error) {
                 // Error is handled by the store
             }
@@ -137,6 +149,7 @@ export class LoginPage extends MobxLitElement {
         this.email = "";
         this.password = "";
         this.confirmPassword = "";
+        this.inviteCode = "";
         this.showPassword = false;
         this.showConfirmPassword = false;
         this.passwordMatchError = "";
@@ -151,6 +164,28 @@ export class LoginPage extends MobxLitElement {
                         <h1 class="login-title">Ship Inspector</h1>
 
                         <div class="auth-fields">
+                            ${!this.isLoginMode
+                                ? html`
+                                      <sp-field-label for="inviteCode"
+                                          >Invite Code</sp-field-label
+                                      >
+                                      <sp-textfield
+                                          id="inviteCode"
+                                          type="text"
+                                          placeholder="Enter your invite code"
+                                          .value=${this.inviteCode}
+                                          @input=${(e: any) => {
+                                              this.inviteCode = e.target.value;
+                                          }}
+                                          @change=${(e: any) => {
+                                              this.inviteCode = e.target.value;
+                                          }}
+                                          @keydown=${this.handleKeyDown}
+                                          autocomplete="off"
+                                      ></sp-textfield>
+                                  `
+                                : null}
+
                             <sp-field-label for="email">Email</sp-field-label>
                             <sp-textfield
                                 id="email"
@@ -216,7 +251,6 @@ export class LoginPage extends MobxLitElement {
                                       ${this.getGenericErrorMessage()}
                                   </sp-help-text>`
                                 : null}
-
                             ${!this.isLoginMode
                                 ? html`
                                       <sp-field-label for="confirmPassword"

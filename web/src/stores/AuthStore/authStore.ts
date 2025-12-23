@@ -72,11 +72,19 @@ export class AuthStore {
     }
 
     @action
-    async register(email: string, password: string): Promise<void> {
+    async register(
+        email: string,
+        password: string,
+        inviteCode: string
+    ): Promise<void> {
         this.isLoading = true;
         this.error = null;
         try {
-            const user = await authService.register(email, password);
+            const user = await authService.register(
+                email,
+                password,
+                inviteCode
+            );
             runInAction(() => {
                 this.user = user;
                 this.isLoading = false;
