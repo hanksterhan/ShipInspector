@@ -8,4 +8,5 @@ export * from "./gear.svg";
 export * from "./close.svg";
 export * from "./visible.svg";
 export * from "./invisible.svg";
+export * from "./boat.svg";
 // PLOP: APPEND ICON EXPORTS
