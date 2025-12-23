@@ -5,9 +5,10 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
-// Explicitly import Landing component to ensure it's registered
-import "../Landing/landing";
-import { Landing } from "../Landing/landing";
+
+// Explicitly import LoginPage component to ensure it's registered
+import "../LoginPage/loginPage";
+import { LoginPage } from "../LoginPage/loginPage";
 
 import { menuStore, settingsStore, authStore, routerStore } from "../../stores/index";
 import { gearIcon } from "../../assets/index";
@@ -51,13 +52,13 @@ export class AppRoot extends MobxLitElement {
             `;
         }
 
-        // Show landing page for root/login route if not authenticated
+        // Show login page for root/login route if not authenticated
         if (!isAuthenticated && (currentRoute === "/" || currentRoute === "/login")) {
             // Force component registration by referencing the class
-            if (!customElements.get("landing-page")) {
-                customElements.define("landing-page", Landing);
+            if (!customElements.get("login-page")) {
+                customElements.define("login-page", LoginPage);
             }
-            return html`<landing-page></landing-page>`;
+            return html`<login-page></login-page>`;
         }
 
         // Redirect authenticated users from login to main app

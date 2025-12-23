@@ -4,9 +4,9 @@ import { customElement, state } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { authStore } from "../../stores/index";
 
-@customElement("landing-page")
-export class Landing extends MobxLitElement {
-    static readonly TAG_NAME = "landing-page";
+@customElement("login-page")
+export class LoginPage extends MobxLitElement {
+    static readonly TAG_NAME = "login-page";
     static get styles() {
         return styles;
     }
@@ -57,10 +57,10 @@ export class Landing extends MobxLitElement {
     render() {
         return html`
             <sp-theme system="spectrum" color="light" scale="medium" dir="ltr">
-                <div class="landing-container">
-                    <div class="landing-card">
-                        <h1 class="landing-title">Ship Inspector</h1>
-                        <p class="landing-subtitle">
+                <div class="login-container">
+                    <div class="login-card">
+                        <h1 class="login-title">Ship Inspector</h1>
+                        <p class="login-subtitle">
                             ${this.isLoginMode
                                 ? "Sign in to your account"
                                 : "Create a new account"}
@@ -161,6 +161,7 @@ export class Landing extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [Landing.TAG_NAME]: Landing;
+        [LoginPage.TAG_NAME]: LoginPage;
     }
 }
+

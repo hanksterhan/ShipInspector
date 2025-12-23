@@ -11,10 +11,10 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0d5c3d;
     }
 
-    .landing-container {
+    .login-container {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -22,7 +22,7 @@ export const styles = css`
         padding: var(--spectrum-global-dimension-size-400);
     }
 
-    .landing-card {
+    .login-card {
         background: white;
         border-radius: var(--spectrum-global-dimension-size-200);
         padding: var(--spectrum-global-dimension-size-600);
@@ -33,7 +33,7 @@ export const styles = css`
             0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
-    .landing-title {
+    .login-title {
         margin: 0 0 var(--spectrum-global-dimension-size-200) 0;
         font-size: var(--spectrum-global-dimension-font-size-900);
         font-weight: 700;
@@ -41,7 +41,7 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-900);
     }
 
-    .landing-subtitle {
+    .login-subtitle {
         margin: 0 0 var(--spectrum-global-dimension-size-400) 0;
         text-align: center;
         color: var(--spectrum-global-color-gray-700);
@@ -51,11 +51,16 @@ export const styles = css`
     .auth-form {
         display: flex;
         flex-direction: column;
-        gap: var(--spectrum-global-dimension-size-300);
+        gap: var(--spectrum-global-dimension-size-200);
     }
 
     .auth-form sp-field-label {
-        margin-bottom: var(--spectrum-global-dimension-size-100);
+        margin-bottom: var(--spectrum-global-dimension-size-50);
+        margin-top: var(--spectrum-global-dimension-size-100);
+    }
+
+    .auth-form sp-field-label:first-of-type {
+        margin-top: 0;
     }
 
     .submit-button {
@@ -82,3 +87,4 @@ export const styles = css`
         margin-bottom: var(--spectrum-global-dimension-size-300);
     }
 `;
+
