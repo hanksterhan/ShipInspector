@@ -9,7 +9,6 @@ import {
     getUserById,
     createUser,
     userExists,
-    isAdmin,
 } from "../services/userService";
 import {
     userRegistrationCounter,
