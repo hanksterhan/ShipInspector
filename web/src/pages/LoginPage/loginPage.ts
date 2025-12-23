@@ -33,6 +33,16 @@ export class LoginPage extends MobxLitElement {
     @state()
     private passwordMatchError = "";
 
+    private getGenericErrorMessage(): string {
+        // Return a generic error message that doesn't reveal specific information
+        // This prevents attackers from knowing if an email exists or what went wrong
+        if (this.isLoginMode) {
+            return "Invalid email or password";
+        } else {
+            return "Unable to create account. Please check your information and try again.";
+        }
+    }
+
     private togglePasswordVisibility(e: Event): void {
         e.stopPropagation();
         this.showPassword = !this.showPassword;
@@ -140,14 +150,6 @@ export class LoginPage extends MobxLitElement {
                     <div class="login-card">
                         <h1 class="login-title">Ship Inspector</h1>
 
-                        ${authStore.error
-                            ? html`<div
-                                  style="background-color: var(--spectrum-global-color-red-100); color: var(--spectrum-global-color-red-700); padding: var(--spectrum-global-dimension-size-200); border-radius: var(--spectrum-global-dimension-size-100); margin-bottom: var(--spectrum-global-dimension-size-300);"
-                              >
-                                  ${authStore.error}
-                              </div>`
-                            : null}
-
                         <div class="auth-fields">
                             <sp-field-label for="email">Email</sp-field-label>
                             <sp-textfield
@@ -206,6 +208,14 @@ export class LoginPage extends MobxLitElement {
                                     >
                                 </sp-action-button>
                             </div>
+                            ${authStore.error
+                                ? html`<sp-help-text
+                                      variant="negative"
+                                      id="auth-error"
+                                  >
+                                      ${this.getGenericErrorMessage()}
+                                  </sp-help-text>`
+                                : null}
 
                             ${!this.isLoginMode
                                 ? html`
