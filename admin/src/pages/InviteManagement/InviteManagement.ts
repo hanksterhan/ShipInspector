@@ -63,13 +63,13 @@ export class InviteManagement extends MobxLitElement {
 
     private getTableData(): TableData {
         const headers: Header[] = [
-            generateHeader("Code", 15, true),
+            generateHeader("Code", 10, true),
             generateHeader("Status", 10, true),
-            generateHeader("Created By", 15, true),
-            generateHeader("Created At", 20, true),
+            generateHeader("Created By", 20, true),
+            generateHeader("Created At", 15, true),
             generateHeader("Used By", 15, true),
-            generateHeader("Used At", 20, true),
-            generateHeader("Actions", 5, false),
+            generateHeader("Used At", 15, true),
+            generateHeader("Actions", 15, false),
         ];
 
         const rows: Row[] = inviteCodeStore.inviteCodes.map(

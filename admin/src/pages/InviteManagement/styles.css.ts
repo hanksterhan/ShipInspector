@@ -69,6 +69,8 @@ export const styles = css`
         border-radius: 8px;
         padding: 16px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+        overflow-y: visible;
     }
 
     sp-alert {
@@ -77,6 +79,7 @@ export const styles = css`
 
     platform-table {
         width: 100%;
+        min-width: max-content;
     }
 
     sp-table-cell {
