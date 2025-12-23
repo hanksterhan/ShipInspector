@@ -3,6 +3,7 @@ import { styles } from "./styles.css";
 import { customElement, state } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { authStore } from "../../stores/index";
+import { visibleIcon, invisibleIcon } from "../../assets/index";
 
 @customElement("login-page")
 export class LoginPage extends MobxLitElement {
@@ -22,6 +23,37 @@ export class LoginPage extends MobxLitElement {
 
     @state()
     private confirmPassword = "";
+
+    @state()
+    private showPassword = false;
+
+    @state()
+    private showConfirmPassword = false;
+
+    @state()
+    private passwordMatchError = "";
+
+    private togglePasswordVisibility(e: Event): void {
+        e.stopPropagation();
+        this.showPassword = !this.showPassword;
+    }
+
+    private toggleConfirmPasswordVisibility(e: Event): void {
+        e.stopPropagation();
+        this.showConfirmPassword = !this.showConfirmPassword;
+    }
+
+    private validatePasswordMatch(): void {
+        if (!this.isLoginMode && this.password && this.confirmPassword) {
+            if (this.password !== this.confirmPassword) {
+                this.passwordMatchError = "Passwords do not match";
+            } else {
+                this.passwordMatchError = "";
+            }
+        } else {
+            this.passwordMatchError = "";
+        }
+    }
 
     private getPasswordValue(): string {
         // Get the actual value from the DOM element in case password manager
@@ -70,10 +102,12 @@ export class LoginPage extends MobxLitElement {
                 // Error is handled by the store
             }
         } else {
+            // Validate password match before submitting
             if (password !== confirmPassword) {
-                authStore.error = "Passwords do not match";
+                this.passwordMatchError = "Passwords do not match";
                 return;
             }
+            this.passwordMatchError = "";
             try {
                 await authStore.register(email, password);
             } catch (error) {
@@ -93,6 +127,9 @@ export class LoginPage extends MobxLitElement {
         this.email = "";
         this.password = "";
         this.confirmPassword = "";
+        this.showPassword = false;
+        this.showConfirmPassword = false;
+        this.passwordMatchError = "";
         authStore.clearError();
     }
 
@@ -131,44 +168,97 @@ export class LoginPage extends MobxLitElement {
                             <sp-field-label for="password"
                                 >Password</sp-field-label
                             >
-                            <sp-textfield
-                                id="password"
-                                type="password"
-                                placeholder="Enter your password"
-                                .value=${this.password}
-                                @input=${(e: any) => {
-                                    this.password = e.target.value;
-                                }}
-                                @change=${(e: any) => {
-                                    this.password = e.target.value;
-                                }}
-                                @keydown=${this.handleKeyDown}
-                                autocomplete=${this.isLoginMode
-                                    ? "current-password"
-                                    : "new-password"}
-                            ></sp-textfield>
+                            <div class="password-field-wrapper">
+                                <sp-textfield
+                                    id="password"
+                                    type=${this.showPassword
+                                        ? "text"
+                                        : "password"}
+                                    placeholder="Enter your password"
+                                    .value=${this.password}
+                                    @input=${(e: any) => {
+                                        this.password = e.target.value;
+                                        this.validatePasswordMatch();
+                                    }}
+                                    @change=${(e: any) => {
+                                        this.password = e.target.value;
+                                        this.validatePasswordMatch();
+                                    }}
+                                    @keydown=${this.handleKeyDown}
+                                    autocomplete=${this.isLoginMode
+                                        ? "current-password"
+                                        : "new-password"}
+                                    class="password-textfield"
+                                ></sp-textfield>
+                                <sp-action-button
+                                    class="password-toggle-button"
+                                    @click=${this.togglePasswordVisibility}
+                                    quiet
+                                    size="s"
+                                    title=${this.showPassword
+                                        ? "Hide password"
+                                        : "Show password"}
+                                >
+                                    <span slot="icon"
+                                        >${this.showPassword
+                                            ? invisibleIcon
+                                            : visibleIcon}</span
+                                    >
+                                </sp-action-button>
+                            </div>
 
                             ${!this.isLoginMode
                                 ? html`
                                       <sp-field-label for="confirmPassword"
                                           >Confirm Password</sp-field-label
                                       >
-                                      <sp-textfield
-                                          id="confirmPassword"
-                                          type="password"
-                                          placeholder="Confirm your password"
-                                          .value=${this.confirmPassword}
-                                          @input=${(e: any) => {
-                                              this.confirmPassword =
-                                                  e.target.value;
-                                          }}
-                                          @change=${(e: any) => {
-                                              this.confirmPassword =
-                                                  e.target.value;
-                                          }}
-                                          @keydown=${this.handleKeyDown}
-                                          autocomplete="new-password"
-                                      ></sp-textfield>
+                                      <div class="password-field-wrapper">
+                                          <sp-textfield
+                                              id="confirmPassword"
+                                              type=${this.showConfirmPassword
+                                                  ? "text"
+                                                  : "password"}
+                                              placeholder="Confirm your password"
+                                              .value=${this.confirmPassword}
+                                              @input=${(e: any) => {
+                                                  this.confirmPassword =
+                                                      e.target.value;
+                                                  this.validatePasswordMatch();
+                                              }}
+                                              @change=${(e: any) => {
+                                                  this.confirmPassword =
+                                                      e.target.value;
+                                                  this.validatePasswordMatch();
+                                              }}
+                                              @keydown=${this.handleKeyDown}
+                                              autocomplete="new-password"
+                                              class="password-textfield"
+                                          ></sp-textfield>
+                                          <sp-action-button
+                                              class="password-toggle-button"
+                                              @click=${this
+                                                  .toggleConfirmPasswordVisibility}
+                                              quiet
+                                              size="s"
+                                              title=${this.showConfirmPassword
+                                                  ? "Hide password"
+                                                  : "Show password"}
+                                          >
+                                              <span slot="icon"
+                                                  >${this.showConfirmPassword
+                                                      ? invisibleIcon
+                                                      : visibleIcon}</span
+                                              >
+                                          </sp-action-button>
+                                      </div>
+                                      ${this.passwordMatchError
+                                          ? html`<sp-help-text
+                                                variant="negative"
+                                                id="password-match-error"
+                                            >
+                                                ${this.passwordMatchError}
+                                            </sp-help-text>`
+                                          : null}
                                   `
                                 : null}
 
@@ -211,4 +301,3 @@ declare global {
         [LoginPage.TAG_NAME]: LoginPage;
     }
 }
-

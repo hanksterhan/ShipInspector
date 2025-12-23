@@ -48,4 +48,3 @@ export class RouterStore {
         return this.currentRoute !== "/" && this.currentRoute !== "/login";
     }
 }
-

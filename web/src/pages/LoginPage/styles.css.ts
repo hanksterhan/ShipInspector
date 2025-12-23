@@ -54,6 +54,37 @@ export const styles = css`
         width: 100%;
     }
 
+    .password-field-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-field-wrapper .password-textfield {
+        width: 100%;
+        padding-right: var(--spectrum-global-dimension-size-600);
+    }
+
+    .password-field-wrapper .password-toggle-button {
+        position: absolute;
+        right: var(--spectrum-global-dimension-size-100);
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
+    .password-field-wrapper .password-toggle-button span[slot="icon"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+    }
+
+    .password-field-wrapper .password-toggle-button span[slot="icon"] svg {
+        width: 16px;
+        height: 16px;
+    }
+
     .submit-button {
         margin-top: var(--spectrum-global-dimension-size-400);
         margin-bottom: var(--spectrum-global-dimension-size-200);
@@ -79,4 +110,3 @@ export const styles = css`
         margin-bottom: var(--spectrum-global-dimension-size-300);
     }
 `;
-

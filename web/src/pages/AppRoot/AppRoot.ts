@@ -10,7 +10,12 @@ import "../../components/index";
 import "../LoginPage/loginPage";
 import { LoginPage } from "../LoginPage/loginPage";
 
-import { menuStore, settingsStore, authStore, routerStore } from "../../stores/index";
+import {
+    menuStore,
+    settingsStore,
+    authStore,
+    routerStore,
+} from "../../stores/index";
 import { gearIcon } from "../../assets/index";
 
 @customElement("app-root")
@@ -32,7 +37,12 @@ export class AppRoot extends MobxLitElement {
         // Show loading state while checking authentication
         if (isLoading) {
             return html`
-                <sp-theme system="spectrum" color="light" scale="medium" dir="ltr">
+                <sp-theme
+                    system="spectrum"
+                    color="light"
+                    scale="medium"
+                    dir="ltr"
+                >
                     <div class="loading-container">
                         <sp-progress-circle indeterminate></sp-progress-circle>
                     </div>
@@ -44,7 +54,12 @@ export class AppRoot extends MobxLitElement {
         if (!isAuthenticated && routerStore.isAuthenticatedRoute) {
             routerStore.navigate("/");
             return html`
-                <sp-theme system="spectrum" color="light" scale="medium" dir="ltr">
+                <sp-theme
+                    system="spectrum"
+                    color="light"
+                    scale="medium"
+                    dir="ltr"
+                >
                     <div class="loading-container">
                         <sp-progress-circle indeterminate></sp-progress-circle>
                     </div>
@@ -53,7 +68,10 @@ export class AppRoot extends MobxLitElement {
         }
 
         // Show login page for root/login route if not authenticated
-        if (!isAuthenticated && (currentRoute === "/" || currentRoute === "/login")) {
+        if (
+            !isAuthenticated &&
+            (currentRoute === "/" || currentRoute === "/login")
+        ) {
             // Force component registration by referencing the class
             if (!customElements.get("login-page")) {
                 customElements.define("login-page", LoginPage);
@@ -62,10 +80,18 @@ export class AppRoot extends MobxLitElement {
         }
 
         // Redirect authenticated users from login to main app
-        if (isAuthenticated && (currentRoute === "/" || currentRoute === "/login")) {
+        if (
+            isAuthenticated &&
+            (currentRoute === "/" || currentRoute === "/login")
+        ) {
             routerStore.navigate("/poker-hands");
             return html`
-                <sp-theme system="spectrum" color="light" scale="medium" dir="ltr">
+                <sp-theme
+                    system="spectrum"
+                    color="light"
+                    scale="medium"
+                    dir="ltr"
+                >
                     <div class="loading-container">
                         <sp-progress-circle indeterminate></sp-progress-circle>
                     </div>
@@ -82,11 +108,17 @@ export class AppRoot extends MobxLitElement {
                         ${(() => {
                             // Use router for navigation, but sync with menuStore for menu highlighting
                             const route = routerStore.currentRoute;
-                            
+
                             // Update menuStore to match route
-                            if (route === "/poker-hands" && menuStore.selectedPage !== "poker-hands") {
+                            if (
+                                route === "/poker-hands" &&
+                                menuStore.selectedPage !== "poker-hands"
+                            ) {
                                 menuStore.setSelectedPage("poker-hands");
-                            } else if (route === "/equity-calculator" && menuStore.selectedPage !== "equity-calculator") {
+                            } else if (
+                                route === "/equity-calculator" &&
+                                menuStore.selectedPage !== "equity-calculator"
+                            ) {
                                 menuStore.setSelectedPage("equity-calculator");
                             }
 
