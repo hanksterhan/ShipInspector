@@ -74,18 +74,8 @@ db.exec(`
     )
 `);
 
-// Create indexes for users
-db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_users_email 
-    ON users(email)
-`);
-
-db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_users_role 
-    ON users(role)
-`);
-
 // Migration: Add role column if it doesn't exist (for existing databases)
+// This must happen BEFORE creating indexes on the role column
 try {
     db.exec(`
         ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'
@@ -112,6 +102,17 @@ try {
 // Update existing users without role to have 'user' role
 db.exec(`
     UPDATE users SET role = 'user' WHERE role IS NULL
+`);
+
+// Create indexes for users (after migrations ensure columns exist)
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_email 
+    ON users(email)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_role 
+    ON users(role)
 `);
 
 export default db;
