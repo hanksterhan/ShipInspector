@@ -1,6 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { authHandler } from "../handlers";
-import { authRateLimiter, authenticateSession } from "../middlewares";
+import { authRateLimiter, authenticateSession, requireAdmin } from "../middlewares";
 
 /**
  * @swagger
@@ -140,6 +140,41 @@ function createRouter(): IRouter {
      *         description: Not authenticated
      */
     router.get("/auth/me", authenticateSession, authHandler.getCurrentUser);
+
+    /**
+     * @swagger
+     * /admin/auth/me:
+     *   get:
+     *     tags:
+     *       - Authentication
+     *     summary: Get current admin user information
+     *     description: Returns information about the currently authenticated admin user (admin app only)
+     *     security:
+     *       - sessionAuth: []
+     *     responses:
+     *       '200':
+     *         description: Admin user information retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 user:
+     *                   type: object
+     *                   properties:
+     *                     userId:
+     *                       type: string
+     *                     email:
+     *                       type: string
+     *                     role:
+     *                       type: string
+     *                       example: "admin"
+     *       '401':
+     *         description: Not authenticated
+     *       '403':
+     *         description: Admin access required
+     */
+    router.get("/admin/auth/me", authenticateSession, requireAdmin, authHandler.getCurrentAdminUser);
 
     /**
      * @swagger

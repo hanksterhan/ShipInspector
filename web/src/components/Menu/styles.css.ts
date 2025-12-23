@@ -17,6 +17,35 @@ export const styles = css`
         gap: 0.25rem;
     }
 
+    .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-right: 2.5rem;
+    }
+
+    .logo-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+    }
+
+    .logo-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .app-logo h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
     .menu-items {
         display: flex;
         flex-direction: row;

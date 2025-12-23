@@ -43,14 +43,24 @@ export function getUserById(userId: string): User | null {
         .get(userId) as any;
 
     if (!row) {
+        console.error(`[getUserById] No user found with userId: ${userId}`);
         return null;
     }
+
+    // Handle role - check for null, undefined, or empty string
+    let role = row.role;
+    if (!role || role.trim() === "") {
+        console.warn(`[getUserById] User ${row.email} (${userId}) has null/empty role, defaulting to "user"`);
+        role = "user";
+    }
+    role = role.trim().toLowerCase() as UserRole;
+    console.log(`[getUserById] Found user ${row.email} (${userId}) with role: "${role}" (raw from DB: "${row.role}")`);
 
     return {
         userId: row.user_id,
         email: row.email,
         passwordHash: row.password_hash,
-        role: (row.role || "user") as UserRole,
+        role: role,
         createdAt: row.created_at,
         updatedAt: row.updated_at || undefined,
     };

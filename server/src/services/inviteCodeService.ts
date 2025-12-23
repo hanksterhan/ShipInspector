@@ -154,3 +154,11 @@ export function getUsedInviteCodes(): InviteCode[] {
         createdBy: row.created_by || undefined,
     }));
 }
+
+/**
+ * Delete an invite code
+ */
+export function deleteInviteCode(code: string): boolean {
+    const result = db.prepare(`DELETE FROM invite_codes WHERE code = ?`).run(code);
+    return result.changes > 0;
+}

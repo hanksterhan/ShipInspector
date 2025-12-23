@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getUserById, isAdmin, UserRole } from "../services/userService";
+import { getUserById, UserRole } from "../services/userService";
 
 export interface AuthRequest extends Request {
     user?: {
@@ -80,16 +80,19 @@ export function requireAdmin(
         return;
     }
 
-    // Check if user has admin role in database
-    if (!isAdmin(session.userId)) {
-        res.status(403).json({ error: "Admin access required" });
-        return;
-    }
-
     // Get user from database to ensure we have current role
     const user = getUserById(session.userId);
     if (!user) {
+        console.error(`[requireAdmin] User not found for userId: ${session.userId}`);
         res.status(401).json({ error: "User not found" });
+        return;
+    }
+
+    // Check if user has admin role in database (case-insensitive check)
+    const userRole = (user.role || "").toLowerCase().trim();
+    if (userRole !== "admin") {
+        console.error(`[requireAdmin] User ${session.userId} (${user.email}) has role "${user.role}" (normalized: "${userRole}"), not "admin"`);
+        res.status(403).json({ error: "Admin access required" });
         return;
     }
 
