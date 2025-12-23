@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middlewares/auth";
 import bcrypt from "bcryptjs";
 import {
     getInviteCode,
@@ -66,25 +67,26 @@ export async function login(req: Request, res: Response): Promise<void> {
             return;
         }
 
-        // Check if this is an admin app request (via custom header)
-        const isAdminAppRequest = req.headers["x-admin-app"] === "true";
-        
-        // If request is from admin app, verify user is admin
-        if (isAdminAppRequest && user.role !== "admin") {
-            userLoginCounter.add(1, {
-                status: "failure",
-                failure_reason: "non_admin_access_attempt",
-            });
-            res.status(403).json({
-                error: "Admin access required. This application is only available to administrators.",
-            });
-            return;
-        }
+        // Log user info for debugging
+        console.log(`[login] User ${user.email} (${user.userId}) logging in with role: "${user.role}"`);
 
         // Create session
         (req.session as any).userId = user.userId;
         (req.session as any).email = user.email;
         (req.session as any).role = user.role;
+
+        // Save session explicitly to ensure it's persisted before sending response
+        await new Promise<void>((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error("[login] Session save error:", err);
+                    reject(err);
+                } else {
+                    console.log(`[login] Session saved for userId: ${user.userId}`);
+                    resolve();
+                }
+            });
+        });
 
         // Record successful login
         userLoginCounter.add(1, {
@@ -194,22 +196,6 @@ export async function register(req: Request, res: Response): Promise<void> {
         // Create user in database
         const user = await createUser(emailLower, password);
 
-        // Check if this is an admin app request (via custom header)
-        const isAdminAppRequest = req.headers["x-admin-app"] === "true";
-        
-        // If request is from admin app, verify user is admin
-        // Note: New registrations default to 'user' role, so they will always fail
-        if (isAdminAppRequest && user.role !== "admin") {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "non_admin_registration_attempt",
-            });
-            res.status(403).json({
-                error: "Admin access required. This application is only available to administrators.",
-            });
-            return;
-        }
-
         // Mark invite code as used
         const codeMarked = markInviteCodeAsUsed(inviteCode, emailLower);
         if (!codeMarked) {
@@ -267,17 +253,6 @@ export function getCurrentUser(req: Request, res: Response): void {
         return;
     }
 
-    // Check if this is an admin app request (via custom header)
-    const isAdminAppRequest = req.headers["x-admin-app"] === "true";
-    
-    // If request is from admin app, verify user is admin
-    if (isAdminAppRequest && user.role !== "admin") {
-        res.status(403).json({
-            error: "Admin access required",
-        });
-        return;
-    }
-
     res.json({
         user: {
             userId: user.userId,
@@ -290,39 +265,25 @@ export function getCurrentUser(req: Request, res: Response): void {
 /**
  * Get current admin user info (requires admin authentication)
  * This is a dedicated endpoint for admin app that always requires admin role
+ * Note: requireAdmin middleware already ensures user is admin, so we can use req.user
  */
-export function getCurrentAdminUser(req: Request, res: Response): void {
-    const session = req.session as any;
-
-    if (!session.userId || !session.email) {
+export function getCurrentAdminUser(req: AuthRequest, res: Response): void {
+    // The requireAdmin middleware already ensures:
+    // 1. User is authenticated
+    // 2. User has admin role
+    // 3. req.user is set with user info
+    if (!req.user) {
         res.status(401).json({
             error: "Not authenticated",
         });
         return;
     }
 
-    // Get user from database to ensure we have current role
-    const user = getUserById(session.userId);
-    if (!user) {
-        res.status(401).json({
-            error: "User not found",
-        });
-        return;
-    }
-
-    // Always require admin role for this endpoint
-    if (user.role !== "admin") {
-        res.status(403).json({
-            error: "Admin access required",
-        });
-        return;
-    }
-
     res.json({
         user: {
-            userId: user.userId,
-            email: user.email,
-            role: user.role,
+            userId: req.user.userId,
+            email: req.user.email,
+            role: req.user.role,
         },
     });
 }

@@ -7,7 +7,6 @@ export class HttpClient {
         this.headers = {
             "Content-Type": "application/json",
             Accept: "application/json",
-            "X-Admin-App": "true", // Identify requests from admin app
             ...headers,
         };
     }
@@ -41,6 +40,15 @@ export class HttpClient {
             }
             const error = new Error(errorMessage);
             (error as any).status = response.status;
+            
+            // If 403 (admin access required), redirect to login
+            if (response.status === 403) {
+                // Dynamically import router to avoid circular dependencies
+                import("../stores/index").then(({ routerStore }) => {
+                    routerStore.navigate("/");
+                });
+            }
+            
             throw error;
         }
 

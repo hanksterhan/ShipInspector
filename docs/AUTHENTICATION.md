@@ -1,56 +1,99 @@
 # Authentication and Rate Limiting
 
-This document describes the JWT authentication and rate limiting implementation for the Ship Inspector API.
+This document describes the session-based authentication and rate limiting implementation for the Ship Inspector API.
 
 ## Overview
 
-All API endpoints (except authentication endpoints) now require JWT authentication. Rate limiting is applied globally and per-route to prevent abuse.
+All API endpoints (except authentication endpoints) require session-based authentication using cookies. Rate limiting is applied globally and per-route to prevent abuse.
 
 ## Authentication
 
-### Getting a Token
+### Session-Based Authentication
+
+The API uses Express sessions with HTTP-only cookies for authentication. When you log in, a session cookie is set that must be included in subsequent requests.
+
+### Getting a Session
 
 1. **Login** - POST `/auth/login`
    ```json
    {
-     "username": "admin",
-     "password": "admin123"
+     "email": "admin@example.com",
+     "password": "your-password"
    }
    ```
    
    Response:
    ```json
    {
-     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
      "user": {
-       "userId": "1",
-       "username": "admin"
+       "userId": "admin_1234567890",
+       "email": "admin@example.com",
+       "role": "admin"
      }
    }
    ```
+   
+   The server sets a session cookie (`connect.sid`) that is automatically sent with subsequent requests.
 
-2. **Register** (optional) - POST `/auth/register`
+2. **Register** - POST `/auth/register`
    ```json
    {
-     "username": "newuser",
-     "password": "password123"
+     "email": "user@example.com",
+     "password": "password123",
+     "inviteCode": "ABC12345"
    }
    ```
+   
+   **Note**: Registration requires a valid invite code (admin-only feature).
 
-### Using the Token
+### Using Session Cookies
 
-Include the token in the `Authorization` header for all protected endpoints:
+The session cookie is automatically managed by browsers. For command-line tools like `curl`, you need to:
 
+1. **Save cookies from login:**
+   ```bash
+   curl -X POST http://localhost:3000/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"your-email@example.com","password":"your-password"}' \
+     -c cookies.txt
+   ```
+
+2. **Use saved cookies in subsequent requests:**
+   ```bash
+   curl -X GET http://localhost:3000/admin/users \
+     -b cookies.txt
+   ```
+
+   Or use `-c` and `-b` together to save and reuse cookies:
+   ```bash
+   # Login and save cookie
+   curl -X POST http://localhost:3000/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"your-email@example.com","password":"your-password"}' \
+     -c cookies.txt
+   
+   # Use cookie for authenticated request
+   curl -X PUT http://localhost:3000/admin/users/user_123/role \
+     -H "Content-Type: application/json" \
+     -d '{"role":"admin"}' \
+     -b cookies.txt
+   ```
+
+### Creating Admin Users
+
+Admin users are created using the `create-admin` script:
+
+```bash
+npm run create-admin
 ```
-Authorization: Bearer <your-token-here>
+
+This requires environment variables in `.env`:
+```env
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-secure-password
 ```
 
-### Default Credentials
-
-- **Username**: `admin` (or set via `ADMIN_USERNAME` env var)
-- **Password**: `admin123` (or set via `ADMIN_PASSWORD` env var)
-
-**⚠️ IMPORTANT**: Change the default password in production!
+**⚠️ IMPORTANT**: Change default credentials in production!
 
 ## Rate Limiting
 
@@ -96,13 +139,12 @@ Rate limits are applied at multiple levels:
 Add these to your `.env` file:
 
 ```env
-# JWT Configuration
-JWT_SECRET=your-secret-key-change-in-production
-JWT_EXPIRES_IN=24h
+# Session Configuration
+SESSION_SECRET=your-session-secret-change-in-production
 
-# Default Admin Credentials
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
+# Admin User Creation (for create-admin script)
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-secure-password
 
 # Rate Limiting (optional - defaults shown)
 RATE_LIMIT_WINDOW_MS=900000
@@ -129,8 +171,9 @@ All endpoints except `/auth/*` require authentication:
 ## Error Responses
 
 ### Authentication Errors
-- `401 Unauthorized` - Missing or invalid token
-- `401 Unauthorized` - Token expired
+- `401 Unauthorized` - Missing or invalid session
+- `401 Unauthorized` - Session expired
+- `403 Forbidden` - Admin access required (for admin-only endpoints)
 
 ### Rate Limit Errors
 - `429 Too Many Requests` - Rate limit exceeded
@@ -143,33 +186,67 @@ All endpoints except `/auth/*` require authentication:
 
 ## Swagger Documentation
 
-The Swagger UI at `/api-docs` now includes:
-- Authentication button to add your JWT token
+The Swagger UI at `/api-docs` includes:
 - Security requirements for each endpoint
 - Updated documentation for all protected endpoints
+- Session-based authentication (cookies are handled automatically in the browser)
 
 ## Implementation Notes
 
-- **User Storage**: Currently uses in-memory storage. In production, replace with a proper database.
+- **User Storage**: Uses SQLite database (`server/data/equity_cache.db`)
 - **Password Hashing**: Uses bcryptjs with 10 rounds
-- **Token Expiration**: Default 24 hours (configurable via `JWT_EXPIRES_IN`)
+- **Session Expiration**: Default 24 hours (configured in session middleware)
 - **Rate Limiting**: Uses `express-rate-limit` with IP-based tracking
+- **Session Storage**: Uses express-session with default in-memory store
 
-## Testing
+## Testing with curl
 
-Example using curl:
+### Example: Login and Get User List
 
 ```bash
-# 1. Login to get token
-TOKEN=$(curl -X POST http://localhost:3000/auth/login \
+# 1. Login and save session cookie
+curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}' \
-  | jq -r '.token')
+  -d '{"email":"admin@example.com","password":"your-password"}' \
+  -c cookies.txt
 
-# 2. Use token for protected endpoint
-curl -X POST http://localhost:3000/poker/hand/evaluate \
+# 2. Use session cookie for protected endpoint
+curl -X GET http://localhost:3000/admin/users \
+  -b cookies.txt
+```
+
+### Example: Promote User to Admin
+
+```bash
+# 1. Login (if not already logged in)
+curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"hole":"14h 14d","board":"12h 11h 10h"}'
+  -d '{"email":"your-email@example.com","password":"your-password"}' \
+  -c cookies.txt
+
+# 2. Get your user ID
+curl -X GET http://localhost:3000/admin/users \
+  -b cookies.txt | jq '.users[] | select(.email=="your-email@example.com") | .userId'
+
+# 3. Promote yourself to admin (replace USER_ID with your actual user ID)
+curl -X PUT http://localhost:3000/admin/users/USER_ID/role \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin"}' \
+  -b cookies.txt
+```
+
+### Example: Check Current User
+
+```bash
+curl -X GET http://localhost:3000/auth/me \
+  -b cookies.txt
+```
+
+### Logout
+
+```bash
+curl -X POST http://localhost:3000/auth/logout \
+  -b cookies.txt \
+  -c cookies.txt
 ```
 

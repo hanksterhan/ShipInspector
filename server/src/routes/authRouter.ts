@@ -1,6 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { authHandler } from "../handlers";
-import { authRateLimiter, authenticateSession } from "../middlewares";
+import { authRateLimiter, authenticateSession, requireAdmin } from "../middlewares";
 
 /**
  * @swagger
@@ -174,7 +174,7 @@ function createRouter(): IRouter {
      *       '403':
      *         description: Admin access required
      */
-    router.get("/admin/auth/me", authenticateSession, authHandler.getCurrentAdminUser);
+    router.get("/admin/auth/me", authenticateSession, requireAdmin, authHandler.getCurrentAdminUser);
 
     /**
      * @swagger

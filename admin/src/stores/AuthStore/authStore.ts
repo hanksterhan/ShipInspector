@@ -29,22 +29,25 @@ export class AuthStore {
         this.error = null;
         try {
             const user = await authService.getCurrentUser();
-            // Only allow admin users in the admin app
-            if (user.role !== "admin") {
-                // Clear session for non-admin users
-                await authService.logout();
-                runInAction(() => {
-                    this.user = null;
-                    this.isLoading = false;
-                    this.error = "Admin access required";
-                });
-                return;
-            }
+            // The /admin/auth/me endpoint already ensures user is admin, so if we get here, user is admin
             runInAction(() => {
                 this.user = user;
                 this.isLoading = false;
             });
         } catch (error: any) {
+            // Handle 403 (admin access required) - redirect to login
+            if (error.status === 403) {
+                // Clear session and redirect to login
+                runInAction(() => {
+                    this.user = null;
+                    this.isLoading = false;
+                    this.error = "Admin access required";
+                });
+                import("../index").then(({ routerStore }) => {
+                    routerStore.navigate("/");
+                });
+                return;
+            }
             // Silently handle authentication errors (401) - user is just not logged in
             // This is expected behavior, not an actual error
             runInAction(() => {
@@ -65,7 +68,7 @@ export class AuthStore {
         this.error = null;
         try {
             const user = await authService.login(email, password);
-            // Only allow admin users in the admin app
+            // Verify user is admin (server should enforce this, but double-check client-side)
             if (user.role !== "admin") {
                 // Logout non-admin users immediately
                 await authService.logout();
@@ -85,6 +88,15 @@ export class AuthStore {
                 routerStore.navigate("/invite-management");
             });
         } catch (error: any) {
+            // Handle 403 (admin access required) - though login endpoint doesn't check this
+            if (error.status === 403) {
+                runInAction(() => {
+                    this.error = "Admin access required. This application is only available to administrators.";
+                    this.isLoading = false;
+                    this.user = null;
+                });
+                return;
+            }
             runInAction(() => {
                 this.error = error.message || "Login failed";
                 this.isLoading = false;
@@ -108,7 +120,8 @@ export class AuthStore {
                 password,
                 inviteCode
             );
-            // Only allow admin users in the admin app
+            // New registrations default to 'user' role, so they cannot access admin app
+            // Verify user is admin (though new registrations won't be admin)
             if (user.role !== "admin") {
                 // Logout non-admin users immediately
                 await authService.logout();
