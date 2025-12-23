@@ -6,6 +6,6 @@
         "forceConsistentCasingInFileNames": true,
         "noUnusedLocals": true
     },
-    "include": ["src/**/*.ts", "src/**/*.spec.ts"],
+    "include": ["src/**/*.ts", "src/**/*.spec.ts", "scripts/**/*.ts"],
     "exclude": ["node_modules"]
 }

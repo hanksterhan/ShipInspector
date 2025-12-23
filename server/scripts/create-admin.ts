@@ -4,10 +4,7 @@
  * This script creates an initial admin user in the database.
  * Run this manually after setting up your .env file.
  * 
- * Usage:
- *   npm run create-admin
- *   or
- *   ts-node server/scripts/create-admin.ts
+ * Usage: npm run create-admin
  * 
  * Required .env variables:
  *   ADMIN_EMAIL=admin@example.com
@@ -16,15 +13,27 @@
 
 import dotenv from "dotenv";
 import path from "path";
-
-// Load environment variables
-const envPath = path.resolve(__dirname, "../../.env");
-dotenv.config({ path: envPath });
-
-// Import after dotenv is configured
+import fs from "fs";
 import db from "../src/config/database";
 import bcrypt from "bcryptjs";
 import { userExists } from "../src/services/userService";
+
+// Load environment variables
+// When compiled, __dirname is dist/server/scripts, so we need to go up 3 levels to server directory
+// When running from source with ts-node, __dirname is scripts, so we go up one level
+// Use a more robust approach: find server directory by going up until we find package.json
+let serverDir = __dirname;
+while (!fs.existsSync(path.join(serverDir, "package.json"))) {
+    const parent = path.dirname(serverDir);
+    if (parent === serverDir) {
+        // Reached root, fallback to going up from __dirname
+        serverDir = path.resolve(__dirname, "../..");
+        break;
+    }
+    serverDir = parent;
+}
+const envPath = path.join(serverDir, ".env");
+dotenv.config({ path: envPath });
 
 async function createAdminUser() {
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -92,12 +101,16 @@ async function createAdminUser() {
 }
 
 // Run the script
-createAdminUser()
-    .then(() => {
-        process.exit(0);
-    })
-    .catch((error) => {
-        console.error("❌ Fatal error:", error);
-        process.exit(1);
-    });
+if (require.main === module) {
+    createAdminUser()
+        .then(() => {
+            process.exit(0);
+        })
+        .catch((error) => {
+            console.error("❌ Fatal error:", error);
+            process.exit(1);
+        });
+}
+
+export { createAdminUser };
 

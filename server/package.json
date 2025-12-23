@@ -11,8 +11,9 @@
         "test": "jest",
         "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/",
         "generate-metrics": "node scripts/generate-metrics-data.js",
-        "seed:equity-cache": "ts-node scripts/seed-equity-cache.ts",
-        "create-admin": "ts-node scripts/create-admin.ts"
+        "seed:equity-cache": "npm run build && ts-node dist/server/scripts/seed-equity-cache.js",
+        "create-admin": "npm run build && ts-node dist/server/scripts/create-admin.js",
+        "postinstall": "npm rebuild better-sqlite3"
     },
     "keywords": [],
     "author": "",
