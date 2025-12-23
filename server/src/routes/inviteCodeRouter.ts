@@ -137,6 +137,42 @@ function createRouter(): IRouter {
         inviteCodeHandler.getUsedInviteCodes
     );
 
+    /**
+     * @swagger
+     * /invite-codes/{code}:
+     *   delete:
+     *     tags:
+     *       - Invite Codes
+     *     summary: Delete an invite code (admin only)
+     *     description: Deletes an invite code by its code string
+     *     security:
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: code
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The invite code to delete
+     *     responses:
+     *       '200':
+     *         description: Invite code deleted successfully
+     *       '400':
+     *         description: Invite code is required
+     *       '404':
+     *         description: Invite code not found
+     *       '401':
+     *         description: Not authenticated
+     *       '403':
+     *         description: Admin access required
+     */
+    router.delete(
+        "/invite-codes/:code",
+        authenticateSession,
+        requireAdmin,
+        inviteCodeHandler.deleteInviteCode
+    );
+
     return router;
 }
 

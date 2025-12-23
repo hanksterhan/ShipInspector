@@ -4,6 +4,7 @@ import {
     getAllInviteCodes,
     getUnusedInviteCodes,
     getUsedInviteCodes,
+    deleteInviteCode,
 } from "../services/inviteCodeService";
 
 /**
@@ -87,9 +88,44 @@ export function getUsedInviteCodesHandler(req: Request, res: Response): void {
     }
 }
 
+/**
+ * Delete an invite code (admin only)
+ */
+export function deleteInviteCodeHandler(req: Request, res: Response): void {
+    try {
+        const { code } = req.params;
+
+        if (!code) {
+            res.status(400).json({
+                error: "Invite code is required",
+            });
+            return;
+        }
+
+        const deleted = deleteInviteCode(code);
+
+        if (!deleted) {
+            res.status(404).json({
+                error: "Invite code not found",
+            });
+            return;
+        }
+
+        res.json({
+            message: "Invite code deleted successfully",
+        });
+    } catch (error: any) {
+        console.error("Delete invite code error:", error);
+        res.status(500).json({
+            error: "Failed to delete invite code",
+        });
+    }
+}
+
 export const inviteCodeHandler = {
     createInviteCode: createInviteCodeHandler,
     getAllInviteCodes: getAllInviteCodesHandler,
     getUnusedInviteCodes: getUnusedInviteCodesHandler,
     getUsedInviteCodes: getUsedInviteCodesHandler,
+    deleteInviteCode: deleteInviteCodeHandler,
 };
