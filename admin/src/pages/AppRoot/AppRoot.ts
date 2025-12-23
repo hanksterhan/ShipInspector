@@ -6,10 +6,6 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 
-// Explicitly import LoginPage component to ensure it's registered
-import "../LoginPage/loginPage";
-import { LoginPage } from "../LoginPage/loginPage";
-
 import { menuStore, authStore, routerStore } from "../../stores/index";
 
 @customElement("app-root")
@@ -66,10 +62,6 @@ export class AppRoot extends MobxLitElement {
             !isAuthenticated &&
             (currentRoute === "/" || currentRoute === "/login")
         ) {
-            // Force component registration by referencing the class
-            if (!customElements.get("login-page")) {
-                customElements.define("login-page", LoginPage);
-            }
             return html`<login-page></login-page>`;
         }
 
@@ -112,6 +104,8 @@ export class AppRoot extends MobxLitElement {
                             }
 
                             switch (route) {
+                                case "/invite-management":
+                                    return html`<invite-management></invite-management>`;
                                 default:
                                     return html`<login-page></login-page>`;
                             }
