@@ -1,5 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { databaseHandler } from "../handlers/databaseHandler";
+import { authenticateSession, databaseRateLimiter } from "../middlewares";
 
 /**
  * @swagger
@@ -70,7 +71,12 @@ function createRouter(): IRouter {
      *             schema:
      *               $ref: '#/components/schemas/ApiErrorResponse'
      */
-    router.post("/db/equity-cache/seed", databaseHandler.seedEquityCache);
+    router.post(
+        "/db/equity-cache/seed",
+        authenticateSession,
+        databaseRateLimiter,
+        databaseHandler.seedEquityCache
+    );
 
     /**
      * @swagger
@@ -115,7 +121,12 @@ function createRouter(): IRouter {
      *             schema:
      *               $ref: '#/components/schemas/ApiErrorResponse'
      */
-    router.get("/db/equity-cache/stats", databaseHandler.getEquityCacheStats);
+    router.get(
+        "/db/equity-cache/stats",
+        authenticateSession,
+        databaseRateLimiter,
+        databaseHandler.getEquityCacheStats
+    );
 
     return router;
 }

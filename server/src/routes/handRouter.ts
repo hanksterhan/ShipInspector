@@ -1,5 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { handHandler } from "../handlers";
+import { authenticateSession, strictRateLimiter } from "../middlewares";
 
 /**
  * @swagger
@@ -77,7 +78,12 @@ function createRouter(): IRouter {
      *             example:
      *               error: "Hole cards are required"
      */
-    router.post("/poker/hand/evaluate", handHandler.evaluateHand);
+    router.post(
+        "/poker/hand/evaluate",
+        authenticateSession,
+        strictRateLimiter,
+        handHandler.evaluateHand
+    );
 
     /**
      * @swagger
@@ -145,7 +151,12 @@ function createRouter(): IRouter {
      *             schema:
      *               $ref: '#/components/schemas/ApiErrorResponse'
      */
-    router.post("/poker/hand/compare", handHandler.compareHands);
+    router.post(
+        "/poker/hand/compare",
+        authenticateSession,
+        strictRateLimiter,
+        handHandler.compareHands
+    );
 
     /**
      * @swagger
@@ -227,7 +238,12 @@ function createRouter(): IRouter {
      *             example:
      *               error: "At least 2 players are required"
      */
-    router.post("/poker/equity/calculate", handHandler.calculateEquity);
+    router.post(
+        "/poker/equity/calculate",
+        authenticateSession,
+        strictRateLimiter,
+        handHandler.calculateEquity
+    );
 
     return router;
 }

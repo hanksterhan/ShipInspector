@@ -18,7 +18,20 @@ const options: swaggerJsdoc.Options = {
                 description: "Development server",
             },
         ],
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
         components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                    description: "Enter JWT token obtained from /auth/login",
+                },
+            },
             schemas: {
                 Card: {
                     type: "object",

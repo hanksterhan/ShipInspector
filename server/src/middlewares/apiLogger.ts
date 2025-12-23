@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { sanitizeObject } from "./sanitize";
 
 const PATHS_TO_SKIP = [
     "/favicon.ico",
@@ -19,7 +20,11 @@ export async function apiLogger(
 
     const apiMetadata = `API Logger: ${req.method} ${req.originalUrl}`;
     console.info(apiMetadata);
-    console.info(`    body: ${JSON.stringify(req.body)}`);
+
+    // Sanitize request body before logging
+    const sanitizedBody = req.body ? sanitizeObject(req.body) : req.body;
+    console.info(`    body: ${JSON.stringify(sanitizedBody)}`);
+
     const startTime = new Date();
 
     res.on("finish", () => {

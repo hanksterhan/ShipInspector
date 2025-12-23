@@ -4,7 +4,15 @@ import { styles } from "./styles.css";
 import { reaction } from "mobx";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
-import { menuStore, cardStore, deckStore, equityStore, settingsStore } from "../../stores/index";
+import {
+    menuStore,
+    cardStore,
+    deckStore,
+    equityStore,
+    settingsStore,
+    authStore,
+    routerStore,
+} from "../../stores/index";
 import { pokerIcon, percentageIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
 
@@ -49,6 +57,8 @@ export class Menu extends MobxLitElement {
 
     navigateTo(page: AppPages) {
         menuStore.setSelectedPage(page);
+        // Also update router
+        routerStore.navigate(`/${page}`);
     }
 
     handleNewHand() {
@@ -123,6 +133,17 @@ export class Menu extends MobxLitElement {
                     >
                         New hand
                     </sp-action-button>
+                    ${authStore.isAuthenticated
+                        ? html`<sp-action-button
+                              class="logout-button"
+                              size="s"
+                              @click=${async () => {
+                                  await authStore.logout();
+                              }}
+                          >
+                              Logout
+                          </sp-action-button>`
+                        : null}
                 </div>
             </div>
         `;

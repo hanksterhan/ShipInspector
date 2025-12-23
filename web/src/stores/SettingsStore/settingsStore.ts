@@ -39,9 +39,7 @@ export class SettingsStore {
     }
 
     @action
-    setEquityCalculationMode(
-        mode: "Monte Carlo" | "Exact" | "Both"
-    ) {
+    setEquityCalculationMode(mode: "Monte Carlo" | "Exact" | "Both") {
         this.equityCalculationMode = mode;
     }
 

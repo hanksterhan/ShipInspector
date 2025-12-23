@@ -91,7 +91,9 @@ export class EquityDisplay extends MobxLitElement {
                 return html`
                     <div class="equity-display empty">
                         ${this.label
-                            ? html`<div class="equity-label">${this.label}</div>`
+                            ? html`<div class="equity-label">
+                                  ${this.label}
+                              </div>`
                             : ""}
                         <span class="empty-text"
                             >Select at least 2 player hands</span
@@ -209,17 +211,21 @@ export class EquityDisplay extends MobxLitElement {
                         : ""}
                 </div>
                 <div class="equity-footer">
-                    <span class="samples-text"
-                        >Samples: ${samplesText}</span
-                    >
+                    <span class="samples-text">Samples: ${samplesText}</span>
                     ${fromCache || timeText
                         ? html`
                               <div class="footer-right">
                                   ${fromCache
-                                      ? html`<span class="cache-indicator" title="Result retrieved from cache">Cached</span>`
+                                      ? html`<span
+                                            class="cache-indicator"
+                                            title="Result retrieved from cache"
+                                            >Cached</span
+                                        >`
                                       : ""}
                                   ${timeText
-                                      ? html`<span class="time-text">${timeText}</span>`
+                                      ? html`<span class="time-text"
+                                            >${timeText}</span
+                                        >`
                                       : ""}
                               </div>
                           `
