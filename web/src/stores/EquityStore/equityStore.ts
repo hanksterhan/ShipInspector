@@ -55,6 +55,12 @@ export class EquityStore {
     @observable
     calculationTimeExact: number | null = null; // Time in milliseconds
 
+    @observable
+    fromCacheMC: boolean = false;
+
+    @observable
+    fromCacheExact: boolean = false;
+
     // Cache keys to track which hand configuration each result is for
     private cacheKeyMC: string | null = null;
     private cacheKeyExact: string | null = null;
@@ -127,6 +133,8 @@ export class EquityStore {
         this.isLoadingExact = false;
         this.calculationTimeMC = null;
         this.calculationTimeExact = null;
+        this.fromCacheMC = false;
+        this.fromCacheExact = false;
         this.players = [];
         this.board = [];
         this.dead = [];
@@ -174,11 +182,13 @@ export class EquityStore {
         // Store the equity result based on mode
         if (mode === "mc") {
             this.equityResultMC = response.equity;
+            this.fromCacheMC = response.fromCache ?? false;
             if (cacheKey) {
                 this.cacheKeyMC = cacheKey;
             }
         } else if (mode === "exact") {
             this.equityResultExact = response.equity;
+            this.fromCacheExact = response.fromCache ?? false;
             if (cacheKey) {
                 this.cacheKeyExact = cacheKey;
             }
@@ -242,6 +252,8 @@ export class EquityStore {
             this.isLoadingExact = false;
             this.calculationTimeMC = null;
             this.calculationTimeExact = null;
+            this.fromCacheMC = false;
+            this.fromCacheExact = false;
             // Clear cache keys when we don't have enough players
             this.cacheKeyMC = null;
             this.cacheKeyExact = null;
@@ -260,6 +272,8 @@ export class EquityStore {
             this.isLoadingExact = false;
             this.calculationTimeMC = null;
             this.calculationTimeExact = null;
+            this.fromCacheMC = false;
+            this.fromCacheExact = false;
             // Clear cache keys when board is incomplete
             this.cacheKeyMC = null;
             this.cacheKeyExact = null;

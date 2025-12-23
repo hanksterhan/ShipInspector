@@ -57,6 +57,7 @@ export interface CalculateEquityResponse {
     players: Card[][];
     board: Card[];
     dead: Card[];
+    fromCache?: boolean; // Indicates if the result was retrieved from cache
 }
 
 // Error Response (shared format)

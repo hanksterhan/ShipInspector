@@ -113,6 +113,20 @@ export const styles = css`
         flex-shrink: 0;
     }
 
+    .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cache-indicator {
+        font-size: 0.75rem;
+        color: var(--spectrum-global-color-blue-600);
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-weight: 500;
+    }
+
     .time-text {
         font-size: 0.75rem;
         color: var(--spectrum-global-color-gray-600);

@@ -200,7 +200,7 @@ class HandHandler {
 
             // Calculate equity (with lookup table caching for performance)
             // Use computeEquityWithCache for automatic caching, or computeEquity for no cache
-            const equityResult = computeEquityWithCache(
+            const { result: equityResult, fromCache } = computeEquityWithCache(
                 parsedPlayers,
                 parsedBoard,
                 options,
@@ -221,6 +221,7 @@ class HandHandler {
                 players: parsedPlayers.map((p) => p.cards),
                 board: parsedBoard.cards,
                 dead: parsedDead,
+                fromCache,
             };
             res.status(200).json(response);
         } catch (error: any) {

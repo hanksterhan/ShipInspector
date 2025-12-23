@@ -116,20 +116,22 @@ export function getLookupTable(
  * It checks the SQLite database first, and if not found, computes and caches the result.
  *
  * The cache is stored in SQLite and persists across server restarts.
+ *
+ * @returns Object containing the equity result and a flag indicating if it was from cache
  */
 export function computeEquityWithCache(
     players: readonly Hole[],
     board: Board,
     opts: EquityOptions = {},
     dead: readonly Card[] = []
-): EquityResult {
+): { result: EquityResult; fromCache: boolean } {
     // Get or create the persistent lookup table
     const lookupTable = getLookupTable();
 
     // Try to get from cache
     const cached = lookupTable.get(players, board, dead, opts);
     if (cached !== null) {
-        return cached;
+        return { result: cached, fromCache: true };
     }
 
     // Compute result
@@ -138,7 +140,7 @@ export function computeEquityWithCache(
     // Store in cache
     lookupTable.set(players, board, dead, result, opts);
 
-    return result;
+    return { result, fromCache: false };
 }
 
 /**

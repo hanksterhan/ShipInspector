@@ -176,6 +176,14 @@ export class EquityDisplay extends MobxLitElement {
             }
         };
 
+        // Get cache indicator based on mode
+        const fromCache =
+            this.mode === "mc"
+                ? equityStore.fromCacheMC
+                : this.mode === "exact"
+                  ? equityStore.fromCacheExact
+                  : false;
+
         const timeText = formatTime(calculationTime);
         const samplesText = formatSamples(samples);
 
@@ -204,8 +212,17 @@ export class EquityDisplay extends MobxLitElement {
                     <span class="samples-text"
                         >Samples: ${samplesText}</span
                     >
-                    ${timeText
-                        ? html`<span class="time-text">${timeText}</span>`
+                    ${fromCache || timeText
+                        ? html`
+                              <div class="footer-right">
+                                  ${fromCache
+                                      ? html`<span class="cache-indicator" title="Result retrieved from cache">Cached</span>`
+                                      : ""}
+                                  ${timeText
+                                      ? html`<span class="time-text">${timeText}</span>`
+                                      : ""}
+                              </div>
+                          `
                         : ""}
                 </div>
             </div>
