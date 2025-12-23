@@ -23,8 +23,7 @@ export class LoginPage extends MobxLitElement {
     @state()
     private confirmPassword = "";
 
-    private async handleSubmit(e: Event): Promise<void> {
-        e.preventDefault();
+    private async handleSubmit(): Promise<void> {
         authStore.clearError();
 
         if (this.isLoginMode) {
@@ -46,6 +45,12 @@ export class LoginPage extends MobxLitElement {
         }
     }
 
+    private handleKeyDown(e: KeyboardEvent): void {
+        if (e.key === "Enter") {
+            this.handleSubmit();
+        }
+    }
+
     private toggleMode(): void {
         this.isLoginMode = !this.isLoginMode;
         this.email = "";
@@ -60,11 +65,6 @@ export class LoginPage extends MobxLitElement {
                 <div class="login-container">
                     <div class="login-card">
                         <h1 class="login-title">Ship Inspector</h1>
-                        <p class="login-subtitle">
-                            ${this.isLoginMode
-                                ? "Sign in to your account"
-                                : "Create a new account"}
-                        </p>
 
                         ${authStore.error
                             ? html`<div
@@ -74,7 +74,7 @@ export class LoginPage extends MobxLitElement {
                               </div>`
                             : null}
 
-                        <form @submit=${this.handleSubmit} class="auth-form">
+                        <div class="auth-fields">
                             <sp-field-label for="email">Email</sp-field-label>
                             <sp-textfield
                                 id="email"
@@ -84,7 +84,7 @@ export class LoginPage extends MobxLitElement {
                                 @input=${(e: any) => {
                                     this.email = e.target.value;
                                 }}
-                                required
+                                @keydown=${this.handleKeyDown}
                                 autocomplete="email"
                             ></sp-textfield>
 
@@ -99,7 +99,7 @@ export class LoginPage extends MobxLitElement {
                                 @input=${(e: any) => {
                                     this.password = e.target.value;
                                 }}
-                                required
+                                @keydown=${this.handleKeyDown}
                                 autocomplete=${this.isLoginMode
                                     ? "current-password"
                                     : "new-password"}
@@ -119,16 +119,16 @@ export class LoginPage extends MobxLitElement {
                                               this.confirmPassword =
                                                   e.target.value;
                                           }}
-                                          required
+                                          @keydown=${this.handleKeyDown}
                                           autocomplete="new-password"
                                       ></sp-textfield>
                                   `
                                 : null}
 
                             <sp-button
-                                type="submit"
                                 variant="accent"
                                 ?disabled=${authStore.isLoading}
+                                @click=${this.handleSubmit}
                                 class="submit-button"
                             >
                                 ${authStore.isLoading
@@ -137,7 +137,7 @@ export class LoginPage extends MobxLitElement {
                                       ? "Sign In"
                                       : "Sign Up"}
                             </sp-button>
-                        </form>
+                        </div>
 
                         <div class="toggle-mode">
                             <span>

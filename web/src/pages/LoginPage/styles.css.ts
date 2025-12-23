@@ -41,30 +41,22 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-900);
     }
 
-    .login-subtitle {
-        margin: 0 0 var(--spectrum-global-dimension-size-400) 0;
-        text-align: center;
-        color: var(--spectrum-global-color-gray-700);
-        font-size: var(--spectrum-global-dimension-font-size-200);
-    }
-
-    .auth-form {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spectrum-global-dimension-size-200);
-    }
-
-    .auth-form sp-field-label {
+    .auth-fields sp-field-label {
         margin-bottom: var(--spectrum-global-dimension-size-50);
-        margin-top: var(--spectrum-global-dimension-size-100);
+        margin-top: var(--spectrum-global-dimension-size-200);
     }
 
-    .auth-form sp-field-label:first-of-type {
+    .auth-fields sp-field-label:first-of-type {
         margin-top: 0;
     }
 
+    .auth-fields sp-textfield {
+        width: 100%;
+    }
+
     .submit-button {
-        margin-top: var(--spectrum-global-dimension-size-200);
+        margin-top: var(--spectrum-global-dimension-size-400);
+        margin-bottom: var(--spectrum-global-dimension-size-200);
         width: 100%;
     }
 
