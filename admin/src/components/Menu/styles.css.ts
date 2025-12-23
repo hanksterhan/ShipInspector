@@ -68,9 +68,9 @@ export const styles = css`
 
     sp-button:hover,
     sp-button.selected {
-        background: rgba(100, 200, 100, 0.1);
-        color: #b6fcb6;
-        box-shadow: 0 0 8px 2px #3a5f3a;
+        background: rgba(139, 0, 0, 0.1);
+        color: #ffb3b3;
+        box-shadow: 0 0 8px 2px #5a0000;
     }
 
     .menu-item-container {

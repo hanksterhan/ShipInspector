@@ -40,7 +40,7 @@ export class HttpClient {
             }
             const error = new Error(errorMessage);
             (error as any).status = response.status;
-            
+
             // If 403 (admin access required), redirect to login
             if (response.status === 403) {
                 // Dynamically import router to avoid circular dependencies
@@ -48,7 +48,7 @@ export class HttpClient {
                     routerStore.navigate("/");
                 });
             }
-            
+
             throw error;
         }
 

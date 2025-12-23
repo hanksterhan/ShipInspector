@@ -5,7 +5,7 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         height: 100%;
-        background-color: #8B0000;
+        background-color: #8b0000;
     }
 
     .app-root-flex-container {

@@ -11,7 +11,7 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: #8B0000;
+        background: #8b0000;
     }
 
     .login-container {

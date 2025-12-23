@@ -75,7 +75,8 @@ export class AuthStore {
                 runInAction(() => {
                     this.user = null;
                     this.isLoading = false;
-                    this.error = "Admin access required. This application is only available to administrators.";
+                    this.error =
+                        "Admin access required. This application is only available to administrators.";
                 });
                 return;
             }
@@ -91,7 +92,8 @@ export class AuthStore {
             // Handle 403 (admin access required) - though login endpoint doesn't check this
             if (error.status === 403) {
                 runInAction(() => {
-                    this.error = "Admin access required. This application is only available to administrators.";
+                    this.error =
+                        "Admin access required. This application is only available to administrators.";
                     this.isLoading = false;
                     this.user = null;
                 });
@@ -128,7 +130,8 @@ export class AuthStore {
                 runInAction(() => {
                     this.user = null;
                     this.isLoading = false;
-                    this.error = "Admin access required. This application is only available to administrators.";
+                    this.error =
+                        "Admin access required. This application is only available to administrators.";
                 });
                 return;
             }
