@@ -25,6 +25,16 @@ import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
+// Initialize user metrics (admin user should be created via script)
+import { getUserCount } from "./services/userService";
+import { totalUsersGauge } from "./config/metrics";
+
+// Initialize total users gauge with current user count from database
+const userCount = getUserCount();
+totalUsersGauge.add(userCount);
+console.log(`Initialized user metrics with ${userCount} users`);
+console.log(`Note: Create admin user by running: npm run create-admin`);
+
 // Equity cache is automatically initialized on first use (SQLite)
 // Database location: server/data/equity_cache.db
 // To use custom path, set EQUITY_CACHE_DB_PATH environment variable

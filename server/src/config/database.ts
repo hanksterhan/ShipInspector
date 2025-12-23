@@ -62,4 +62,56 @@ db.exec(`
     ON invite_codes(created_at)
 `);
 
+// Users table for authentication
+db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        user_id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER
+    )
+`);
+
+// Create indexes for users
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_email 
+    ON users(email)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_role 
+    ON users(role)
+`);
+
+// Migration: Add role column if it doesn't exist (for existing databases)
+try {
+    db.exec(`
+        ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'
+    `);
+} catch (error: any) {
+    // Column already exists, ignore error
+    if (!error.message?.includes("duplicate column")) {
+        console.warn("Migration note: role column may already exist");
+    }
+}
+
+// Migration: Add updated_at column if it doesn't exist
+try {
+    db.exec(`
+        ALTER TABLE users ADD COLUMN updated_at INTEGER
+    `);
+} catch (error: any) {
+    // Column already exists, ignore error
+    if (!error.message?.includes("duplicate column")) {
+        console.warn("Migration note: updated_at column may already exist");
+    }
+}
+
+// Update existing users without role to have 'user' role
+db.exec(`
+    UPDATE users SET role = 'user' WHERE role IS NULL
+`);
+
 export default db;

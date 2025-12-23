@@ -11,7 +11,8 @@
         "test": "jest",
         "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/",
         "generate-metrics": "node scripts/generate-metrics-data.js",
-        "seed:equity-cache": "ts-node scripts/seed-equity-cache.ts"
+        "seed:equity-cache": "ts-node scripts/seed-equity-cache.ts",
+        "create-admin": "ts-node scripts/create-admin.ts"
     },
     "keywords": [],
     "author": "",

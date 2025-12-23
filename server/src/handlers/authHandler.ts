@@ -5,47 +5,16 @@ import {
     markInviteCodeAsUsed,
 } from "../services/inviteCodeService";
 import {
+    getUserByEmail,
+    getUserById,
+    createUser,
+    userExists,
+} from "../services/userService";
+import {
     userRegistrationCounter,
     userLoginCounter,
     totalUsersGauge,
 } from "../config/metrics";
-
-// Simple in-memory user store
-// In production, this should be replaced with a proper database
-interface User {
-    userId: string;
-    email: string;
-    passwordHash: string;
-}
-
-// Default admin user (password: "admin123")
-// In production, users should be stored in a database
-// For now, we'll use environment variables or a default admin
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
-
-// In-memory user store (replace with database in production)
-const users: Map<string, User> = new Map(); // Keyed by email
-
-// Initialize default admin user on first load
-async function initializeDefaultUser(): Promise<void> {
-    const passwordHash = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
-    users.set(DEFAULT_ADMIN_EMAIL, {
-        userId: "1",
-        email: DEFAULT_ADMIN_EMAIL,
-        passwordHash,
-    });
-}
-
-// Initialize on module load
-initializeDefaultUser()
-    .then(() => {
-        // Initialize total users gauge with current user count
-        totalUsersGauge.add(users.size);
-    })
-    .catch((err) => {
-        console.error("Failed to initialize default user:", err);
-    });
 
 /**
  * Login handler - validates credentials and creates session
@@ -70,7 +39,7 @@ export async function login(req: Request, res: Response): Promise<void> {
             return;
         }
 
-        const user = users.get(email.toLowerCase());
+        const user = getUserByEmail(email);
         if (!user) {
             userLoginCounter.add(1, {
                 status: "failure",
@@ -100,6 +69,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         // Create session
         (req.session as any).userId = user.userId;
         (req.session as any).email = user.email;
+        (req.session as any).role = user.role;
 
         // Record successful login
         userLoginCounter.add(1, {
@@ -110,6 +80,7 @@ export async function login(req: Request, res: Response): Promise<void> {
             user: {
                 userId: user.userId,
                 email: user.email,
+                role: user.role,
             },
         });
     } catch (error) {
@@ -183,7 +154,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         }
 
         const emailLower = email.toLowerCase();
-        if (users.has(emailLower)) {
+        if (userExists(emailLower)) {
             userRegistrationCounter.add(1, {
                 status: "failure",
                 failure_reason: "email_already_registered",
@@ -205,16 +176,8 @@ export async function register(req: Request, res: Response): Promise<void> {
             return;
         }
 
-        const passwordHash = await bcrypt.hash(password, 10);
-        const userId = (users.size + 1).toString();
-
-        const user: User = {
-            userId,
-            email: emailLower,
-            passwordHash,
-        };
-
-        users.set(emailLower, user);
+        // Create user in database
+        const user = await createUser(emailLower, password);
 
         // Mark invite code as used
         const codeMarked = markInviteCodeAsUsed(inviteCode, emailLower);
@@ -234,11 +197,13 @@ export async function register(req: Request, res: Response): Promise<void> {
         // Create session
         (req.session as any).userId = user.userId;
         (req.session as any).email = user.email;
+        (req.session as any).role = user.role;
 
         res.status(201).json({
             user: {
                 userId: user.userId,
                 email: user.email,
+                role: user.role,
             },
         });
     } catch (error) {
@@ -262,10 +227,20 @@ export function getCurrentUser(req: Request, res: Response): void {
         return;
     }
 
+    // Get user from database to ensure we have current role
+    const user = getUserById(session.userId);
+    if (!user) {
+        res.status(401).json({
+            error: "User not found",
+        });
+        return;
+    }
+
     res.json({
         user: {
-            userId: session.userId,
-            email: session.email,
+            userId: user.userId,
+            email: user.email,
+            role: user.role,
         },
     });
 }
