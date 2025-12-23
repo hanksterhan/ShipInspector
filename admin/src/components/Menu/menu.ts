@@ -6,7 +6,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import { menuStore, authStore, routerStore } from "../../stores/index";
 import { AppPages } from "../../stores/MenuStore/menuStore";
-import { compassIcon, anchorIcon } from "../../assets";
+import { inviteIcon, docsIcon } from "../../assets";
 
 interface MenuItemDetails {
     id: string;
@@ -18,12 +18,12 @@ const MENU_ITEMS: MenuItemDetails[] = [
     {
         id: "invite-management",
         name: "Invite Management",
-        icon: html`<span class="menu-icon">${compassIcon}</span>`,
+        icon: html`<span class="menu-icon">${inviteIcon}</span>`,
     },
     {
         id: "swagger-docs",
         name: "API Documentation",
-        icon: html`<span class="menu-icon">${anchorIcon}</span>`,
+        icon: html`<span class="menu-icon">${docsIcon}</span>`,
     },
 ];
 
