@@ -20,7 +20,7 @@ export const styles = css`
 
     .selected-holes-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
     }

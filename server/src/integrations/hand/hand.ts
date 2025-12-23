@@ -8,6 +8,7 @@ class Hand {
     /**
      * Evaluate a 7-card hand to determine the best 5-card hand
      * Uses symmetry reduction via memoization to cache isomorphic evaluations
+     * Optimized to evaluate on-the-fly without generating all combinations
      * @param cards7 - The 7 cards to evaluate
      * @returns The HandRank object for the best 5-card hand
      */
@@ -23,22 +24,36 @@ class Hand {
             return cached;
         }
 
-        // Generate all combinations of 5 cards from 7
-        const combinations = this.getCombinations(cards7, 5);
+        // Optimized: evaluate on-the-fly without generating all combinations
+        // This avoids creating 21 arrays in memory
+        let bestHand: HandRank | null = null;
+        const temp5Cards: Card[] = new Array(5);
 
-        // Evaluate each combination and find the best
-        let bestHand = this.evaluate5(combinations[0]);
-        for (let i = 1; i < combinations.length; i++) {
-            const hand = this.evaluate5(combinations[i]);
-            if (this.compareRanks(hand, bestHand) > 0) {
-                bestHand = hand;
+        // Iterate through all C(7,5) = 21 combinations without storing them
+        for (let i = 0; i < 7; i++) {
+            for (let j = i + 1; j < 7; j++) {
+                // Build 5-card combination by excluding cards at indices i and j
+                let idx = 0;
+                for (let k = 0; k < 7; k++) {
+                    if (k !== i && k !== j) {
+                        temp5Cards[idx++] = cards7[k];
+                    }
+                }
+
+                const hand = this.evaluate5(temp5Cards);
+                if (
+                    bestHand === null ||
+                    this.compareRanks(hand, bestHand) > 0
+                ) {
+                    bestHand = hand;
+                }
             }
         }
 
         // Cache the result
-        this.evaluationCache.set(cacheKey, bestHand);
+        this.evaluationCache.set(cacheKey, bestHand!);
 
-        return bestHand;
+        return bestHand!;
     }
 
     /**
@@ -195,30 +210,6 @@ class Hand {
         }
 
         return uniqueRanks[4];
-    }
-
-    /**
-     * Generate all combinations of k elements from array
-     */
-    private getCombinations<T>(array: T[], k: number): T[][] {
-        if (k === 0) return [[]];
-        if (k === array.length) return [array];
-        if (k > array.length) return [];
-
-        const combinations: T[][] = [];
-
-        for (let i = 0; i <= array.length - k; i++) {
-            const head = array[i];
-            const tailCombinations = this.getCombinations(
-                array.slice(i + 1),
-                k - 1
-            );
-            for (const tailCombo of tailCombinations) {
-                combinations.push([head, ...tailCombo]);
-            }
-        }
-
-        return combinations;
     }
 
     /**

@@ -129,6 +129,56 @@ export class EquityDisplay extends MobxLitElement {
         // Only show tie if it's 0.01% or more
         const hasTie = parseFloat(tiePercentage) >= 0.01;
 
+        // Get calculation time based on mode
+        const calculationTime =
+            this.mode === "mc"
+                ? equityStore.calculationTimeMC
+                : this.mode === "exact"
+                  ? equityStore.calculationTimeExact
+                  : null;
+
+        // Format time as seconds (e.g., "4s" or "0.5s")
+        const formatTime = (ms: number | null): string => {
+            if (ms === null) return "";
+            const seconds = ms / 1000;
+            if (seconds < 1) {
+                return `${seconds.toFixed(1)}s`;
+            }
+            // Show whole number if it's a whole number, otherwise 1 decimal place
+            const rounded = Math.round(seconds * 10) / 10;
+            if (rounded % 1 === 0) {
+                return `${Math.round(seconds)}s`;
+            }
+            return `${rounded.toFixed(1)}s`;
+        };
+
+        // Format samples with truncation
+        // >= 1,000,000: show as millions (e.g., 1,234,567 → 1.23M)
+        // >= 100,000: show rounded to nearest 10k in 10k units (e.g., 842,000 → 84k)
+        // >= 10,000: show rounded to nearest 10k in thousands (e.g., 50,000 → 50k)
+        // < 10,000: show as-is (e.g., 9321 → 9321)
+        const formatSamples = (count: number): string => {
+            if (count >= 1_000_000) {
+                const millions = count / 1_000_000;
+                return `${millions.toFixed(2)}M`;
+            } else if (count >= 100_000) {
+                // Round to nearest 10,000, then show in 10k units
+                const rounded = Math.round(count / 10_000) * 10_000;
+                const tenThousands = rounded / 10_000;
+                return `${tenThousands}k`;
+            } else if (count >= 10_000) {
+                // Round to nearest 10,000, then show in thousands
+                const rounded = Math.round(count / 10_000) * 10_000;
+                const thousands = rounded / 1_000;
+                return `${thousands}k`;
+            } else {
+                return count.toLocaleString();
+            }
+        };
+
+        const timeText = formatTime(calculationTime);
+        const samplesText = formatSamples(samples);
+
         return html`
             <div class="equity-display">
                 ${this.label
@@ -152,8 +202,11 @@ export class EquityDisplay extends MobxLitElement {
                 </div>
                 <div class="equity-footer">
                     <span class="samples-text"
-                        >Samples: ${samples.toLocaleString()}</span
+                        >Samples: ${samplesText}</span
                     >
+                    ${timeText
+                        ? html`<span class="time-text">${timeText}</span>`
+                        : ""}
                 </div>
             </div>
         `;

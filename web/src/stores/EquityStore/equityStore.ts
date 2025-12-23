@@ -49,6 +49,12 @@ export class EquityStore {
     @observable
     samples: number = 0;
 
+    @observable
+    calculationTimeMC: number | null = null; // Time in milliseconds
+
+    @observable
+    calculationTimeExact: number | null = null; // Time in milliseconds
+
     // Cache keys to track which hand configuration each result is for
     private cacheKeyMC: string | null = null;
     private cacheKeyExact: string | null = null;
@@ -119,6 +125,8 @@ export class EquityStore {
         this.isLoading = false;
         this.isLoadingMC = false;
         this.isLoadingExact = false;
+        this.calculationTimeMC = null;
+        this.calculationTimeExact = null;
         this.players = [];
         this.board = [];
         this.dead = [];
@@ -232,6 +240,8 @@ export class EquityStore {
             this.isLoading = false;
             this.isLoadingMC = false;
             this.isLoadingExact = false;
+            this.calculationTimeMC = null;
+            this.calculationTimeExact = null;
             // Clear cache keys when we don't have enough players
             this.cacheKeyMC = null;
             this.cacheKeyExact = null;
@@ -248,6 +258,8 @@ export class EquityStore {
             this.isLoading = false;
             this.isLoadingMC = false;
             this.isLoadingExact = false;
+            this.calculationTimeMC = null;
+            this.calculationTimeExact = null;
             // Clear cache keys when board is incomplete
             this.cacheKeyMC = null;
             this.cacheKeyExact = null;
@@ -328,6 +340,9 @@ export class EquityStore {
                     ? { mode: "mc" as const, iterations: 50000 }
                     : { mode: "exact" as const };
 
+            // Track calculation start time
+            const startTime = performance.now();
+
             // Call the API with abort signal
             const result = await pokerService.getHandEquity(
                 players,
@@ -339,6 +354,17 @@ export class EquityStore {
 
             // Only parse the response if this request wasn't aborted
             if (!abortController.signal.aborted) {
+                // Calculate duration
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+
+                // Store calculation time
+                if (calculationMode === "mc") {
+                    this.calculationTimeMC = duration;
+                } else {
+                    this.calculationTimeExact = duration;
+                }
+
                 this.parseEquityResponse(result, calculationMode, cacheKey);
             }
         } catch (err) {
@@ -426,22 +452,27 @@ export class EquityStore {
         // Make parallel requests only for modes that don't have cached results
         const mcPromise = hasMCCached
             ? Promise.resolve()
-            : pokerService
-            .getHandEquity(
-                players,
-                board,
-                { mode: "mc" as const, iterations: 50000 },
-                [],
-                abortControllerMC!.signal
-            )
-            .then((result) => {
-                if (
-                    abortControllerMC &&
-                    !abortControllerMC.signal.aborted
-                ) {
-                    this.parseEquityResponse(result, "mc", cacheKey);
-                }
-            })
+            : (() => {
+                  const startTime = performance.now();
+                  return pokerService
+                      .getHandEquity(
+                          players,
+                          board,
+                          { mode: "mc" as const, iterations: 50000 },
+                          [],
+                          abortControllerMC!.signal
+                      )
+                      .then((result) => {
+                          if (
+                              abortControllerMC &&
+                              !abortControllerMC.signal.aborted
+                          ) {
+                              const endTime = performance.now();
+                              this.calculationTimeMC = endTime - startTime;
+                              this.parseEquityResponse(result, "mc", cacheKey);
+                          }
+                      });
+              })()
             .catch((err) => {
                 if (
                     abortControllerMC &&
@@ -468,22 +499,27 @@ export class EquityStore {
 
         const exactPromise = hasExactCached
             ? Promise.resolve()
-            : pokerService
-            .getHandEquity(
-                players,
-                board,
-                { mode: "exact" as const },
-                [],
-                abortControllerExact!.signal
-            )
-            .then((result) => {
-                if (
-                    abortControllerExact &&
-                    !abortControllerExact.signal.aborted
-                ) {
-                    this.parseEquityResponse(result, "exact", cacheKey);
-                }
-            })
+            : (() => {
+                  const startTime = performance.now();
+                  return pokerService
+                      .getHandEquity(
+                          players,
+                          board,
+                          { mode: "exact" as const },
+                          [],
+                          abortControllerExact!.signal
+                      )
+                      .then((result) => {
+                          if (
+                              abortControllerExact &&
+                              !abortControllerExact.signal.aborted
+                          ) {
+                              const endTime = performance.now();
+                              this.calculationTimeExact = endTime - startTime;
+                              this.parseEquityResponse(result, "exact", cacheKey);
+                          }
+                      });
+              })()
             .catch((err) => {
                 if (
                     abortControllerExact &&

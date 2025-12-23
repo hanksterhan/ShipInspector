@@ -8,6 +8,9 @@ export const styles = css`
         padding: 0.75rem;
         background-color: var(--spectrum-global-color-gray-100);
         border-radius: 0.25rem;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
 
     .equity-label {
@@ -96,10 +99,24 @@ export const styles = css`
         margin-top: 0.25rem;
         padding-top: 0.5rem;
         border-top: 1px solid var(--spectrum-global-color-gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
     }
 
     .samples-text {
         font-size: 0.75rem;
         color: var(--spectrum-global-color-gray-600);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .time-text {
+        font-size: 0.75rem;
+        color: var(--spectrum-global-color-gray-600);
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 `;

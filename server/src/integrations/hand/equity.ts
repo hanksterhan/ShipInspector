@@ -6,6 +6,7 @@ import {
     Card,
     CardRank,
     CardSuit,
+    HandRank,
 } from "@common/interfaces";
 import { hand } from "./hand";
 import { trace } from "@opentelemetry/api";
@@ -145,36 +146,47 @@ function createSeededRandom(seed: number): () => number {
 
 /**
  * Evaluate a single board completion and determine winners
+ * Optimized to reduce array allocations
+ * Note: boardCards should always be 5 cards (complete board)
  */
 function evaluateBoard(
     players: readonly Hole[],
     boardCards: Card[]
 ): { winners: number[]; ties: boolean } {
-    const playerHands: {
-        rank: import("@common/interfaces").HandRank;
-        index: number;
-    }[] = [];
+    const numPlayers = players.length;
+    const boardLength = boardCards.length;
+
+    // Pre-allocate array for 7 cards to avoid repeated allocations
+    const all7Cards: Card[] = new Array(7);
 
     // Evaluate each player's best 7-card hand
-    for (let i = 0; i < players.length; i++) {
-        const all7Cards = [...players[i].cards, ...boardCards];
-        const rank = hand.evaluate7(all7Cards);
-        playerHands.push({ rank, index: i });
-    }
-
-    // Find the best hand(s)
-    let bestHand = playerHands[0].rank;
-    for (const { rank } of playerHands) {
-        if (hand.compareRanks(rank, bestHand) > 0) {
-            bestHand = rank;
+    const playerRanks: HandRank[] = new Array(numPlayers);
+    for (let i = 0; i < numPlayers; i++) {
+        // Build 7-card hand without creating new array (2 hole + 5 board)
+        const hole = players[i].cards;
+        all7Cards[0] = hole[0];
+        all7Cards[1] = hole[1];
+        for (let j = 0; j < boardLength; j++) {
+            all7Cards[2 + j] = boardCards[j];
         }
+
+        playerRanks[i] = hand.evaluate7(all7Cards);
     }
 
-    // Find all players with the best hand
-    const winners: number[] = [];
-    for (const { rank, index } of playerHands) {
-        if (hand.compareRanks(rank, bestHand) === 0) {
-            winners.push(index);
+    // Find the best hand and winners in a single pass
+    let bestHand = playerRanks[0];
+    const winners: number[] = [0];
+
+    for (let i = 1; i < numPlayers; i++) {
+        const comparison = hand.compareRanks(playerRanks[i], bestHand);
+        if (comparison > 0) {
+            // New best hand found
+            bestHand = playerRanks[i];
+            winners.length = 0; // Clear winners
+            winners.push(i);
+        } else if (comparison === 0) {
+            // Tie with best hand
+            winners.push(i);
         }
     }
 
@@ -314,6 +326,7 @@ function sampleWithoutReplacement<T>(
 /**
  * Monte Carlo simulation: randomly sample board completions
  * Uses reservoir sampling for efficient random selection
+ * Optimized to reduce array allocations
  */
 function monteCarlo(
     players: readonly Hole[],
@@ -330,8 +343,10 @@ function monteCarlo(
     // Create random number generator (seeded or unseeded)
     const random = seed !== undefined ? createSeededRandom(seed) : Math.random;
 
-    // Pre-allocate array for board to avoid repeated allocations
+    // Pre-allocate arrays to avoid repeated allocations
     const boardBase = board.cards;
+    const boardBaseLength = boardBase.length;
+    const completeBoard: Card[] = new Array(5); // Complete board is always 5 cards
 
     // Sample iterations - use reservoir sampling for better performance
     for (let iter = 0; iter < iterations; iter++) {
@@ -341,9 +356,16 @@ function monteCarlo(
             missing,
             random
         );
-        const sampledBoard = [...boardBase, ...sampled];
 
-        const { winners, ties: isTie } = evaluateBoard(players, sampledBoard);
+        // Build complete board without creating new array
+        for (let i = 0; i < boardBaseLength; i++) {
+            completeBoard[i] = boardBase[i];
+        }
+        for (let i = 0; i < missing; i++) {
+            completeBoard[boardBaseLength + i] = sampled[i];
+        }
+
+        const { winners, ties: isTie } = evaluateBoard(players, completeBoard);
 
         if (isTie) {
             const tieValue = 1 / winners.length;
