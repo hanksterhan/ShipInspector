@@ -1,6 +1,6 @@
 import { makeObservable, observable, action } from "mobx";
 
-export type Route = "/" | "/login" | "/poker-hands" | "/equity-calculator";
+export type Route = "/" | "/login" | "/invite-management";
 
 export class RouterStore {
     @observable
@@ -34,10 +34,8 @@ export class RouterStore {
         // Map paths to routes
         if (path === "/" || path === "/login") {
             this.currentRoute = "/";
-        } else if (path === "/poker-hands") {
-            this.currentRoute = "/poker-hands";
-        } else if (path === "/equity-calculator") {
-            this.currentRoute = "/equity-calculator";
+        } else if (path === "/invite-management") {
+            this.currentRoute = "/invite-management";
         } else {
             // Default to root
             this.currentRoute = "/";

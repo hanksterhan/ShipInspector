@@ -59,7 +59,7 @@ export class AuthStore {
             });
             // Navigate to main app after successful login
             import("../index").then(({ routerStore }) => {
-                routerStore.navigate("/poker-hands");
+                routerStore.navigate("/invite-management");
             });
         } catch (error: any) {
             runInAction(() => {
@@ -91,7 +91,7 @@ export class AuthStore {
             });
             // Navigate to main app after successful registration
             import("../index").then(({ routerStore }) => {
-                routerStore.navigate("/poker-hands");
+                routerStore.navigate("/invite-management");
             });
         } catch (error: any) {
             runInAction(() => {

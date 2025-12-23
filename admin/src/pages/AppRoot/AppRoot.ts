@@ -78,7 +78,7 @@ export class AppRoot extends MobxLitElement {
             isAuthenticated &&
             (currentRoute === "/" || currentRoute === "/login")
         ) {
-            routerStore.navigate("/poker-hands");
+            routerStore.navigate("/invite-management");
             return html`
                 <sp-theme
                     system="spectrum"
@@ -104,17 +104,12 @@ export class AppRoot extends MobxLitElement {
                             const route = routerStore.currentRoute;
 
                             // Update menuStore to match route
-                            // if (
-                            //     route === "/poker-hands" &&
-                            //     menuStore.selectedPage !== "poker-hands"
-                            // ) {
-                            //     menuStore.setSelectedPage("poker-hands");
-                            // } else if (
-                            //     route === "/equity-calculator" &&
-                            //     menuStore.selectedPage !== "equity-calculator"
-                            // ) {
-                            //     menuStore.setSelectedPage("equity-calculator");
-                            // }
+                            if (
+                                route === "/invite-management" &&
+                                menuStore.selectedPage !== "invite-management"
+                            ) {
+                                menuStore.setSelectedPage("invite-management");
+                            }
 
                             switch (route) {
                                 default:

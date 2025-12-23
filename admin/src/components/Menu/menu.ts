@@ -5,8 +5,8 @@ import { reaction } from "mobx";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
 import { menuStore, authStore, routerStore } from "../../stores/index";
-import { AppPages } from "web/src/stores/MenuStore/menuStore";
-import { invisibleIcon, visibleIcon } from "../../assets";
+import { AppPages } from "../../stores/MenuStore/menuStore";
+import { compassIcon } from "../../assets";
 
 interface MenuItemDetails {
     id: string;
@@ -16,14 +16,9 @@ interface MenuItemDetails {
 
 const MENU_ITEMS: MenuItemDetails[] = [
     {
-        id: "poker-hands",
-        name: "Poker Hands",
-        icon: html`<span class="menu-icon">${visibleIcon}</span>`,
-    },
-    {
-        id: "equity-calculator",
-        name: "Equity Calculator",
-        icon: html`<span class="menu-icon">${invisibleIcon}</span>`,
+        id: "invite-management",
+        name: "Invite Management",
+        icon: html`<span class="menu-icon">${compassIcon}</span>`,
     },
 ];
 
