@@ -12,52 +12,52 @@ import { computeEquity } from "./equity";
 
 describe("computeEquity", () => {
     describe("Input validation", () => {
-        it("should throw error if less than 2 players", () => {
+        it("should throw error if less than 2 players", async () => {
             const players: Hole[] = [parseHole("14h 14d")];
             const board = parseBoard("");
 
-            expect(() => computeEquity(players, board)).toThrow(
+            await expect(computeEquity(players, board)).rejects.toThrow(
                 "At least 2 players required"
             );
         });
 
-        it("should throw error if board has more than 5 cards", () => {
+        it("should throw error if board has more than 5 cards", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
             ];
             const board = parseBoard("12h 11h 10h 9h 8h 7h");
 
-            expect(() => computeEquity(players, board)).toThrow(
+            await expect(computeEquity(players, board)).rejects.toThrow(
                 "Board cannot have more than 5 cards"
             );
         });
 
-        it("should throw error on duplicate cards in holes", () => {
+        it("should throw error on duplicate cards in holes", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("14h 13d"), // Duplicate Ace of Hearts
             ];
             const board = parseBoard("");
 
-            expect(() => computeEquity(players, board)).toThrow(
+            await expect(computeEquity(players, board)).rejects.toThrow(
                 "Duplicate card"
             );
         });
 
-        it("should throw error on duplicate cards between hole and board", () => {
+        it("should throw error on duplicate cards between hole and board", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
             ];
             const board = parseBoard("14h 12h 11h"); // Duplicate Ace of Hearts
 
-            expect(() => computeEquity(players, board)).toThrow(
+            await expect(computeEquity(players, board)).rejects.toThrow(
                 "Duplicate card"
             );
         });
 
-        it("should throw error on duplicate cards in dead cards", () => {
+        it("should throw error on duplicate cards in dead cards", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -65,24 +65,24 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h");
             const dead = [parseCard("14h")]; // Duplicate Ace of Hearts
 
-            expect(() => computeEquity(players, board, {}, dead)).toThrow(
-                "Duplicate card"
-            );
+            await expect(
+                computeEquity(players, board, {}, dead)
+            ).rejects.toThrow("Duplicate card");
         });
 
-        it("should not throw error on valid inputs", () => {
+        it("should not throw error on valid inputs", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
             ];
             const board = parseBoard("12h 11h 10h");
 
-            expect(() => computeEquity(players, board)).not.toThrow();
+            await expect(computeEquity(players, board)).resolves.toBeDefined();
         });
     });
 
     describe("Deterministic showdown (5-card board)", () => {
-        it("should return correct equity for clear winner", () => {
+        it("should return correct equity for clear winner", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -90,7 +90,7 @@ describe("computeEquity", () => {
             // Board where aces make a better hand (e.g., aces make a full house)
             const board = parseBoard("14c 14s 13c 2h 3h"); // Aces full of kings
 
-            const result = computeEquity(players, board);
+            const result = await computeEquity(players, board);
 
             expect(result.samples).toBe(1);
             expect(result.win[0]).toBe(1); // Aces win (full house aces over kings)
@@ -101,14 +101,14 @@ describe("computeEquity", () => {
             expect(result.lose[1]).toBe(1);
         });
 
-        it("should handle ties correctly", () => {
+        it("should handle ties correctly", async () => {
             const players: Hole[] = [
                 parseHole("14h 2c"), // Ace with low kicker
                 parseHole("14d 2d"), // Ace with low kicker (different suit)
             ];
             const board = parseBoard("12h 11h 10h 9h 8h"); // Both players use the board for straight
 
-            const result = computeEquity(players, board);
+            const result = await computeEquity(players, board);
 
             expect(result.samples).toBe(1);
             // Both players use the board, so they tie
@@ -118,7 +118,7 @@ describe("computeEquity", () => {
             expect(result.win[1]).toBe(0);
         });
 
-        it("should handle three-way tie", () => {
+        it("should handle three-way tie", async () => {
             const players: Hole[] = [
                 parseHole("14h 2c"),
                 parseHole("14d 2d"),
@@ -126,7 +126,7 @@ describe("computeEquity", () => {
             ];
             const board = parseBoard("12h 11h 10h 9h 8h"); // All use the board for straight
 
-            const result = computeEquity(players, board);
+            const result = await computeEquity(players, board);
 
             expect(result.samples).toBe(1);
             expect(result.tie[0]).toBeCloseTo(1 / 3, 5);
@@ -136,7 +136,7 @@ describe("computeEquity", () => {
     });
 
     describe("Exact enumeration", () => {
-        it("should use exact mode when specified", () => {
+        it("should use exact mode when specified", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -144,7 +144,7 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h"); // Flop - 2 cards to come (990 combos)
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // With exact enumeration, samples should equal number of combinations
             // 49 remaining cards, choose 2 = 1,176 combos (52 - 2*2 - 3 = 45... wait, let me recalculate)
@@ -160,7 +160,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should correctly calculate equity for turn (1 card to come)", () => {
+        it("should correctly calculate equity for turn (1 card to come)", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -168,7 +168,7 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h 9h"); // Turn - 1 card to come (46 combos)
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // 52 - 4 - 4 = 44 cards, choose 1 = 44 combos
             expect(result.samples).toBe(44);
@@ -178,7 +178,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should handle dead cards in exact enumeration", () => {
+        it("should handle dead cards in exact enumeration", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -187,7 +187,7 @@ describe("computeEquity", () => {
             const dead = [parseCard("9h"), parseCard("8h")];
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts, dead);
+            const result = await computeEquity(players, board, opts, dead);
 
             // 52 - 4 - 3 - 2 = 43 cards, choose 2 = 903 combos
             expect(result.samples).toBe(903);
@@ -195,7 +195,7 @@ describe("computeEquity", () => {
     });
 
     describe("Monte Carlo", () => {
-        it("should use Monte Carlo mode when specified", () => {
+        it("should use Monte Carlo mode when specified", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -203,7 +203,7 @@ describe("computeEquity", () => {
             const board = parseBoard(""); // Pre-flop - many combos
             const opts: EquityOptions = { mode: "mc", iterations: 1000 };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             expect(result.samples).toBe(1000);
             expect(result.win[0] + result.tie[0] + result.lose[0]).toBeCloseTo(
@@ -216,7 +216,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should use custom iteration count", () => {
+        it("should use custom iteration count", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -224,12 +224,12 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h");
             const opts: EquityOptions = { mode: "mc", iterations: 500 };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             expect(result.samples).toBe(500);
         });
 
-        it("should use default iterations when not specified", () => {
+        it("should use default iterations when not specified", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -237,12 +237,12 @@ describe("computeEquity", () => {
             const board = parseBoard("");
             const opts: EquityOptions = { mode: "mc" };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             expect(result.samples).toBe(10000); // Default
         });
 
-        it("should produce reproducible results with seed", () => {
+        it("should produce reproducible results with seed", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -259,8 +259,8 @@ describe("computeEquity", () => {
                 seed: 12345,
             };
 
-            const result1 = computeEquity(players, board, opts1);
-            const result2 = computeEquity(players, board, opts2);
+            const result1 = await computeEquity(players, board, opts1);
+            const result2 = await computeEquity(players, board, opts2);
 
             // Results should be identical with same seed
             expect(result1.win[0]).toBe(result2.win[0]);
@@ -270,7 +270,7 @@ describe("computeEquity", () => {
     });
 
     describe("Auto mode", () => {
-        it("should use exact enumeration for small combo count", () => {
+        it("should use exact enumeration for small combo count", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -281,7 +281,7 @@ describe("computeEquity", () => {
                 exactMaxCombos: 200_000,
             };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // Should use exact (turn combos < 200k threshold)
             // 52 - 4 (holes) - 4 (board) = 44 cards, choose 1 = 44 combos
@@ -290,7 +290,7 @@ describe("computeEquity", () => {
             expect(result.samples).toBeLessThan(200_000);
         });
 
-        it("should use Monte Carlo for large combo count", () => {
+        it("should use Monte Carlo for large combo count", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -304,13 +304,13 @@ describe("computeEquity", () => {
             // Actually, let's just test that MC mode works when explicitly requested
             const opts: EquityOptions = { mode: "mc", iterations: 5000 };
 
-            const result = computeEquity(players, board, opts, dead);
+            const result = await computeEquity(players, board, opts, dead);
 
             // Should use Monte Carlo when explicitly requested
             expect(result.samples).toBe(5000);
         });
 
-        it("should respect custom exactMaxCombos threshold", () => {
+        it("should respect custom exactMaxCombos threshold", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -318,13 +318,13 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h"); // Flop - 990 combos
             const opts: EquityOptions = { mode: "auto", exactMaxCombos: 500 }; // Lower threshold
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // Should use Monte Carlo (990 > 500 threshold)
             expect(result.samples).toBe(10000);
         });
 
-        it("should default to auto mode", () => {
+        it("should default to auto mode", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -332,7 +332,7 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h 9h"); // Turn - small combos
             const opts: EquityOptions = {}; // No mode specified
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // Should use exact (auto mode defaults to exact for small combos)
             expect(result.samples).toBe(44);
@@ -340,7 +340,7 @@ describe("computeEquity", () => {
     });
 
     describe("Equity calculations", () => {
-        it("should give pocket aces high equity against pocket kings pre-flop", () => {
+        it("should give pocket aces high equity against pocket kings pre-flop", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -348,7 +348,7 @@ describe("computeEquity", () => {
             const board = parseBoard("");
             const opts: EquityOptions = { mode: "mc", iterations: 50000 };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // Aces should have > 80% equity
             expect(result.win[0]).toBeGreaterThan(0.8);
@@ -360,7 +360,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should handle flop scenarios correctly", () => {
+        it("should handle flop scenarios correctly", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -368,7 +368,7 @@ describe("computeEquity", () => {
             const board = parseBoard("12h 11h 10h"); // Flop with straight
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             // Both players can make a straight, but aces might have better kicker
             expect(result.win[0] + result.tie[0] + result.lose[0]).toBeCloseTo(
@@ -381,7 +381,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should correctly handle multiple players", () => {
+        it("should correctly handle multiple players", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"), // Pocket Aces
                 parseHole("13h 13d"), // Pocket Kings
@@ -390,7 +390,7 @@ describe("computeEquity", () => {
             const board = parseBoard("11h 10h 9h");
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             expect(result.win).toHaveLength(3);
             expect(result.tie).toHaveLength(3);
@@ -404,7 +404,7 @@ describe("computeEquity", () => {
             }
         });
 
-        it("should handle board with no cards (pre-flop)", () => {
+        it("should handle board with no cards (pre-flop)", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -412,7 +412,7 @@ describe("computeEquity", () => {
             const board = parseBoard("");
             const opts: EquityOptions = { mode: "mc", iterations: 10000 };
 
-            const result = computeEquity(players, board, opts);
+            const result = await computeEquity(players, board, opts);
 
             expect(result.samples).toBe(10000);
             expect(result.win[0] + result.tie[0] + result.lose[0]).toBeCloseTo(
@@ -421,7 +421,7 @@ describe("computeEquity", () => {
             );
         });
 
-        it("should handle edge case with dead cards reducing deck", () => {
+        it("should handle edge case with dead cards reducing deck", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -430,34 +430,34 @@ describe("computeEquity", () => {
             const dead = [parseCard("9h"), parseCard("8h"), parseCard("7h")];
             const opts: EquityOptions = { mode: "exact" };
 
-            const result = computeEquity(players, board, opts, dead);
+            const result = await computeEquity(players, board, opts, dead);
             // 52 - 4 - 3 - 3 = 42 cards, choose 2 = 861 combos
             expect(result.samples).toBe(861);
         });
     });
 
     describe("Edge cases", () => {
-        it("should handle identical hole cards scenario", () => {
+        it("should handle identical hole cards scenario", async () => {
             const players: Hole[] = [
                 parseHole("14h 13h"), // Ace-King suited
                 parseHole("14d 13d"), // Ace-King suited (different suit)
             ];
             const board = parseBoard("12h 11h 10h 9h 8h"); // Complete board
 
-            const result = computeEquity(players, board);
+            const result = await computeEquity(players, board);
 
             // Both players have the same high card hand, should tie
             expect(result.samples).toBe(1);
         });
 
-        it("should handle scenario where board is best hand", () => {
+        it("should handle scenario where board is best hand", async () => {
             const players: Hole[] = [
                 parseHole("2h 3h"), // Low cards
                 parseHole("4h 5h"), // Low cards
             ];
             const board = parseBoard("14h 13h 12h 11h 10h"); // Royal flush on board
 
-            const result = computeEquity(players, board);
+            const result = await computeEquity(players, board);
 
             // Both players use the board, should tie
             expect(result.samples).toBe(1);
@@ -465,7 +465,7 @@ describe("computeEquity", () => {
             expect(result.tie[1]).toBe(0.5);
         });
 
-        it("should throw error when not enough cards in deck", () => {
+        it("should throw error when not enough cards in deck", async () => {
             const players: Hole[] = [
                 parseHole("14h 14d"),
                 parseHole("13h 13d"),
@@ -486,9 +486,9 @@ describe("computeEquity", () => {
             }
 
             // This should throw because we need 3 more cards but don't have enough
-            expect(() => computeEquity(players, board, {}, dead)).toThrow(
-                "Not enough cards"
-            );
+            await expect(
+                computeEquity(players, board, {}, dead)
+            ).rejects.toThrow("Not enough cards");
         });
     });
 });

@@ -13,20 +13,20 @@ describe("EquityLookupTable", () => {
     });
 
     describe("Basic caching", () => {
-        it("should cache and return cached results", () => {
+        it("should cache and return cached results", async () => {
             const player1 = parseHole("14h 14d"); // Pocket Aces
             const player2 = parseHole("13h 13d"); // Pocket Kings
             const board = parseBoard(""); // Pre-flop
 
             // First call: should compute
             const { result: result1, fromCache: fromCache1 } =
-                computeEquityWithCache([player1, player2], board, {
+                await computeEquityWithCache([player1, player2], board, {
                     mode: "exact",
                 });
 
             // Second call: should return cached result
             const { result: result2, fromCache: fromCache2 } =
-                computeEquityWithCache([player1, player2], board, {
+                await computeEquityWithCache([player1, player2], board, {
                     mode: "exact",
                 });
 
@@ -41,13 +41,13 @@ describe("EquityLookupTable", () => {
             expect(result1.samples).toBe(result2.samples);
         });
 
-        it("should handle different calculation modes separately", () => {
+        it("should handle different calculation modes separately", async () => {
             const player1 = parseHole("14h 14d");
             const player2 = parseHole("13h 13d");
             const board = parseBoard("");
 
             // Exact mode
-            const { result: exactResult } = computeEquityWithCache(
+            const { result: exactResult } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -56,7 +56,7 @@ describe("EquityLookupTable", () => {
             );
 
             // MC mode (different cache entry)
-            const { result: mcResult } = computeEquityWithCache(
+            const { result: mcResult } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -69,12 +69,12 @@ describe("EquityLookupTable", () => {
             expect(exactResult.samples).toBeGreaterThan(mcResult.samples);
         });
 
-        it("should handle board cards correctly", () => {
+        it("should handle board cards correctly", async () => {
             const player1 = parseHole("14h 14d");
             const player2 = parseHole("13h 13d");
             const board = parseBoard("12h 11h 10h"); // Flop
 
-            const { result: result1 } = computeEquityWithCache(
+            const { result: result1 } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -82,7 +82,7 @@ describe("EquityLookupTable", () => {
                 }
             );
 
-            const { result: result2 } = computeEquityWithCache(
+            const { result: result2 } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -96,7 +96,7 @@ describe("EquityLookupTable", () => {
     });
 
     describe("Cache management", () => {
-        it("should track cache size", () => {
+        it("should track cache size", async () => {
             const stats1 = getCacheStats();
             expect(stats1.size).toBe(0);
 
@@ -104,7 +104,7 @@ describe("EquityLookupTable", () => {
             const player2 = parseHole("13h 13d");
             const board = parseBoard("");
 
-            computeEquityWithCache([player1, player2], board, {
+            await computeEquityWithCache([player1, player2], board, {
                 mode: "exact",
             });
 
@@ -112,12 +112,12 @@ describe("EquityLookupTable", () => {
             expect(stats2.size).toBe(1);
         });
 
-        it("should clear cache", () => {
+        it("should clear cache", async () => {
             const player1 = parseHole("14h 14d");
             const player2 = parseHole("13h 13d");
             const board = parseBoard("");
 
-            computeEquityWithCache([player1, player2], board, {
+            await computeEquityWithCache([player1, player2], board, {
                 mode: "exact",
             });
 
@@ -130,13 +130,13 @@ describe("EquityLookupTable", () => {
     });
 
     describe("Key normalization", () => {
-        it("should handle different card orders as same scenario", () => {
+        it("should handle different card orders as same scenario", async () => {
             const player1a = parseHole("14h 14d");
             const player1b = parseHole("14d 14h"); // Same cards, different order
             const player2 = parseHole("13h 13d");
             const board = parseBoard("");
 
-            const { result: result1 } = computeEquityWithCache(
+            const { result: result1 } = await computeEquityWithCache(
                 [player1a, player2],
                 board,
                 {
@@ -145,7 +145,7 @@ describe("EquityLookupTable", () => {
             );
 
             // Should use cached result (same scenario)
-            const { result: result2 } = computeEquityWithCache(
+            const { result: result2 } = await computeEquityWithCache(
                 [player1b, player2],
                 board,
                 {
@@ -159,14 +159,14 @@ describe("EquityLookupTable", () => {
     });
 
     describe("Performance", () => {
-        it("should be faster on second call (cached)", () => {
+        it("should be faster on second call (cached)", async () => {
             const player1 = parseHole("14h 14d");
             const player2 = parseHole("13h 13d");
             const board = parseBoard("12h 11h 10h"); // Flop (smaller calculation)
 
             // First call
             const start1 = performance.now();
-            const { result: result1 } = computeEquityWithCache(
+            const { result: result1 } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -177,7 +177,7 @@ describe("EquityLookupTable", () => {
 
             // Second call (should be cached)
             const start2 = performance.now();
-            const { result: result2 } = computeEquityWithCache(
+            const { result: result2 } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -193,12 +193,12 @@ describe("EquityLookupTable", () => {
     });
 
     describe("Correctness", () => {
-        it("should produce same results as computeEquity", () => {
+        it("should produce same results as computeEquity", async () => {
             const player1 = parseHole("14h 14d");
             const player2 = parseHole("13h 13d");
             const board = parseBoard("12h 11h 10h");
 
-            const { result: cachedResult } = computeEquityWithCache(
+            const { result: cachedResult } = await computeEquityWithCache(
                 [player1, player2],
                 board,
                 {
@@ -208,9 +208,13 @@ describe("EquityLookupTable", () => {
 
             // Clear cache and compute directly
             clearEquityCache();
-            const directResult = computeEquity([player1, player2], board, {
-                mode: "exact",
-            });
+            const directResult = await computeEquity(
+                [player1, player2],
+                board,
+                {
+                    mode: "exact",
+                }
+            );
 
             // Results should be identical
             expect(cachedResult.win[0]).toBeCloseTo(directResult.win[0], 5);

@@ -85,7 +85,9 @@ export function createEquityKey(
             ? "exact"
             : options?.mode === "mc"
               ? `mc:${options.iterations ?? 10000}`
-              : "auto";
+              : options?.mode === "rust"
+                ? "rust"
+                : "auto";
 
     // Create composite key
     return `equity:${normalizedHoles.join("|")}:${boardStr}:${deadStr}:${optionsStr}`;
@@ -119,12 +121,12 @@ export function getLookupTable(
  *
  * @returns Object containing the equity result and a flag indicating if it was from cache
  */
-export function computeEquityWithCache(
+export async function computeEquityWithCache(
     players: readonly Hole[],
     board: Board,
     opts: EquityOptions = {},
     dead: readonly Card[] = []
-): { result: EquityResult; fromCache: boolean } {
+): Promise<{ result: EquityResult; fromCache: boolean }> {
     // Get or create the persistent lookup table
     const lookupTable = getLookupTable();
 
@@ -135,7 +137,7 @@ export function computeEquityWithCache(
     }
 
     // Compute result
-    const result = computeEquity(players, board, opts, dead);
+    const result = await computeEquity(players, board, opts, dead);
 
     // Store in cache
     lookupTable.set(players, board, dead, result, opts);

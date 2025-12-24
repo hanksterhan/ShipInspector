@@ -11,6 +11,7 @@ import {
 import { hand } from "./hand";
 import { trace } from "@opentelemetry/api";
 import { getBoardState } from "../../config/metrics";
+import { calculateEquityRust } from "./equityRust";
 
 /**
  * Create a full 52-card deck
@@ -396,12 +397,12 @@ function monteCarlo(
 /**
  * Compute equity for given players, board, and options
  */
-export function computeEquity(
+export async function computeEquity(
     players: readonly Hole[],
     board: Board,
     opts: EquityOptions = {},
     dead: readonly Card[] = []
-): EquityResult {
+): Promise<EquityResult> {
     // Validate inputs
     validateInputs(players, board, dead);
 
@@ -478,8 +479,17 @@ export function computeEquity(
     // Determine algorithm
     const mode = opts.mode ?? "auto";
     let useExact = false;
+    let useRust = false;
 
-    if (mode === "exact") {
+    if (mode === "rust") {
+        useRust = true;
+        // Rust mode only supports preflop (empty board) for now
+        if (boardLength !== 0) {
+            throw new Error(
+                "Rust equity calculation currently only supports preflop (empty board)"
+            );
+        }
+    } else if (mode === "exact") {
         useExact = true;
     } else if (mode === "mc") {
         useExact = false;
@@ -493,7 +503,7 @@ export function computeEquity(
     // Create trace span for equity calculation
     const tracer = trace.getTracer("equity-calculator");
     const boardState = getBoardState(boardLength);
-    const actualMethod = useExact ? "exact" : "mc";
+    const actualMethod = useRust ? "rust" : useExact ? "exact" : "mc";
     const span = tracer.startSpan("equity.calculate", {
         attributes: {
             "equity.method": actualMethod,
@@ -507,7 +517,9 @@ export function computeEquity(
     try {
         // Run calculation
         let result: EquityResult;
-        if (useExact) {
+        if (useRust) {
+            result = await calculateEquityRust(players, board, remainingDeck);
+        } else if (useExact) {
             result = exactEnumeration(players, board, remainingDeck, missing);
         } else {
             const iterations = opts.iterations ?? 10_000;

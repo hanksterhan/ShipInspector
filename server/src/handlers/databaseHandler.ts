@@ -293,7 +293,7 @@ async function seedEquityCache(handCount: number = 50): Promise<{
 
         // Compute equity
         try {
-            const result = computeEquity(
+            const result = await computeEquity(
                 [matchup.hand1.hole, matchup.hand2.hole],
                 { cards: [] },
                 options,

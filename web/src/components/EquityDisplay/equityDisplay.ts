@@ -15,7 +15,7 @@ export class EquityDisplay extends MobxLitElement {
     playerIndex: number = 0;
 
     @property({ type: String })
-    mode?: "mc" | "exact";
+    mode?: "mc" | "exact" | "rust";
 
     @property({ type: String })
     label?: string;
@@ -37,21 +37,27 @@ export class EquityDisplay extends MobxLitElement {
                 ? equityStore.equityResultMC
                 : this.mode === "exact"
                   ? equityStore.equityResultExact
-                  : equityStore.equityResult;
+                  : this.mode === "rust"
+                    ? equityStore.equityResultRust
+                    : equityStore.equityResult;
 
         const isLoading =
             this.mode === "mc"
                 ? equityStore.isLoadingMC
                 : this.mode === "exact"
                   ? equityStore.isLoadingExact
-                  : equityStore.isLoading;
+                  : this.mode === "rust"
+                    ? equityStore.isLoadingRust
+                    : equityStore.isLoading;
 
         const error =
             this.mode === "mc"
                 ? equityStore.errorMC
                 : this.mode === "exact"
                   ? equityStore.errorExact
-                  : equityStore.error;
+                  : this.mode === "rust"
+                    ? equityStore.errorRust
+                    : equityStore.error;
 
         // Show loading state
         if (isLoading) {

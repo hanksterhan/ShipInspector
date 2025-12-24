@@ -84,9 +84,9 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         mode: {
                             type: "string",
-                            enum: ["auto", "exact", "mc"],
+                            enum: ["auto", "exact", "mc", "rust"],
                             description:
-                                "Calculation mode: 'auto' chooses based on combo count, 'exact' enumerates all possibilities, 'mc' uses Monte Carlo simulation",
+                                "Calculation mode: 'auto' chooses based on combo count, 'exact' enumerates all possibilities, 'mc' uses Monte Carlo simulation, 'rust' uses Rust WASM (preflop only)",
                             default: "auto",
                             example: "auto",
                         },

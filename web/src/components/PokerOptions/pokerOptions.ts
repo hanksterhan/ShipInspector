@@ -28,7 +28,7 @@ export class PokerOptions extends MobxLitElement {
     };
 
     handleEquityCalculationModeChange = (
-        mode: "Monte Carlo" | "Exact" | "Both"
+        mode: "Monte Carlo" | "Exact" | "Rust" | "Both"
     ) => {
         settingsStore.setEquityCalculationMode(mode);
     };
@@ -113,6 +113,7 @@ export class PokerOptions extends MobxLitElement {
                                     selectedValue as
                                         | "Monte Carlo"
                                         | "Exact"
+                                        | "Rust"
                                         | "Both"
                                 );
                             }}
@@ -123,6 +124,9 @@ export class PokerOptions extends MobxLitElement {
                             </sp-action-button>
                             <sp-action-button value="Monte Carlo">
                                 Monte Carlo
+                            </sp-action-button>
+                            <sp-action-button value="Rust">
+                                Rust
                             </sp-action-button>
                             <sp-action-button value="Both">
                                 Both

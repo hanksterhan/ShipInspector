@@ -68,7 +68,9 @@ export async function login(req: Request, res: Response): Promise<void> {
         }
 
         // Log user info for debugging
-        console.log(`[login] User ${user.email} (${user.userId}) logging in with role: "${user.role}"`);
+        console.log(
+            `[login] User ${user.email} (${user.userId}) logging in with role: "${user.role}"`
+        );
 
         // Create session
         (req.session as any).userId = user.userId;
@@ -82,7 +84,9 @@ export async function login(req: Request, res: Response): Promise<void> {
                     console.error("[login] Session save error:", err);
                     reject(err);
                 } else {
-                    console.log(`[login] Session saved for userId: ${user.userId}`);
+                    console.log(
+                        `[login] Session saved for userId: ${user.userId}`
+                    );
                     resolve();
                 }
             });

@@ -89,12 +89,19 @@ export class PokerHand extends MobxLitElement {
                                                 mode="mc"
                                             ></equity-display>
                                         `
-                                      : html`
-                                            <equity-display
-                                                .playerIndex=${playerIndex}
-                                                mode="exact"
-                                            ></equity-display>
-                                        `}
+                                      : equityMode === "Rust"
+                                        ? html`
+                                              <equity-display
+                                                  .playerIndex=${playerIndex}
+                                                  mode="rust"
+                                              ></equity-display>
+                                          `
+                                        : html`
+                                              <equity-display
+                                                  .playerIndex=${playerIndex}
+                                                  mode="exact"
+                                              ></equity-display>
+                                          `}
                             </div>
                         `
                     )}

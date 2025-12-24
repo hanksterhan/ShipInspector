@@ -200,12 +200,13 @@ class HandHandler {
 
             // Calculate equity (with lookup table caching for performance)
             // Use computeEquityWithCache for automatic caching, or computeEquity for no cache
-            const { result: equityResult, fromCache } = computeEquityWithCache(
-                parsedPlayers,
-                parsedBoard,
-                options,
-                parsedDead
-            );
+            const { result: equityResult, fromCache } =
+                await computeEquityWithCache(
+                    parsedPlayers,
+                    parsedBoard,
+                    options,
+                    parsedDead
+                );
 
             // Record metric for equity calculation
             const boardState = getBoardState(parsedBoard.cards.length);

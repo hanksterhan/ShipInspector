@@ -9,10 +9,11 @@
         "watch": "nodemon --watch src --exec \"npm run start\" \"npm run copy-assets\"",
         "lint": "prettier --write \"src/**/*.ts\"",
         "test": "jest",
-        "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/",
+        "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/ && mkdir -p dist/server/wasm-equity/pkg && cp -r wasm-equity/pkg/* dist/server/wasm-equity/pkg/ 2>/dev/null || true",
         "generate-metrics": "node scripts/generate-metrics-data.js",
         "seed:equity-cache": "npm run build && ts-node dist/server/scripts/seed-equity-cache.js",
         "create-admin": "npm run build && ts-node dist/server/scripts/create-admin.js",
+        "build:wasm": "cd wasm-equity && wasm-pack build --target nodejs --out-dir pkg",
         "postinstall": "npm rebuild better-sqlite3"
     },
     "keywords": [],

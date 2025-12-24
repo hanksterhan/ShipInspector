@@ -18,12 +18,15 @@ export class EquityStore {
     @observable
     error: string | null = null;
 
-    // Separate results for Monte Carlo and Exact modes
+    // Separate results for Monte Carlo, Exact, and Rust modes
     @observable
     equityResultMC: EquityResult | null = null;
 
     @observable
     equityResultExact: EquityResult | null = null;
+
+    @observable
+    equityResultRust: EquityResult | null = null;
 
     @observable
     isLoadingMC: boolean = false;
@@ -32,10 +35,16 @@ export class EquityStore {
     isLoadingExact: boolean = false;
 
     @observable
+    isLoadingRust: boolean = false;
+
+    @observable
     errorMC: string | null = null;
 
     @observable
     errorExact: string | null = null;
+
+    @observable
+    errorRust: string | null = null;
 
     @observable
     players: Card[][] = [];
@@ -64,10 +73,12 @@ export class EquityStore {
     // Cache keys to track which hand configuration each result is for
     private cacheKeyMC: string | null = null;
     private cacheKeyExact: string | null = null;
+    private cacheKeyRust: string | null = null;
 
     private currentAbortController: AbortController | null = null;
     private currentAbortControllerMC: AbortController | null = null;
     private currentAbortControllerExact: AbortController | null = null;
+    private currentAbortControllerRust: AbortController | null = null;
     private reactionDisposer: (() => void) | null = null;
 
     constructor() {
@@ -120,17 +131,24 @@ export class EquityStore {
             this.currentAbortControllerExact.abort();
             this.currentAbortControllerExact = null;
         }
+        if (this.currentAbortControllerRust) {
+            this.currentAbortControllerRust.abort();
+            this.currentAbortControllerRust = null;
+        }
 
         // Clear all results
         this.equityResult = null;
         this.equityResultMC = null;
         this.equityResultExact = null;
+        this.equityResultRust = null;
         this.error = null;
         this.errorMC = null;
         this.errorExact = null;
+        this.errorRust = null;
         this.isLoading = false;
         this.isLoadingMC = false;
         this.isLoadingExact = false;
+        this.isLoadingRust = false;
         this.calculationTimeMC = null;
         this.calculationTimeExact = null;
         this.fromCacheMC = false;
@@ -142,6 +160,7 @@ export class EquityStore {
         // Clear cache keys
         this.cacheKeyMC = null;
         this.cacheKeyExact = null;
+        this.cacheKeyRust = null;
     }
 
     /**
@@ -155,7 +174,7 @@ export class EquityStore {
      * Check if we have cached results for the current hand configuration
      */
     private hasCachedResult(
-        mode: "mc" | "exact",
+        mode: "mc" | "exact" | "rust",
         currentCacheKey: string
     ): boolean {
         if (mode === "mc") {
@@ -164,11 +183,17 @@ export class EquityStore {
                 this.cacheKeyMC === currentCacheKey &&
                 !this.errorMC
             );
-        } else {
+        } else if (mode === "exact") {
             return (
                 this.equityResultExact !== null &&
                 this.cacheKeyExact === currentCacheKey &&
                 !this.errorExact
+            );
+        } else {
+            return (
+                this.equityResultRust !== null &&
+                this.cacheKeyRust === currentCacheKey &&
+                !this.errorRust
             );
         }
     }
@@ -176,7 +201,7 @@ export class EquityStore {
     @action
     parseEquityResponse(
         response: CalculateEquityResponse,
-        mode?: "mc" | "exact",
+        mode?: "mc" | "exact" | "rust",
         cacheKey?: string
     ) {
         // Store the equity result based on mode
@@ -191,6 +216,11 @@ export class EquityStore {
             this.fromCacheExact = response.fromCache ?? false;
             if (cacheKey) {
                 this.cacheKeyExact = cacheKey;
+            }
+        } else if (mode === "rust") {
+            this.equityResultRust = response.equity;
+            if (cacheKey) {
+                this.cacheKeyRust = cacheKey;
             }
         } else {
             // Backward compatibility: store in main equityResult
@@ -311,6 +341,15 @@ export class EquityStore {
                 return;
             }
             await this.calculateEquitySingle("exact", currentCacheKey);
+        } else if (mode === "Rust") {
+            // Check if we already have Rust results for this configuration
+            if (this.hasCachedResult("rust", currentCacheKey)) {
+                // Results already exist, just update loading state
+                this.isLoading = false;
+                this.isLoadingRust = false;
+                return;
+            }
+            await this.calculateEquitySingle("rust", currentCacheKey);
         } else if (mode === "Both") {
             await this.calculateEquityBoth(players, board, currentCacheKey);
         }
@@ -318,7 +357,7 @@ export class EquityStore {
 
     @action
     private async calculateEquitySingle(
-        calculationMode: "mc" | "exact",
+        calculationMode: "mc" | "exact" | "rust",
         cacheKey: string
     ) {
         // Cancel any in-flight request
@@ -343,16 +382,21 @@ export class EquityStore {
         if (calculationMode === "mc") {
             this.isLoadingMC = true;
             this.errorMC = null;
-        } else {
+        } else if (calculationMode === "exact") {
             this.isLoadingExact = true;
             this.errorExact = null;
+        } else if (calculationMode === "rust") {
+            this.isLoadingRust = true;
+            this.errorRust = null;
         }
 
         try {
             const options =
                 calculationMode === "mc"
                     ? { mode: "mc" as const, iterations: 50000 }
-                    : { mode: "exact" as const };
+                    : calculationMode === "rust"
+                      ? { mode: "rust" as const }
+                      : { mode: "exact" as const };
 
             // Track calculation start time
             const startTime = performance.now();
@@ -372,10 +416,10 @@ export class EquityStore {
                 const endTime = performance.now();
                 const duration = endTime - startTime;
 
-                // Store calculation time
+                // Store calculation time (Rust mode doesn't track time separately for now)
                 if (calculationMode === "mc") {
                     this.calculationTimeMC = duration;
-                } else {
+                } else if (calculationMode === "exact") {
                     this.calculationTimeExact = duration;
                 }
 
@@ -400,9 +444,12 @@ export class EquityStore {
                 if (calculationMode === "mc") {
                     this.equityResultMC = null;
                     this.errorMC = errorMessage;
-                } else {
+                } else if (calculationMode === "exact") {
                     this.equityResultExact = null;
                     this.errorExact = errorMessage;
+                } else if (calculationMode === "rust") {
+                    this.equityResultRust = null;
+                    this.errorRust = errorMessage;
                 }
             }
         } finally {
@@ -412,8 +459,10 @@ export class EquityStore {
                 this.currentAbortController = null;
                 if (calculationMode === "mc") {
                     this.isLoadingMC = false;
-                } else {
+                } else if (calculationMode === "exact") {
                     this.isLoadingExact = false;
+                } else if (calculationMode === "rust") {
+                    this.isLoadingRust = false;
                 }
             }
         }
