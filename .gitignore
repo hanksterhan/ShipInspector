@@ -4,3 +4,8 @@ server/.env
 server/src/data/
 .DS_Store
 otel-collector-logs/
+
+# Rust build artifacts
+**/target/
+**/*.rs.bk
+Cargo.lock

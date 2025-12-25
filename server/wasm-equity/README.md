@@ -35,3 +35,21 @@ Returns a JSON string with equity results:
 
 This implementation uses exact enumeration optimized for preflop scenarios. It's designed for simplicity and efficiency, trading some optimization for code clarity.
 
+### Benchmarking
+
+Run the performance benchmarks to test calculation speed:
+
+```bash
+# Full benchmark suite with multiple test scenarios
+node benchmark.js
+
+# Compare direct WASM vs TypeScript wrapper overhead
+node compare-performance.js
+```
+
+See `PERFORMANCE_RESULTS.md` for detailed benchmark results.
+
+**Note**: Previous performance was ~22 seconds for a 2-player preflop calculation (1.7M combinations). After optimizations, target performance is **~150ms** (100x speedup).
+
+See `OPTIMIZATIONS.md` for detailed information about all optimizations applied.
+

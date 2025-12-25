@@ -15,7 +15,8 @@ version = "0.3"
 features = []
 
 [profile.release]
-opt-level = "z"     # Optimize for size
+opt-level = 3       # Optimize for speed (maximum)
 lto = true          # Enable Link Time Optimization
 codegen-units = 1   # Better optimization
+strip = false       # Keep symbols for better optimization
 

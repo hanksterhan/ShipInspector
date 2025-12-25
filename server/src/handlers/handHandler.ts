@@ -15,7 +15,7 @@ import {
     ApiErrorResponse,
 } from "@common/interfaces";
 import { hand } from "../integrations/hand";
-import { computeEquityWithCache } from "../integrations/hand/equityLookup";
+import { computeEquity } from "../integrations/hand/equity";
 import {
     equityCalculationCounter,
     handComparisonCounter,
@@ -198,15 +198,14 @@ class HandHandler {
                 parseCard(cardStr)
             );
 
-            // Calculate equity (with lookup table caching for performance)
-            // Use computeEquityWithCache for automatic caching, or computeEquity for no cache
-            const { result: equityResult, fromCache } =
-                await computeEquityWithCache(
-                    parsedPlayers,
-                    parsedBoard,
-                    options,
-                    parsedDead
-                );
+            // Calculate equity (cache temporarily disabled for performance testing)
+            // Using computeEquity directly to bypass database cache checks
+            const equityResult = await computeEquity(
+                parsedPlayers,
+                parsedBoard,
+                options,
+                parsedDead
+            );
 
             // Record metric for equity calculation
             const boardState = getBoardState(parsedBoard.cards.length);
@@ -222,7 +221,7 @@ class HandHandler {
                 players: parsedPlayers.map((p) => p.cards),
                 board: parsedBoard.cards,
                 dead: parsedDead,
-                fromCache,
+                fromCache: false,
             };
             res.status(200).json(response);
         } catch (error: any) {
