@@ -125,15 +125,6 @@ Rate limits are applied at multiple levels:
   - `RATE_LIMIT_AUTH_WINDOW_MS`: Time window (default: 900000)
   - `RATE_LIMIT_AUTH_MAX`: Maximum requests (default: 5)
 
-### Database Rate Limiter
-- **Limit**: 10 requests per 15 minutes (default)
-- **Applies to**: 
-  - `/db/equity-cache/seed`
-  - `/db/equity-cache/stats`
-- **Environment Variables**:
-  - `RATE_LIMIT_DB_WINDOW_MS`: Time window (default: 900000)
-  - `RATE_LIMIT_DB_MAX`: Maximum requests (default: 10)
-
 ## Environment Variables
 
 Add these to your `.env` file:
@@ -153,8 +144,6 @@ RATE_LIMIT_STRICT_WINDOW_MS=900000
 RATE_LIMIT_STRICT_MAX=20
 RATE_LIMIT_AUTH_WINDOW_MS=900000
 RATE_LIMIT_AUTH_MAX=5
-RATE_LIMIT_DB_WINDOW_MS=900000
-RATE_LIMIT_DB_MAX=10
 ```
 
 ## Protected Endpoints
@@ -164,8 +153,6 @@ All endpoints except `/auth/*` require authentication:
 - `POST /poker/hand/evaluate` - Requires auth + strict rate limit
 - `POST /poker/hand/compare` - Requires auth + strict rate limit
 - `POST /poker/equity/calculate` - Requires auth + strict rate limit
-- `POST /db/equity-cache/seed` - Requires auth + database rate limit
-- `GET /db/equity-cache/stats` - Requires auth + database rate limit
 - `GET /auth/me` - Requires auth (no special rate limit)
 
 ## Error Responses
@@ -193,7 +180,7 @@ The Swagger UI at `/api-docs` includes:
 
 ## Implementation Notes
 
-- **User Storage**: Uses SQLite database (`server/data/equity_cache.db`)
+- **User Storage**: Uses SQLite database (`server/data/users.db`)
 - **Password Hashing**: Uses bcryptjs with 10 rounds
 - **Session Expiration**: Default 24 hours (configured in session middleware)
 - **Rate Limiting**: Uses `express-rate-limit` with IP-based tracking

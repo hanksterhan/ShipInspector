@@ -198,8 +198,7 @@ class HandHandler {
                 parseCard(cardStr)
             );
 
-            // Calculate equity (cache temporarily disabled for performance testing)
-            // Using computeEquity directly to bypass database cache checks
+            // Calculate equity using Rust WASM implementation
             const equityResult = await computeEquity(
                 parsedPlayers,
                 parsedBoard,

@@ -14,12 +14,6 @@ export class EquityDisplay extends MobxLitElement {
     @property({ type: Number })
     playerIndex: number = 0;
 
-    @property({ type: String })
-    mode?: "mc" | "exact" | "rust";
-
-    @property({ type: String })
-    label?: string;
-
     connectedCallback() {
         super.connectedCallback();
         // Reaction is now handled centrally in EquityStore to prevent duplicate calls
@@ -31,41 +25,14 @@ export class EquityDisplay extends MobxLitElement {
     }
 
     render(): TemplateResult {
-        // Determine which result to use based on mode
-        const result =
-            this.mode === "mc"
-                ? equityStore.equityResultMC
-                : this.mode === "exact"
-                  ? equityStore.equityResultExact
-                  : this.mode === "rust"
-                    ? equityStore.equityResultRust
-                    : equityStore.equityResult;
-
-        const isLoading =
-            this.mode === "mc"
-                ? equityStore.isLoadingMC
-                : this.mode === "exact"
-                  ? equityStore.isLoadingExact
-                  : this.mode === "rust"
-                    ? equityStore.isLoadingRust
-                    : equityStore.isLoading;
-
-        const error =
-            this.mode === "mc"
-                ? equityStore.errorMC
-                : this.mode === "exact"
-                  ? equityStore.errorExact
-                  : this.mode === "rust"
-                    ? equityStore.errorRust
-                    : equityStore.error;
+        const result = equityStore.equityResult;
+        const isLoading = equityStore.isLoading;
+        const error = equityStore.error;
 
         // Show loading state
         if (isLoading) {
             return html`
                 <div class="equity-display loading">
-                    ${this.label
-                        ? html`<div class="equity-label">${this.label}</div>`
-                        : ""}
                     <sp-progress-circle
                         indeterminate
                         size="s"
@@ -79,9 +46,6 @@ export class EquityDisplay extends MobxLitElement {
         if (error) {
             return html`
                 <div class="equity-display error">
-                    ${this.label
-                        ? html`<div class="equity-label">${this.label}</div>`
-                        : ""}
                     <span class="error-text">Error: ${error}</span>
                 </div>
             `;
@@ -96,11 +60,6 @@ export class EquityDisplay extends MobxLitElement {
             if (validHoles.length < 2) {
                 return html`
                     <div class="equity-display empty">
-                        ${this.label
-                            ? html`<div class="equity-label">
-                                  ${this.label}
-                              </div>`
-                            : ""}
                         <span class="empty-text"
                             >Select at least 2 player hands</span
                         >
@@ -110,22 +69,16 @@ export class EquityDisplay extends MobxLitElement {
 
             return html`
                 <div class="equity-display empty">
-                    ${this.label
-                        ? html`<div class="equity-label">${this.label}</div>`
-                        : ""}
                     <span class="empty-text">No equity data</span>
                 </div>
             `;
         }
 
         // Check if player index is valid
-        const { win, tie, samples } = result;
+        const { win, tie } = result;
         if (this.playerIndex < 0 || this.playerIndex >= win.length) {
             return html`
                 <div class="equity-display empty">
-                    ${this.label
-                        ? html`<div class="equity-label">${this.label}</div>`
-                        : ""}
                     <span class="empty-text">Invalid player index</span>
                 </div>
             `;
@@ -137,13 +90,7 @@ export class EquityDisplay extends MobxLitElement {
         // Only show tie if it's 0.01% or more
         const hasTie = parseFloat(tiePercentage) >= 0.01;
 
-        // Get calculation time based on mode
-        const calculationTime =
-            this.mode === "mc"
-                ? equityStore.calculationTimeMC
-                : this.mode === "exact"
-                  ? equityStore.calculationTimeExact
-                  : null;
+        const calculationTime = equityStore.calculationTime;
 
         // Format time as seconds (e.g., "4s" or "0.5s")
         const formatTime = (ms: number | null): string => {
@@ -160,46 +107,10 @@ export class EquityDisplay extends MobxLitElement {
             return `${rounded.toFixed(1)}s`;
         };
 
-        // Format samples with truncation
-        // >= 1,000,000: show as millions (e.g., 1,234,567 → 1.23M)
-        // >= 100,000: show rounded to nearest 10k in 10k units (e.g., 842,000 → 84k)
-        // >= 10,000: show rounded to nearest 10k in thousands (e.g., 50,000 → 50k)
-        // < 10,000: show as-is (e.g., 9321 → 9321)
-        const formatSamples = (count: number): string => {
-            if (count >= 1_000_000) {
-                const millions = count / 1_000_000;
-                return `${millions.toFixed(2)}M`;
-            } else if (count >= 100_000) {
-                // Round to nearest 10,000, then show in 10k units
-                const rounded = Math.round(count / 10_000) * 10_000;
-                const tenThousands = rounded / 10_000;
-                return `${tenThousands}k`;
-            } else if (count >= 10_000) {
-                // Round to nearest 10,000, then show in thousands
-                const rounded = Math.round(count / 10_000) * 10_000;
-                const thousands = rounded / 1_000;
-                return `${thousands}k`;
-            } else {
-                return count.toLocaleString();
-            }
-        };
-
-        // Get cache indicator based on mode
-        const fromCache =
-            this.mode === "mc"
-                ? equityStore.fromCacheMC
-                : this.mode === "exact"
-                  ? equityStore.fromCacheExact
-                  : false;
-
         const timeText = formatTime(calculationTime);
-        const samplesText = formatSamples(samples);
 
         return html`
             <div class="equity-display">
-                ${this.label
-                    ? html`<div class="equity-label">${this.label}</div>`
-                    : ""}
                 <div class="equity-stats">
                     <div class="equity-stat win">
                         <span class="stat-label">Win:</span>
@@ -216,27 +127,13 @@ export class EquityDisplay extends MobxLitElement {
                           `
                         : ""}
                 </div>
-                <div class="equity-footer">
-                    <span class="samples-text">Samples: ${samplesText}</span>
-                    ${fromCache || timeText
-                        ? html`
-                              <div class="footer-right">
-                                  ${fromCache
-                                      ? html`<span
-                                            class="cache-indicator"
-                                            title="Result retrieved from cache"
-                                            >Cached</span
-                                        >`
-                                      : ""}
-                                  ${timeText
-                                      ? html`<span class="time-text"
-                                            >${timeText}</span
-                                        >`
-                                      : ""}
-                              </div>
-                          `
-                        : ""}
-                </div>
+                ${timeText
+                    ? html`
+                          <div class="equity-footer">
+                              <span class="time-text">${timeText}</span>
+                          </div>
+                      `
+                    : ""}
             </div>
         `;
     }
