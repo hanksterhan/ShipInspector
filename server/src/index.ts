@@ -35,10 +35,6 @@ totalUsersGauge.add(userCount);
 console.log(`Initialized user metrics with ${userCount} users`);
 console.log(`Note: Create admin user by running: npm run create-admin`);
 
-// Equity cache is automatically initialized on first use (SQLite)
-// Database location: server/data/equity_cache.db
-// To use custom path, set EQUITY_CACHE_DB_PATH environment variable
-
 const port = process.env.PORT || 3000;
 
 const app = express();

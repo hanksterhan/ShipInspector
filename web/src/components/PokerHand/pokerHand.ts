@@ -52,8 +52,6 @@ export class PokerHand extends MobxLitElement {
             return html``;
         }
 
-        const equityMode = settingsStore.equityCalculationMode;
-
         return html`
             <div class="selected-holes-section">
                 <div class="selected-holes-grid">
@@ -67,34 +65,9 @@ export class PokerHand extends MobxLitElement {
                                     ${this.renderCard(hole.cards[0], 0)}
                                     ${this.renderCard(hole.cards[1], 1)}
                                 </div>
-                                ${equityMode === "Both"
-                                    ? html`
-                                          <div class="equity-displays-stacked">
-                                              <equity-display
-                                                  .playerIndex=${playerIndex}
-                                                  mode="mc"
-                                                  label="Monte Carlo"
-                                              ></equity-display>
-                                              <equity-display
-                                                  .playerIndex=${playerIndex}
-                                                  mode="exact"
-                                                  label="Exact"
-                                              ></equity-display>
-                                          </div>
-                                      `
-                                    : equityMode === "Monte Carlo"
-                                      ? html`
-                                            <equity-display
-                                                .playerIndex=${playerIndex}
-                                                mode="mc"
-                                            ></equity-display>
-                                        `
-                                      : html`
-                                            <equity-display
-                                                .playerIndex=${playerIndex}
-                                                mode="exact"
-                                            ></equity-display>
-                                        `}
+                                <equity-display
+                                    .playerIndex=${playerIndex}
+                                ></equity-display>
                             </div>
                         `
                     )}

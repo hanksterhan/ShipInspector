@@ -159,6 +159,8 @@ export function getUsedInviteCodes(): InviteCode[] {
  * Delete an invite code
  */
 export function deleteInviteCode(code: string): boolean {
-    const result = db.prepare(`DELETE FROM invite_codes WHERE code = ?`).run(code);
+    const result = db
+        .prepare(`DELETE FROM invite_codes WHERE code = ?`)
+        .run(code);
     return result.changes > 0;
 }

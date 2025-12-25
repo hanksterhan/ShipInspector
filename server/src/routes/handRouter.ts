@@ -165,7 +165,7 @@ function createRouter(): IRouter {
      *     tags:
      *       - Poker Equity Calculation
      *     summary: Calculate equity for multiple players
-     *     description: Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Supports exact enumeration (for small combo counts) and Monte Carlo simulation (for large combo counts). Automatically chooses the best method based on the number of combinations unless explicitly specified.
+     *     description: Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Uses high-performance Rust WASM implementation. Currently supports preflop (empty board) and river showdown (complete 5-card board).
      *     requestBody:
      *       required: true
      *       content:
@@ -179,23 +179,22 @@ function createRouter(): IRouter {
      *                 players: ["14h 14d", "13h 13d"]
      *                 board: ""
      *                 options:
-     *                   mode: "mc"
-     *                   iterations: 10000
-     *             flopExact:
-     *               summary: Flop equity with exact enumeration
+     *                   mode: "rust"
+     *             river:
+     *               summary: River showdown (complete board)
      *               value:
      *                 players: ["14h 14d", "13h 13d"]
-     *                 board: "12h 11h 10h"
+     *                 board: "12h 11h 10h 9h 8h"
      *                 options:
-     *                   mode: "exact"
-     *             turnWithDead:
-     *               summary: Turn equity with dead cards
+     *                   mode: "rust"
+     *             preflopWithDead:
+     *               summary: Pre-flop equity with dead cards
      *               value:
      *                 players: ["14h 14d", "13h 13d", "12h 12d"]
-     *                 board: "11h 10h 9h 8h"
+     *                 board: ""
      *                 dead: ["7h", "6h"]
      *                 options:
-     *                   mode: "auto"
+     *                   mode: "rust"
      *     responses:
      *       '200':
      *         description: Equity calculated successfully

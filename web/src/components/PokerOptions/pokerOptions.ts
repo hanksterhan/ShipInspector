@@ -27,12 +27,6 @@ export class PokerOptions extends MobxLitElement {
         settingsStore.setCardSelectionMode(mode);
     };
 
-    handleEquityCalculationModeChange = (
-        mode: "Monte Carlo" | "Exact" | "Both"
-    ) => {
-        settingsStore.setEquityCalculationMode(mode);
-    };
-
     handleReset = () => {
         settingsStore.resetSettings();
     };
@@ -94,38 +88,6 @@ export class PokerOptions extends MobxLitElement {
                             </sp-action-button>
                             <sp-action-button value="52 Cards">
                                 52 Cards
-                            </sp-action-button>
-                        </sp-action-group>
-                    </div>
-                    <div class="equity-calculation-mode-container">
-                        <sp-field-label>Equity calculation mode</sp-field-label>
-                        <sp-action-group
-                            selects="single"
-                            .selected=${[settingsStore.equityCalculationMode]}
-                            @change=${(e: CustomEvent) => {
-                                const target = e.target as any;
-                                const selectedValue = Array.isArray(
-                                    target.selected
-                                )
-                                    ? target.selected[0]
-                                    : target.selected;
-                                this.handleEquityCalculationModeChange(
-                                    selectedValue as
-                                        | "Monte Carlo"
-                                        | "Exact"
-                                        | "Both"
-                                );
-                            }}
-                            class="selection-mode-buttons"
-                        >
-                            <sp-action-button value="Exact">
-                                Exact
-                            </sp-action-button>
-                            <sp-action-button value="Monte Carlo">
-                                Monte Carlo
-                            </sp-action-button>
-                            <sp-action-button value="Both">
-                                Both
                             </sp-action-button>
                         </sp-action-group>
                     </div>

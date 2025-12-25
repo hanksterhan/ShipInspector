@@ -6,8 +6,5 @@ export interface EquityResult {
 }
 
 export interface EquityOptions {
-    mode?: "auto" | "exact" | "mc";
-    iterations?: number; // number of iterations for Monte Carlo simulation
-    seed?: number; // seed for random number generator
-    exactMaxCombos?: number; // guardrail: if combos > this, fallback to Monte Carlo in auto
+    mode?: "rust"; // Only Rust WASM mode is supported
 }

@@ -50,11 +50,15 @@ export function getUserById(userId: string): User | null {
     // Handle role - check for null, undefined, or empty string
     let role = row.role;
     if (!role || role.trim() === "") {
-        console.warn(`[getUserById] User ${row.email} (${userId}) has null/empty role, defaulting to "user"`);
+        console.warn(
+            `[getUserById] User ${row.email} (${userId}) has null/empty role, defaulting to "user"`
+        );
         role = "user";
     }
     role = role.trim().toLowerCase() as UserRole;
-    console.log(`[getUserById] Found user ${row.email} (${userId}) with role: "${role}" (raw from DB: "${row.role}")`);
+    console.log(
+        `[getUserById] Found user ${row.email} (${userId}) with role: "${role}" (raw from DB: "${row.role}")`
+    );
 
     return {
         userId: row.user_id,

@@ -6,8 +6,8 @@ const meter = metrics.getMeter("ship-inspector-server", "1.0.0");
  * Counter for equity calculation requests
  * Tags:
  * - players: number of players
- * - board_state: preflop, flop, turn, river, complete
- * - calculation_mode: exact, mc, auto
+ * - board_state: preflop, river
+ * - calculation_mode: rust
  */
 export const equityCalculationCounter = meter.createCounter(
     "poker.equity.calculations",

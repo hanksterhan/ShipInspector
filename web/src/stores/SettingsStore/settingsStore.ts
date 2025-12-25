@@ -11,9 +11,6 @@ export class SettingsStore {
     @observable
     cardSelectionMode: "Suit - Rank Selection" | "52 Cards" = "52 Cards";
 
-    @observable
-    equityCalculationMode: "Monte Carlo" | "Exact" | "Both" = "Exact";
-
     constructor() {
         makeObservable(this);
     }
@@ -39,14 +36,8 @@ export class SettingsStore {
     }
 
     @action
-    setEquityCalculationMode(mode: "Monte Carlo" | "Exact" | "Both") {
-        this.equityCalculationMode = mode;
-    }
-
-    @action
     resetSettings() {
         this.setPlayers(2);
         this.setCardSelectionMode("52 Cards");
-        this.setEquityCalculationMode("Exact");
     }
 }

@@ -84,32 +84,11 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         mode: {
                             type: "string",
-                            enum: ["auto", "exact", "mc"],
+                            enum: ["rust"],
                             description:
-                                "Calculation mode: 'auto' chooses based on combo count, 'exact' enumerates all possibilities, 'mc' uses Monte Carlo simulation",
-                            default: "auto",
-                            example: "auto",
-                        },
-                        iterations: {
-                            type: "integer",
-                            description:
-                                "Number of iterations for Monte Carlo simulation",
-                            default: 10000,
-                            minimum: 1,
-                            example: 10000,
-                        },
-                        seed: {
-                            type: "integer",
-                            description:
-                                "Seed for random number generator (for reproducible results)",
-                            example: 12345,
-                        },
-                        exactMaxCombos: {
-                            type: "integer",
-                            description:
-                                "Maximum combinations before falling back to Monte Carlo in auto mode",
-                            default: 200000,
-                            example: 200000,
+                                "Calculation mode: 'rust' uses high-performance Rust WASM implementation (preflop only)",
+                            default: "rust",
+                            example: "rust",
                         },
                     },
                 },

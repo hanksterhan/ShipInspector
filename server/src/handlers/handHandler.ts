@@ -15,7 +15,7 @@ import {
     ApiErrorResponse,
 } from "@common/interfaces";
 import { hand } from "../integrations/hand";
-import { computeEquityWithCache } from "../integrations/hand/equityLookup";
+import { computeEquity } from "../integrations/hand/equity";
 import {
     equityCalculationCounter,
     handComparisonCounter,
@@ -198,9 +198,8 @@ class HandHandler {
                 parseCard(cardStr)
             );
 
-            // Calculate equity (with lookup table caching for performance)
-            // Use computeEquityWithCache for automatic caching, or computeEquity for no cache
-            const { result: equityResult, fromCache } = computeEquityWithCache(
+            // Calculate equity using Rust WASM implementation
+            const equityResult = await computeEquity(
                 parsedPlayers,
                 parsedBoard,
                 options,
@@ -221,7 +220,7 @@ class HandHandler {
                 players: parsedPlayers.map((p) => p.cards),
                 board: parsedBoard.cards,
                 dead: parsedDead,
-                fromCache,
+                fromCache: false,
             };
             res.status(200).json(response);
         } catch (error: any) {
