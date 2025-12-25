@@ -166,6 +166,14 @@ export const styles = css`
         margin-top: var(--spectrum-global-dimension-size-100);
     }
 
+    .outs-container {
+        width: 100%;
+        max-width: 100%;
+        margin-top: var(--spectrum-global-dimension-size-300);
+        margin-bottom: var(--spectrum-global-dimension-size-200);
+        box-sizing: border-box;
+    }
+
     .board-complete-message {
         font-size: var(--spectrum-global-dimension-font-size-300);
         color: var(--spectrum-global-color-gray-700);

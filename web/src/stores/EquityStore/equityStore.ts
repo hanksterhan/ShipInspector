@@ -159,10 +159,10 @@ export class EquityStore {
             return;
         }
 
-        // Only calculate for pre-flop (0 cards) or river (5 cards)
-        // Don't calculate during partial board selection (1-4 cards)
+        // Calculate equity for all board states: preflop (0), flop (3), turn (4), river (5)
+        // Skip calculation during incomplete flop selection (1-2 cards)
         const boardCardsCount = cardStore.boardCards.length;
-        if (boardCardsCount > 0 && boardCardsCount < 5) {
+        if (boardCardsCount === 1 || boardCardsCount === 2) {
             this.equityResult = null;
             this.isLoading = false;
             this.cacheKey = null;
