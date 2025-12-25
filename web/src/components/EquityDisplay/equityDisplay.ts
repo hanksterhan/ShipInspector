@@ -90,25 +90,6 @@ export class EquityDisplay extends MobxLitElement {
         // Only show tie if it's 0.01% or more
         const hasTie = parseFloat(tiePercentage) >= 0.01;
 
-        const calculationTime = equityStore.calculationTime;
-
-        // Format time as seconds (e.g., "4s" or "0.5s")
-        const formatTime = (ms: number | null): string => {
-            if (ms === null) return "";
-            const seconds = ms / 1000;
-            if (seconds < 1) {
-                return `${seconds.toFixed(1)}s`;
-            }
-            // Show whole number if it's a whole number, otherwise 1 decimal place
-            const rounded = Math.round(seconds * 10) / 10;
-            if (rounded % 1 === 0) {
-                return `${Math.round(seconds)}s`;
-            }
-            return `${rounded.toFixed(1)}s`;
-        };
-
-        const timeText = formatTime(calculationTime);
-
         return html`
             <div class="equity-display">
                 <div class="equity-stats">
@@ -127,13 +108,6 @@ export class EquityDisplay extends MobxLitElement {
                           `
                         : ""}
                 </div>
-                ${timeText
-                    ? html`
-                          <div class="equity-footer">
-                              <span class="time-text">${timeText}</span>
-                          </div>
-                      `
-                    : ""}
             </div>
         `;
     }

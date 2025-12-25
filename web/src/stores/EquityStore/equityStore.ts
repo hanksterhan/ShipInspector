@@ -30,9 +30,6 @@ export class EquityStore {
     @observable
     samples: number = 0;
 
-    @observable
-    calculationTime: number | null = null; // Time in milliseconds
-
     // Cache key to track which hand configuration this result is for
     private cacheKey: string | null = null;
 
@@ -85,7 +82,6 @@ export class EquityStore {
         this.equityResult = null;
         this.error = null;
         this.isLoading = false;
-        this.calculationTime = null;
         this.players = [];
         this.board = [];
         this.dead = [];
@@ -159,7 +155,6 @@ export class EquityStore {
             this.equityResult = null;
             this.error = null;
             this.isLoading = false;
-            this.calculationTime = null;
             this.cacheKey = null;
             return;
         }
@@ -170,7 +165,6 @@ export class EquityStore {
         if (boardCardsCount > 0 && boardCardsCount < 5) {
             this.equityResult = null;
             this.isLoading = false;
-            this.calculationTime = null;
             this.cacheKey = null;
             return;
         }
@@ -203,9 +197,6 @@ export class EquityStore {
             // Use Rust mode for all calculations
             const options = { mode: "rust" as const };
 
-            // Track calculation start time
-            const startTime = performance.now();
-
             // Call the API with abort signal
             const result = await pokerService.getHandEquity(
                 players,
@@ -217,11 +208,6 @@ export class EquityStore {
 
             // Only parse the response if this request wasn't aborted
             if (!abortController.signal.aborted) {
-                // Calculate duration
-                const endTime = performance.now();
-                const duration = endTime - startTime;
-
-                this.calculationTime = duration;
                 this.parseEquityResponse(result, currentCacheKey);
             }
         } catch (err) {
