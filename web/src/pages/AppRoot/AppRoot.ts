@@ -6,14 +6,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 
-// Explicitly import LoginPage component to ensure it's registered
-import "../LoginPage/loginPage";
-import { LoginPage } from "../LoginPage/loginPage";
-
 import {
     menuStore,
     settingsStore,
-    authStore,
     routerStore,
 } from "../../stores/index";
 import { gearIcon } from "../../assets/index";
@@ -30,60 +25,10 @@ export class AppRoot extends MobxLitElement {
 
     render() {
         // Access observables directly to ensure MobX tracks them
-        const isLoading = authStore.isLoading;
-        const isAuthenticated = authStore.isAuthenticated;
         const currentRoute = routerStore.currentRoute;
 
-        // Show loading state while checking authentication
-        if (isLoading) {
-            return html`
-                <sp-theme
-                    system="spectrum"
-                    color="light"
-                    scale="medium"
-                    dir="ltr"
-                >
-                    <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
-                    </div>
-                </sp-theme>
-            `;
-        }
-
-        // Route guard: redirect to login if trying to access protected route without auth
-        if (!isAuthenticated && routerStore.isAuthenticatedRoute) {
-            routerStore.navigate("/");
-            return html`
-                <sp-theme
-                    system="spectrum"
-                    color="light"
-                    scale="medium"
-                    dir="ltr"
-                >
-                    <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
-                    </div>
-                </sp-theme>
-            `;
-        }
-
-        // Show login page for root/login route if not authenticated
-        if (
-            !isAuthenticated &&
-            (currentRoute === "/" || currentRoute === "/login")
-        ) {
-            // Force component registration by referencing the class
-            if (!customElements.get("login-page")) {
-                customElements.define("login-page", LoginPage);
-            }
-            return html`<login-page></login-page>`;
-        }
-
-        // Redirect authenticated users from login to main app
-        if (
-            isAuthenticated &&
-            (currentRoute === "/" || currentRoute === "/login")
-        ) {
+        // Auth disabled - redirect root/login to main app
+        if (currentRoute === "/" || currentRoute === "/login") {
             routerStore.navigate("/poker-hands");
             return html`
                 <sp-theme
