@@ -11,7 +11,10 @@ import {
 import { hand } from "./hand";
 import { trace } from "@opentelemetry/api";
 import { getBoardState } from "../../config/metrics";
-import { calculateEquityRust } from "./equityRust";
+import { calculateEquityRust, calculateTurnOuts } from "./equityRust";
+
+// Re-export for convenience
+export { calculateTurnOuts };
 
 /**
  * Create a full 52-card deck
@@ -247,29 +250,120 @@ export async function computeEquity(
         );
     }
 
-    // Rust implementation currently only supports preflop (empty board)
-    if (boardLength !== 0) {
-        throw new Error(
-            "Equity calculation currently only supports preflop (empty board) or complete board (river showdown)"
-        );
-    }
-
     // Create trace span for equity calculation
     const tracer = trace.getTracer("equity-calculator");
     const boardState = getBoardState(boardLength);
+
+    // For preflop, use optimized Rust implementation
+    if (boardLength === 0) {
+        const span = tracer.startSpan("equity.calculate", {
+            attributes: {
+                "equity.method": "rust",
+                "equity.players": numPlayers,
+                "equity.board_state": boardState,
+            },
+        });
+
+        try {
+            const result = await calculateEquityRust(
+                players,
+                board,
+                remainingDeck
+            );
+            span.setAttribute("equity.samples", result.samples);
+            return result;
+        } finally {
+            span.end();
+        }
+    }
+
+    // For flop/turn (1-4 cards), enumerate all possible runouts
     const span = tracer.startSpan("equity.calculate", {
         attributes: {
-            "equity.method": "rust",
+            "equity.method": "enumeration",
             "equity.players": numPlayers,
             "equity.board_state": boardState,
+            "equity.missing_cards": missing,
         },
     });
 
     try {
-        const result = await calculateEquityRust(players, board, remainingDeck);
+        const result = enumerateRunouts(
+            players,
+            board.cards,
+            remainingDeck,
+            missing,
+            numPlayers
+        );
         span.setAttribute("equity.samples", result.samples);
         return result;
     } finally {
         span.end();
     }
+}
+
+/**
+ * Enumerate all possible runouts for flop/turn equity
+ * Uses nested loops to generate all combinations of remaining cards
+ */
+function enumerateRunouts(
+    players: readonly Hole[],
+    boardCards: Card[],
+    remainingDeck: Card[],
+    missing: number,
+    numPlayers: number
+): EquityResult {
+    const wins = new Array(numPlayers).fill(0);
+    const ties = new Array(numPlayers).fill(0);
+    let totalCombos = 0;
+
+    const deckLen = remainingDeck.length;
+    const completeBoard = new Array(5);
+
+    // Copy existing board cards
+    for (let i = 0; i < boardCards.length; i++) {
+        completeBoard[i] = boardCards[i];
+    }
+
+    // Generate all combinations recursively
+    function enumerate(startIdx: number, depth: number) {
+        if (depth === missing) {
+            // Evaluate this runout
+            const { winners, ties: isTie } = evaluateBoard(
+                players,
+                completeBoard
+            );
+            totalCombos++;
+
+            if (isTie) {
+                const tieShare = 1.0 / winners.length;
+                for (const winnerIdx of winners) {
+                    ties[winnerIdx] += tieShare;
+                }
+            } else {
+                wins[winners[0]] += 1;
+            }
+            return;
+        }
+
+        // Try each remaining card
+        for (let i = startIdx; i < deckLen; i++) {
+            completeBoard[boardCards.length + depth] = remainingDeck[i];
+            enumerate(i + 1, depth + 1);
+        }
+    }
+
+    enumerate(0, 0);
+
+    // Convert counts to fractions
+    const winFractions = wins.map((w) => w / totalCombos);
+    const tieFractions = ties.map((t) => t / totalCombos);
+    const loseFractions = winFractions.map((w, i) => 1.0 - w - tieFractions[i]);
+
+    return {
+        win: winFractions,
+        tie: tieFractions,
+        lose: loseFractions,
+        samples: totalCombos,
+    };
 }

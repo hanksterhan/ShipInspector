@@ -8,18 +8,21 @@ export interface User {
 
 export class AuthStore {
     @observable
-    user: User | null = null;
+    user: User | null = {
+        userId: "disabled-auth",
+        email: "disabled@example.com",
+    }; // Set default user - auth disabled
 
     @observable
-    isLoading = true; // Start as true to show loading state initially
+    isLoading = false; // Start as false - auth disabled
 
     @observable
     error: string | null = null;
 
     constructor() {
         makeObservable(this);
-        // Check for existing session on initialization
-        this.checkAuth();
+        // Auth disabled - skip checkAuth
+        // this.checkAuth();
     }
 
     @action
@@ -131,6 +134,7 @@ export class AuthStore {
     }
 
     get isAuthenticated(): boolean {
-        return this.user !== null;
+        // Auth disabled - always return true
+        return true;
     }
 }

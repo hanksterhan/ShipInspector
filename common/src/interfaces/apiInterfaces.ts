@@ -60,6 +60,38 @@ export interface CalculateEquityResponse {
     fromCache?: boolean; // Indicates if the result was retrieved from cache
 }
 
+// Outs Calculation API
+export interface CalculateOutsRequest {
+    hero: string; // Hero's hole cards, e.g., "14h 13h"
+    villain: string; // Villain's hole cards, e.g., "9d 9c"
+    board: string; // Turn board (4 cards), e.g., "8h 7h 6h 2c"
+}
+
+export interface OutCard {
+    rank: number;
+    suit: number; // 0=c, 1=d, 2=h, 3=s
+    category: number; // Hand category: 0=high_card, 1=pair, 2=two_pair, 3=set, 4=straight, 5=flush, etc.
+}
+
+export interface OutsSuppressionReason {
+    reason: string;
+    baseline_win: number;
+    baseline_tie: number;
+}
+
+export interface CalculateOutsResponse {
+    suppressed: OutsSuppressionReason | null;
+    win_outs: OutCard[];
+    tie_outs: OutCard[];
+    baseline_win: number;
+    baseline_tie: number;
+    baseline_lose: number;
+    total_river_cards: number;
+    // Friendly format with Card[] instead of OutCard[]
+    win_outs_cards?: Card[];
+    tie_outs_cards?: Card[];
+}
+
 // Error Response (shared format)
 export interface ApiErrorResponse {
     error: string;

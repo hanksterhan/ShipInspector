@@ -7,6 +7,7 @@ import { Card } from "@common/interfaces";
 import { cardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 import "../CardSelector";
+import "../OutsDisplay";
 
 @customElement("board-selector")
 export class BoardSelector extends MobxLitElement {
@@ -156,6 +157,12 @@ export class BoardSelector extends MobxLitElement {
         const accordionOpen =
             this.isOpen !== undefined ? this.isOpen : defaultOpen;
 
+        // Show outs display for heads-up (2 players) on the turn (4 board cards)
+        const selectedHolesCount = cardStore.holeCards.filter(
+            (hole) => hole !== undefined
+        ).length;
+        const showOuts = selectedHolesCount === 2 && boardCards.length === 4;
+
         return html`
             <div class="board-selector-container">
                 <sp-accordion>
@@ -170,6 +177,15 @@ export class BoardSelector extends MobxLitElement {
                                     this.renderCard(card, index)
                                 )}
                             </div>
+                            ${showOuts
+                                ? html`
+                                      <div class="outs-container">
+                                          <outs-display
+                                              .playerIndex=${0}
+                                          ></outs-display>
+                                      </div>
+                                  `
+                                : html``}
                             ${canSelectMore
                                 ? html`
                                       <div class="selection-instruction">

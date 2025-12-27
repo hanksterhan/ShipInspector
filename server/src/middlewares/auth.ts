@@ -12,30 +12,18 @@ export interface AuthRequest extends Request {
 /**
  * Verify session middleware
  * Checks if user has an active session
+ * DISABLED: Auth is currently disabled - setting default admin user
  */
 export function authenticateSession(
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ): void {
-    const session = req.session as any;
-
-    if (!session.userId || !session.email) {
-        res.status(401).json({ error: "Authentication required" });
-        return;
-    }
-
-    // Get user from database to ensure we have current role
-    const user = getUserById(session.userId);
-    if (!user) {
-        res.status(401).json({ error: "User not found" });
-        return;
-    }
-
+    // Auth disabled - set default admin user so handlers that expect req.user work
     req.user = {
-        userId: user.userId,
-        email: user.email,
-        role: user.role,
+        userId: "disabled-auth",
+        email: "disabled@example.com",
+        role: "admin" as UserRole,
     };
     next();
 }
@@ -67,75 +55,33 @@ export function optionalAuth(
 /**
  * Verify admin access middleware
  * Checks if user has an active session and has admin role
+ * DISABLED: Auth is currently disabled - setting default admin user
  */
 export function requireAdmin(
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ): void {
-    const session = req.session as any;
-
-    if (!session.userId || !session.email) {
-        res.status(401).json({ error: "Authentication required" });
-        return;
-    }
-
-    // Get user from database to ensure we have current role
-    const user = getUserById(session.userId);
-    if (!user) {
-        console.error(
-            `[requireAdmin] User not found for userId: ${session.userId}`
-        );
-        res.status(401).json({ error: "User not found" });
-        return;
-    }
-
-    // Check if user has admin role in database (case-insensitive check)
-    const userRole = (user.role || "").toLowerCase().trim();
-    if (userRole !== "admin") {
-        console.error(
-            `[requireAdmin] User ${session.userId} (${user.email}) has role "${user.role}" (normalized: "${userRole}"), not "admin"`
-        );
-        res.status(403).json({ error: "Admin access required" });
-        return;
-    }
-
+    // Auth disabled - set default admin user so handlers that expect req.user work
     req.user = {
-        userId: user.userId,
-        email: user.email,
-        role: user.role,
+        userId: "disabled-auth",
+        email: "disabled@example.com",
+        role: "admin" as UserRole,
     };
     next();
 }
 
 /**
  * Require specific role middleware
+ * DISABLED: Auth is currently disabled - setting default user with requested role
  */
 export function requireRole(role: UserRole) {
     return (req: AuthRequest, res: Response, next: NextFunction): void => {
-        const session = req.session as any;
-
-        if (!session.userId || !session.email) {
-            res.status(401).json({ error: "Authentication required" });
-            return;
-        }
-
-        // Get user from database to ensure we have current role
-        const user = getUserById(session.userId);
-        if (!user) {
-            res.status(401).json({ error: "User not found" });
-            return;
-        }
-
-        if (user.role !== role) {
-            res.status(403).json({ error: `${role} access required` });
-            return;
-        }
-
+        // Auth disabled - set default user with requested role so handlers that expect req.user work
         req.user = {
-            userId: user.userId,
-            email: user.email,
-            role: user.role,
+            userId: "disabled-auth",
+            email: "disabled@example.com",
+            role: role,
         };
         next();
     };

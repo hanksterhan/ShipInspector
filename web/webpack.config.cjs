@@ -1,8 +1,10 @@
 const path = require("path");
+const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-    mode: "development",
+    mode: process.env.NODE_ENV === "production" ? "production" : "development",
     entry: "./src/index.ts",
     module: {
         rules: [
@@ -31,7 +33,24 @@ module.exports = {
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist"),
+        clean: true,
     },
+    plugins: [
+        new MiniCssExtractPlugin(),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, "public"),
+                    to: path.resolve(__dirname, "dist"),
+                },
+            ],
+        }),
+        new webpack.DefinePlugin({
+            "process.env.API_URL": JSON.stringify(
+                process.env.API_URL || "http://localhost:3000"
+            ),
+        }),
+    ],
     devServer: {
         static: {
             directory: path.join(__dirname, "public"),

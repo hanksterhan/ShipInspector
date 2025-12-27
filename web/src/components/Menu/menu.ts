@@ -10,7 +10,6 @@ import {
     deckStore,
     equityStore,
     settingsStore,
-    authStore,
     routerStore,
 } from "../../stores/index";
 import { pokerIcon, percentageIcon, boatIcon } from "../../assets";
@@ -137,17 +136,7 @@ export class Menu extends MobxLitElement {
                     >
                         New hand
                     </sp-action-button>
-                    ${authStore.isAuthenticated
-                        ? html`<sp-action-button
-                              class="logout-button"
-                              size="s"
-                              @click=${async () => {
-                                  await authStore.logout();
-                              }}
-                          >
-                              Logout
-                          </sp-action-button>`
-                        : null}
+                    <!-- Logout button removed - auth disabled -->
                 </div>
             </div>
         `;

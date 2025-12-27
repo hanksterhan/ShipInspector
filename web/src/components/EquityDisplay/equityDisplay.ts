@@ -67,6 +67,12 @@ export class EquityDisplay extends MobxLitElement {
                 `;
             }
 
+            // If selecting partial flop (1-2 cards), show nothing
+            const boardCardsCount = cardStore.boardCards.length;
+            if (boardCardsCount === 1 || boardCardsCount === 2) {
+                return html``;
+            }
+
             return html`
                 <div class="equity-display empty">
                     <span class="empty-text">No equity data</span>
