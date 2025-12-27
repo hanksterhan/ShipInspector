@@ -68,4 +68,7 @@ export class HttpClient {
     }
 }
 
-export const httpClient = new HttpClient("http://localhost:3000");
+// Use environment variable for API URL, fallback to localhost for development
+const API_URL = process.env.API_URL || "http://localhost:3000";
+
+export const httpClient = new HttpClient(API_URL);
