@@ -18,6 +18,16 @@ export const styles = css`
         margin: var(--spectrum-global-dimension-size-200);
     }
 
+    .swap-button-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: var(--spectrum-global-dimension-size-200);
+    }
+
+    .swap-button-container sp-button {
+        font-size: var(--spectrum-global-dimension-font-size-100);
+    }
+
     .selected-holes-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -62,14 +72,14 @@ export const styles = css`
     .hole-card,
     .hole-card-placeholder {
         width: calc((100% - var(--spectrum-global-dimension-size-75)) / 2);
-        max-width: 120px;
+        max-width: 48px;
         height: auto;
-        min-width: 40px;
+        min-width: 16px;
         min-height: 0;
         aspect-ratio: 5 / 7;
-        border-radius: var(--spectrum-global-dimension-size-100);
-        border: 2px solid var(--spectrum-global-color-gray-400);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        border: 1px solid var(--spectrum-global-color-gray-400);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -91,30 +101,22 @@ export const styles = css`
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: var(--spectrum-global-dimension-size-75);
+        gap: 2px;
         width: 100%;
         height: 100%;
-        padding: clamp(
-            var(--spectrum-global-dimension-size-75),
-            5%,
-            var(--spectrum-global-dimension-size-150)
-        );
+        padding: clamp(2px, 5%, 4px);
     }
 
     .hole-card-rank {
-        font-size: clamp(
-            var(--spectrum-global-dimension-font-size-200),
-            3.5%,
-            var(--spectrum-global-dimension-font-size-500)
-        );
+        font-size: clamp(8px, 3.5%, 12px);
         font-weight: var(--spectrum-global-font-weight-bold);
         color: var(--spectrum-global-color-gray-900);
         line-height: 1;
     }
 
     .hole-card-suit-icon {
-        width: clamp(16px, 5%, 32px);
-        height: clamp(16px, 5%, 32px);
+        width: clamp(6px, 5%, 12px);
+        height: clamp(6px, 5%, 12px);
         display: flex;
         align-items: center;
         justify-content: center;

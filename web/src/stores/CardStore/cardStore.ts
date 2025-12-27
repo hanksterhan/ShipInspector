@@ -156,6 +156,18 @@ export class CardStore {
         this.resetSelection();
     }
 
+    @action
+    swapPlayers() {
+        // Swap player 1 and player 2 (indices 0 and 1)
+        if (this.holeCards.length >= 2 && this.holeCards[0] && this.holeCards[1]) {
+            const temp = this.holeCards[0];
+            this.holeCards[0] = this.holeCards[1];
+            this.holeCards[1] = temp;
+            // Force array update for MobX reactivity
+            this.holeCards = [...this.holeCards];
+        }
+    }
+
     // Board selection state
     @observable
     boardCardIndex: number = 0; // 0-4 for flop (0-2), turn (3), river (4)

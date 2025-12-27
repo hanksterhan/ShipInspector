@@ -210,6 +210,50 @@ export class OutsDisplay extends MobxLitElement {
                                       >${tieOuts.length}</span
                                   >
                               </div>
+                              <div class="outs-groups">
+                                  ${(() => {
+                                      const tieOutsGrouped = this.groupOutsByCategory(result.tie_outs);
+                                      const tieSortedCategories = Array.from(tieOutsGrouped.keys()).sort(
+                                          (a, b) => b - a
+                                      );
+                                      return tieSortedCategories.map((category) => {
+                                          const outs =
+                                              tieOutsGrouped.get(category) || [];
+
+                                          return html`
+                                              <div class="outs-group">
+                                                  <div class="outs-group-header">
+                                                      <span class="category-name"
+                                                          >${this.getCategoryName(
+                                                              category
+                                                          )}</span
+                                                      >
+                                                      <span class="outs-group-count"
+                                                          >${outs.length}</span
+                                                      >
+                                                  </div>
+                                                  <div class="outs-cards">
+                                                      ${outs.map((out: any) =>
+                                                          this.renderOutCard({
+                                                              rank: out.rank,
+                                                              suit:
+                                                                  typeof out.suit ===
+                                                                  "number"
+                                                                      ? [
+                                                                            "c",
+                                                                            "d",
+                                                                            "h",
+                                                                            "s",
+                                                                        ][out.suit]
+                                                                      : out.suit,
+                                                          })
+                                                      )}
+                                                  </div>
+                                              </div>
+                                          `;
+                                      });
+                                  })()}
+                              </div>
                           </div>
                       `
                     : html``}

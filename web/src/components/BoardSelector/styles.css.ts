@@ -61,12 +61,10 @@ export const styles = css`
 
     .board-card,
     .board-card-placeholder {
-        width: 100px;
-        height: 140px;
-        min-width: 100px;
-        max-width: 100px;
-        min-height: 140px;
-        max-height: 140px;
+        width: 48px;
+        min-width: 48px;
+        max-width: 48px;
+        height: auto;
         aspect-ratio: 5 / 7;
         border-radius: var(--spectrum-global-dimension-size-100);
         border: 2px solid var(--spectrum-global-color-gray-400);
@@ -92,10 +90,10 @@ export const styles = css`
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: var(--spectrum-global-dimension-size-75);
+        gap: 2px;
         width: 100%;
         height: 100%;
-        padding: var(--spectrum-global-dimension-size-150);
+        padding: clamp(2px, 5%, 4px);
     }
 
     .board-card-rank {

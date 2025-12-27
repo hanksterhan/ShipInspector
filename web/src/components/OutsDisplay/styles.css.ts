@@ -151,7 +151,7 @@ export const styles = css`
     .outs-cards {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.375rem;
+        gap: 0.25rem;
         margin-top: 0.25rem;
     }
 
@@ -160,31 +160,34 @@ export const styles = css`
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-width: 32px;
-        width: 32px;
-        height: 44px;
+        gap: 2px;
+        min-width: 16px;
+        width: 48px;
+        max-width: 48px;
+        height: auto;
+        aspect-ratio: 5 / 7;
         background: white;
         border: 1px solid var(--spectrum-global-color-gray-400);
-        border-radius: 0.25rem;
-        padding: 0.125rem;
+        border-radius: 4px;
+        padding: clamp(2px, 5%, 4px);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         flex-shrink: 0;
+        box-sizing: border-box;
     }
 
     .out-card-rank {
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: var(--spectrum-global-dimension-font-size-500);
+        font-weight: var(--spectrum-global-font-weight-bold);
         line-height: 1;
         color: var(--spectrum-global-color-gray-900);
     }
 
     .out-card-suit {
-        width: 12px;
-        height: 12px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: 0.125rem;
     }
 
     .out-card-suit svg {

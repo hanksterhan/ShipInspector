@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd common && npm install && npm run build && cd ../web && npm install && npm run build",
+  "outputDirectory": "web/dist",
+  "installCommand": "cd common && npm install && cd ../web && npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+
