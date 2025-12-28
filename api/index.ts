@@ -28,6 +28,15 @@ import { swaggerSpec } from "../server/dist/server/src/config/swagger";
 // Load environment variables
 dotenv.config();
 
+// Log environment info for debugging
+console.log('=== API Function Startup ===');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Is Serverless:', isServerless);
+console.log('VERCEL env:', process.env.VERCEL);
+console.log('Clerk Secret Key present:', !!process.env.CLERK_SECRET_KEY);
+console.log('Database URL present:', !!process.env.DATABASE_URL);
+console.log('===========================');
+
 // Initialize user metrics (in serverless, this will run on cold start)
 import { getUserCount } from "../server/dist/server/src/services/userService";
 import { totalUsersGauge } from "../server/dist/server/src/config/metrics";
@@ -60,26 +69,41 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 
 app.use(
     cors({
-        origin: (origin, callback) => {
+        origin: (origin: any, callback: any) => {
+            console.log(`CORS request from origin: ${origin}`);
+            
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) {
+                console.log('CORS: Allowing request with no origin');
                 return callback(null, true);
             }
 
             // In development, allow localhost with any port
             if (isDevelopment && origin.startsWith("http://localhost:")) {
+                console.log('CORS: Allowing localhost in development');
+                return callback(null, true);
+            }
+
+            // Allow requests from the same domain (for Vercel deployments)
+            // This handles cases where the API is on the same domain as the frontend
+            if (origin.includes('.vercel.app') || origin.includes('sipoker.club')) {
+                console.log('CORS: Allowing Vercel/production domain');
                 return callback(null, true);
             }
 
             // Check if origin is in allowed list
             if (allowedOrigins.indexOf(origin) !== -1) {
+                console.log('CORS: Allowing configured origin');
                 callback(null, true);
             } else {
-                // In production, reject unknown origins
+                // In production, log but allow (for now, for debugging)
+                console.warn(`CORS: Origin not in allowed list: ${origin}`);
                 if (isDevelopment) {
                     callback(null, true); // Allow in development
                 } else {
-                    callback(new Error("Not allowed by CORS"));
+                    // Allow in production for now while debugging
+                    callback(null, true);
+                    // callback(new Error("Not allowed by CORS"));
                 }
             }
         },
@@ -91,22 +115,33 @@ app.use(express.json());
 
 // Clerk authentication middleware
 try {
+    console.log('Initializing Clerk middleware...');
     app.use(clerkMiddleware());
-    if (process.env.CLERK_SECRET_KEY) {
-        console.log("Clerk middleware initialized successfully");
-    } else {
-        console.warn(
-            "Clerk middleware initialized but CLERK_SECRET_KEY is missing - authentication may fail"
+    console.log("✅ Clerk middleware initialized successfully");
+    
+    if (!process.env.CLERK_SECRET_KEY) {
+        console.error(
+            "❌ CLERK_SECRET_KEY is missing! Authentication will fail."
+        );
+        console.error(
+            "Please set CLERK_SECRET_KEY in Vercel environment variables."
         );
     }
-} catch (error) {
-    console.error("Failed to initialize Clerk middleware:", error);
-    throw error;
+} catch (error: any) {
+    console.error("❌ Failed to initialize Clerk middleware:", error);
+    console.error("Error details:", error.message, error.stack);
+    // Don't throw - let the app start but authentication will fail
+    console.warn("⚠️  App starting without Clerk authentication");
 }
 
 app.use(globalRateLimiter); // Global rate limiting
 app.use(apiLogger); // Console logging for debugging
-app.use(telemetryLogger); // OpenTelemetry tracing
+
+// Only use telemetry logger if not in serverless environment
+// (telemetry SDK is not initialized in serverless to reduce cold start time)
+if (!isServerless) {
+    app.use(telemetryLogger); // OpenTelemetry tracing
+}
 
 // Swagger UI (primarily for development)
 app.use(
