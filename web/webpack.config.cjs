@@ -1,10 +1,11 @@
 const path = require("path");
 const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 require("dotenv").config();
 
 module.exports = {
-    mode: "development",
+    mode: process.env.NODE_ENV === "production" ? "production" : "development",
     entry: "./src/index.ts",
     module: {
         rules: [
@@ -34,6 +35,7 @@ module.exports = {
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist"),
+        clean: true,
     },
     plugins: [
         new MiniCssExtractPlugin(),
@@ -41,6 +43,15 @@ module.exports = {
             "process.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
                 process.env.VITE_CLERK_PUBLISHABLE_KEY
             ),
+        }),
+        new MiniCssExtractPlugin(),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, "public"),
+                    to: path.resolve(__dirname, "dist"),
+                },
+            ],
         }),
     ],
     devServer: {
