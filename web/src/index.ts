@@ -1,8 +1,11 @@
 import "./pages";
 import "./components";
 
-// Import only the Spectrum Web Components we actually use
+// Import Spectrum Web Components theme and styles
 import "@spectrum-web-components/theme/sp-theme.js";
+import "@spectrum-web-components/theme/src/themes.js";
+
+// Import only the Spectrum Web Components we actually use
 import "@spectrum-web-components/progress-circle/sp-progress-circle.js";
 import "@spectrum-web-components/action-button/sp-action-button.js";
 import "@spectrum-web-components/button/sp-button.js";
