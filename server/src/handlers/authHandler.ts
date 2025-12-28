@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import { AuthRequest, getAuth, clerkClient } from "../middlewares/auth";
-import { getUserById } from "../services/userService";
+import { getUserById, syncClerkUser } from "../services/userService";
 
 /**
  * Get current user info (requires authentication)
  * Uses Clerk authentication
  */
-export async function getCurrentUser(req: Request, res: Response): Promise<void> {
+export async function getCurrentUser(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         // Use Clerk's getAuth to get the user's userId
         const { userId } = getAuth(req);
@@ -24,7 +27,9 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
         let clerkUser;
         try {
             clerkUser = await clerkClient.users.getUser(userId);
-            console.log(`[getCurrentUser] Got Clerk user: ${clerkUser.emailAddresses[0]?.emailAddress}`);
+            console.log(
+                `[getCurrentUser] Got Clerk user: ${clerkUser.emailAddresses[0]?.emailAddress}`
+            );
         } catch (clerkError: any) {
             console.error(`[getCurrentUser] Clerk API error:`, clerkError);
             // If Clerk API fails, check if it's an authentication issue
@@ -37,19 +42,44 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
             throw clerkError;
         }
 
-        // Get local user data if you're storing additional info
-        // Note: User might not exist in local DB yet - that's OK, default to "user" role
+        // Get or create local user for role management
         let localUser = null;
         try {
             localUser = await getUserById(userId);
+
             if (localUser) {
-                console.log(`[getCurrentUser] Found local user with role: ${localUser.role}`);
+                console.log(
+                    `[getCurrentUser] Found local user with role: ${localUser.role}`
+                );
             } else {
-                console.log(`[getCurrentUser] User not in local DB yet, defaulting to "user" role`);
+                // User doesn't exist in local DB - sync from Clerk
+                console.log(
+                    `[getCurrentUser] User not in local DB, syncing from Clerk...`
+                );
+                const email = clerkUser.emailAddresses[0]?.emailAddress;
+
+                if (!email) {
+                    console.error(
+                        `[getCurrentUser] No email address found for Clerk user`
+                    );
+                    throw new Error("User has no email address");
+                }
+
+                // Create user in local DB with default "user" role
+                localUser = await syncClerkUser(userId, email, "user");
+                console.log(
+                    `[getCurrentUser] User synced to local DB with role: ${localUser.role}`
+                );
             }
         } catch (dbError) {
-            console.error(`[getCurrentUser] Database error (non-fatal):`, dbError);
-            // Continue even if database query fails - user is authenticated via Clerk
+            console.error(`[getCurrentUser] Database error:`, dbError);
+            // If database sync fails, still return user info with default role
+            // but log the error for investigation
+            if (!localUser) {
+                console.warn(
+                    `[getCurrentUser] Using fallback: defaulting to "user" role`
+                );
+            }
         }
 
         res.json({
@@ -69,11 +99,14 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
         console.error("Error details:", {
             message: error.message,
             status: error.status,
-            stack: error.stack
+            stack: error.stack,
         });
         res.status(500).json({
             error: "Failed to retrieve user information",
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details:
+                process.env.NODE_ENV === "development"
+                    ? error.message
+                    : undefined,
         });
     }
 }
@@ -84,7 +117,10 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
  * Note: requireAdmin middleware already ensures user is admin, so we can use req.user
  * Uses Clerk authentication
  */
-export async function getCurrentAdminUser(req: AuthRequest, res: Response): Promise<void> {
+export async function getCurrentAdminUser(
+    req: AuthRequest,
+    res: Response
+): Promise<void> {
     try {
         // The requireAdmin middleware already ensures:
         // 1. User is authenticated via Clerk
@@ -126,7 +162,10 @@ export async function getCurrentAdminUser(req: AuthRequest, res: Response): Prom
  * This demonstrates how to use getAuth() and clerkClient
  * as shown in the Clerk tutorial
  */
-export async function getClerkUserInfo(req: Request, res: Response): Promise<void> {
+export async function getClerkUserInfo(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         // Use getAuth() to get the user's userId from Clerk
         const { userId } = getAuth(req);

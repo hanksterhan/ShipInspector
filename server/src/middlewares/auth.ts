@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { getUserById, UserRole } from "../services/userService";
-import { 
-    requireAuth as clerkRequireAuth, 
+import {
+    requireAuth as clerkRequireAuth,
     getAuth,
-    clerkClient
+    clerkClient,
 } from "@clerk/express";
 
 // Re-export Clerk functions for use in handlers
@@ -72,7 +72,11 @@ export async function requireAdmin(
  * Require specific role middleware using Clerk
  */
 export function requireRole(role: UserRole) {
-    return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    return async (
+        req: AuthRequest,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
         try {
             // Use Clerk's getAuth to get the authenticated user's ID
             const { userId } = getAuth(req);

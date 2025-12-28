@@ -31,31 +31,39 @@ class ClerkService {
             if (!publishableKey) {
                 throw new Error(
                     "Missing VITE_CLERK_PUBLISHABLE_KEY environment variable. " +
-                    "Make sure you have a .env file with VITE_CLERK_PUBLISHABLE_KEY set."
+                        "Make sure you have a .env file with VITE_CLERK_PUBLISHABLE_KEY set."
                 );
             }
 
-            console.log('Clerk module keys:', Object.keys(ClerkModule));
-            console.log('publishableKey:', publishableKey);
+            console.log("Clerk module keys:", Object.keys(ClerkModule));
+            console.log("publishableKey:", publishableKey);
 
             // Handle different module formats (ESM vs CommonJS)
             // Try: default export, named Clerk export, or the module itself
             // @ts-ignore
-            const ClerkConstructor = ClerkModule.default || ClerkModule.Clerk || ClerkModule;
-            
-            if (typeof ClerkConstructor !== 'function') {
-                console.error('ClerkModule:', ClerkModule);
-                console.error('ClerkConstructor type:', typeof ClerkConstructor);
+            const ClerkConstructor =
+                ClerkModule.default || ClerkModule.Clerk || ClerkModule;
+
+            if (typeof ClerkConstructor !== "function") {
+                console.error("ClerkModule:", ClerkModule);
+                console.error(
+                    "ClerkConstructor type:",
+                    typeof ClerkConstructor
+                );
                 throw new Error(
                     "Failed to load Clerk constructor. Check that @clerk/clerk-js is properly installed. " +
-                    "Available keys: " + Object.keys(ClerkModule).join(', ')
+                        "Available keys: " +
+                        Object.keys(ClerkModule).join(", ")
                 );
             }
 
-            console.log('Initializing Clerk with constructor:', ClerkConstructor.name);
+            console.log(
+                "Initializing Clerk with constructor:",
+                ClerkConstructor.name
+            );
             this.clerk = new ClerkConstructor(publishableKey);
             await this.clerk.load();
-            console.log('Clerk loaded successfully');
+            console.log("Clerk loaded successfully");
             return this.clerk;
         })();
 
@@ -68,9 +76,7 @@ class ClerkService {
      */
     getClerk(): any {
         if (!this.clerk) {
-            throw new Error(
-                "Clerk not initialized. Call initialize() first."
-            );
+            throw new Error("Clerk not initialized. Call initialize() first.");
         }
         return this.clerk;
     }
@@ -96,4 +102,3 @@ class ClerkService {
 }
 
 export const clerkService = new ClerkService();
-

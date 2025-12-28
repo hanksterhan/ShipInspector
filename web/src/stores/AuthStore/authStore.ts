@@ -43,7 +43,7 @@ export class AuthStore {
             runInAction(() => {
                 this.isClerkLoaded = true;
             });
-            
+
             // Listen to Clerk session changes
             const clerk = clerkService.getClerk();
             clerk.addListener((event: any) => {
@@ -71,7 +71,7 @@ export class AuthStore {
 
         try {
             const clerk = clerkService.getClerk();
-            
+
             // Check if user is signed in with Clerk
             if (!clerk.user) {
                 runInAction(() => {

@@ -1,9 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { authHandler } from "../handlers";
-import {
-    requireAdmin,
-    requireAuth,
-} from "../middlewares";
+import { requireAdmin, requireAuth } from "../middlewares";
 
 /**
  * @swagger

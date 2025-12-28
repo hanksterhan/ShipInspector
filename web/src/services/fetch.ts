@@ -17,7 +17,7 @@ export class HttpClient {
      */
     private async getHeaders(): Promise<HeadersInit> {
         const headers = { ...this.defaultHeaders };
-        
+
         // Add Clerk token if available
         try {
             const token = await clerkService.getToken();
@@ -39,7 +39,7 @@ export class HttpClient {
         signal?: AbortSignal
     ): Promise<any> {
         const headers = await this.getHeaders();
-        
+
         const response = await fetch(`${this.baseUrl}${url}`, {
             method,
             headers,

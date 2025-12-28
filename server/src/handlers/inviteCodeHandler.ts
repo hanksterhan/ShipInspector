@@ -12,7 +12,10 @@ import {
  * Create a new invite code (admin only)
  * Uses Clerk authentication
  */
-export async function createInviteCodeHandler(req: Request, res: Response): Promise<void> {
+export async function createInviteCodeHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         // Use Clerk's getAuth to get the user's userId
         const { userId } = getAuth(req);
@@ -45,7 +48,10 @@ export async function createInviteCodeHandler(req: Request, res: Response): Prom
 /**
  * Get all invite codes (admin only)
  */
-export async function getAllInviteCodesHandler(req: Request, res: Response): Promise<void> {
+export async function getAllInviteCodesHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const codes = await getAllInviteCodes();
 
@@ -66,7 +72,10 @@ export async function getAllInviteCodesHandler(req: Request, res: Response): Pro
 /**
  * Get unused invite codes (admin only)
  */
-export async function getUnusedInviteCodesHandler(req: Request, res: Response): Promise<void> {
+export async function getUnusedInviteCodesHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const codes = await getUnusedInviteCodes();
 
@@ -85,7 +94,10 @@ export async function getUnusedInviteCodesHandler(req: Request, res: Response): 
 /**
  * Get used invite codes (admin only)
  */
-export async function getUsedInviteCodesHandler(req: Request, res: Response): Promise<void> {
+export async function getUsedInviteCodesHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const codes = await getUsedInviteCodes();
 
@@ -104,7 +116,10 @@ export async function getUsedInviteCodesHandler(req: Request, res: Response): Pr
 /**
  * Delete an invite code (admin only)
  */
-export async function deleteInviteCodeHandler(req: Request, res: Response): Promise<void> {
+export async function deleteInviteCodeHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const { code } = req.params;
 

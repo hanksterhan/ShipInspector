@@ -21,7 +21,8 @@ export interface User {
  * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
-    const rows = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`;
+    const rows =
+        await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`;
 
     if (!rows || rows.length === 0) {
         return null;
@@ -190,7 +191,71 @@ export async function isAdmin(userId: string): Promise<boolean> {
 /**
  * Check if user has role
  */
-export async function hasRole(userId: string, role: UserRole): Promise<boolean> {
+export async function hasRole(
+    userId: string,
+    role: UserRole
+): Promise<boolean> {
     const user = await getUserById(userId);
     return user?.role === role;
+}
+
+/**
+ * Create or update a user from Clerk
+ * This syncs Clerk users to the local database for role management
+ * @param clerkUserId - The Clerk user ID
+ * @param email - User's email address
+ * @param role - Optional role (defaults to "user" for new users)
+ */
+export async function syncClerkUser(
+    clerkUserId: string,
+    email: string,
+    role: UserRole = "user"
+): Promise<User> {
+    const emailLower = email.toLowerCase();
+    const now = Date.now();
+
+    console.log(`[syncClerkUser] Syncing user ${clerkUserId} (${emailLower})`);
+
+    // Check if user already exists
+    const existingUser = await getUserById(clerkUserId);
+
+    if (existingUser) {
+        console.log(
+            `[syncClerkUser] User already exists with role: ${existingUser.role}`
+        );
+        // Update email if it changed
+        if (existingUser.email !== emailLower) {
+            console.log(
+                `[syncClerkUser] Updating email from ${existingUser.email} to ${emailLower}`
+            );
+            await sql`
+                UPDATE users 
+                SET email = ${emailLower}, updated_at = ${now}
+                WHERE user_id = ${clerkUserId}
+            `;
+        }
+        return existingUser;
+    }
+
+    // Create new user
+    console.log(`[syncClerkUser] Creating new user with role: ${role}`);
+
+    // Use empty password hash for Clerk-authenticated users
+    const passwordHash = "";
+
+    await sql`
+        INSERT INTO users (user_id, email, password_hash, role, created_at)
+        VALUES (${clerkUserId}, ${emailLower}, ${passwordHash}, ${role}, ${now})
+    `;
+
+    console.log(`[syncClerkUser] User created successfully`);
+
+    return {
+        userId: clerkUserId,
+        email: emailLower,
+        passwordHash,
+        role,
+        createdAt: now,
+        updatedAt: undefined,
+    };
 }

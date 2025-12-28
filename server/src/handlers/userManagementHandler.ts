@@ -11,7 +11,10 @@ import {
 /**
  * Get all users (admin only)
  */
-export async function getAllUsersHandler(req: Request, res: Response): Promise<void> {
+export async function getAllUsersHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const users = await getAllUsers();
 
@@ -39,7 +42,10 @@ export async function getAllUsersHandler(req: Request, res: Response): Promise<v
 /**
  * Get users by role (admin only)
  */
-export async function getUsersByRoleHandler(req: Request, res: Response): Promise<void> {
+export async function getUsersByRoleHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const role = req.params.role as UserRole;
 
@@ -79,7 +85,10 @@ export async function getUsersByRoleHandler(req: Request, res: Response): Promis
  * Update user role (admin only)
  * Uses Clerk authentication
  */
-export async function updateUserRoleHandler(req: Request, res: Response): Promise<void> {
+export async function updateUserRoleHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const { userId } = req.params;
         const { role } = req.body;
@@ -164,7 +173,10 @@ export async function updateUserRoleHandler(req: Request, res: Response): Promis
 /**
  * Get user by ID (admin only)
  */
-export async function getUserByIdHandler(req: Request, res: Response): Promise<void> {
+export async function getUserByIdHandler(
+    req: Request,
+    res: Response
+): Promise<void> {
     try {
         const { userId } = req.params;
 
