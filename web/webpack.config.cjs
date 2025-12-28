@@ -2,6 +2,7 @@ const path = require("path");
 const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+// Load .env file for local development (optional - Vercel uses environment variables directly)
 require("dotenv").config();
 
 module.exports = {
@@ -57,11 +58,6 @@ module.exports = {
                     to: path.resolve(__dirname, "dist"),
                 },
             ],
-        }),
-        new webpack.DefinePlugin({
-            "process.env.API_URL": JSON.stringify(
-                process.env.API_URL || "http://localhost:3000"
-            ),
         }),
     ],
     devServer: {
