@@ -105,4 +105,8 @@ export class HttpClient {
     }
 }
 
-export const httpClient = new HttpClient("http://localhost:3000");
+// Get API URL from environment variable, fallback to localhost for development
+// @ts-ignore - process.env is replaced at build time by webpack
+const API_URL = process.env.API_URL || "http://localhost:3000";
+
+export const httpClient = new HttpClient(API_URL);

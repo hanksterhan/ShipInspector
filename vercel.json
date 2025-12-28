@@ -1,0 +1,17 @@
+{
+    "version": 2,
+    "buildCommand": "cd common && npm install && npm run build && cd ../web && npm install && npm run build",
+    "outputDirectory": "web/dist",
+    "installCommand": "npm install --prefix common && npm install --prefix web",
+    "framework": null,
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "env": {
+        "NODE_ENV": "production"
+    }
+}
+  

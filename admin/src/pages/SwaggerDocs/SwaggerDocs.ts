@@ -13,11 +13,15 @@ export class SwaggerDocs extends MobxLitElement {
         return styles;
     }
 
+    // Get API URL from environment variable, fallback to localhost for development
+    // @ts-ignore - process.env is replaced at build time by webpack
+    private apiUrl = process.env.API_URL || "http://localhost:3000";
+
     render(): TemplateResult {
         return html`
             <div class="swagger-docs-container">
                 <iframe
-                    src="http://localhost:3000/api-docs"
+                    src="${this.apiUrl}/api-docs"
                     class="swagger-iframe"
                     title="API Documentation"
                 ></iframe>

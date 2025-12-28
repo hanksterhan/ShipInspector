@@ -43,8 +43,10 @@ module.exports = {
             "process.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
                 process.env.VITE_CLERK_PUBLISHABLE_KEY
             ),
+            "process.env.API_URL": JSON.stringify(
+                process.env.API_URL || "http://localhost:3000"
+            ),
         }),
-        new MiniCssExtractPlugin(),
         new CopyWebpackPlugin({
             patterns: [
                 {

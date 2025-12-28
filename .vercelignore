@@ -1,0 +1,47 @@
+# Development files
+*.log
+*.md
+.git
+.gitignore
+
+# Server files (not needed for static frontend)
+server/
+admin/
+
+# Development configs
+nodemon.json
+tsconfig.json
+
+# Docker files
+docker-compose.yml
+clickhouse-init/
+grafana/
+prometheus.yml
+otel-collector-config.yaml
+otel-collector-logs/
+
+# Environment files (will be set in Vercel dashboard)
+.env
+.env.*
+!.env.example
+
+# Node modules (will be installed during build)
+node_modules/
+
+# Source files (only need built dist)
+web/src/
+web/public/
+web/tsconfig.json
+web/webpack.config.cjs
+web/plopfile.js
+web/plop/
+
+common/src/
+common/tsconfig.json
+
+# Keep only what's needed
+!common/package.json
+!common/package-lock.json
+!web/package.json
+!web/package-lock.json
+
