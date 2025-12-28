@@ -24,30 +24,22 @@ export class SignInPage extends MobxLitElement {
     private clerkUnsubscribe?: (() => void) | null = null;
 
     async firstUpdated() {
-        console.log("Admin SignInPage mounted, initializing Clerk...");
-        
         // Wait for the DOM to be ready
         await this.updateComplete;
         
         try {
             // Wait for Clerk to be initialized
             await clerkService.initialize();
-            console.log("Clerk initialized successfully");
 
             const clerk = clerkService.getClerk();
 
             const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
 
             if (!mountNode) {
-                console.error("Mount node not found in shadow DOM");
-                console.error("Shadow root:", this.shadowRoot);
-                console.error("Available elements:", this.shadowRoot?.querySelectorAll("*"));
                 this.error = "Failed to initialize sign-in form";
                 this.isLoading = false;
                 return;
             }
-
-            console.log("Mounting Clerk SignIn component to:", mountNode);
 
             // Mount Clerk SignIn component with proper configuration
             // Clerk will automatically handle users who are already signed in
@@ -63,35 +55,23 @@ export class SignInPage extends MobxLitElement {
                 }
             });
 
-            console.log("Clerk SignIn mounted successfully");
             this.isLoading = false;
 
             // Listen for authentication state changes
             this.clerkUnsubscribe = clerk.addListener((event: any) => {
-                console.log("Clerk event:", event);
-                
                 if (event.user) {
-                    // User signed in successfully
-                    console.log("Admin user signed in:", event.user);
-                    
-                    // Refresh auth state and verify admin role - AppRoot will handle redirect
-                    // Only call checkAuth when user actually signs in (not on initial mount)
+                    // User signed in successfully - refresh auth state and verify admin role
+                    // AppRoot will handle redirect
                     authStore.checkAuth().then(() => {
                         if (!authStore.isAuthenticated) {
-                            console.error("User not authenticated or not an admin");
                             this.error = "Access denied. Admin privileges required.";
-                        } else {
-                            console.log("Admin auth state updated, AppRoot will handle redirect");
                         }
-                    }).catch((err) => {
-                        console.error("Failed to verify admin auth:", err);
-                        // Don't always set error - might be temporary backend issue
-                        console.warn("Backend verification failed for admin");
+                    }).catch(() => {
+                        // Ignore errors - might be temporary backend issue
                     });
                 }
             });
         } catch (error) {
-            console.error("Failed to mount Clerk SignIn:", error);
             this.error = error instanceof Error ? error.message : "Failed to load sign-in form";
             this.isLoading = false;
         }
@@ -112,11 +92,9 @@ export class SignInPage extends MobxLitElement {
             const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
             if (mountNode) {
                 clerk.unmountSignIn(mountNode);
-                console.log("Clerk SignIn unmounted");
             }
         } catch (error) {
             // Clerk might not be initialized
-            console.debug("Cleanup error:", error);
         }
     }
 

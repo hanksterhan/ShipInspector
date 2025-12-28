@@ -35,27 +35,20 @@ class ClerkService {
                 );
             }
 
-            console.log('Clerk module keys:', Object.keys(ClerkModule));
-            console.log('publishableKey:', publishableKey);
-
             // Handle different module formats (ESM vs CommonJS)
             // Try: default export, named Clerk export, or the module itself
             // @ts-ignore
             const ClerkConstructor = ClerkModule.default || ClerkModule.Clerk || ClerkModule;
             
             if (typeof ClerkConstructor !== 'function') {
-                console.error('ClerkModule:', ClerkModule);
-                console.error('ClerkConstructor type:', typeof ClerkConstructor);
                 throw new Error(
                     "Failed to load Clerk constructor. Check that @clerk/clerk-js is properly installed. " +
                     "Available keys: " + Object.keys(ClerkModule).join(', ')
                 );
             }
 
-            console.log('Initializing Clerk with constructor:', ClerkConstructor.name);
             this.clerk = new ClerkConstructor(publishableKey);
             await this.clerk.load();
-            console.log('Clerk loaded successfully');
             return this.clerk;
         })();
 

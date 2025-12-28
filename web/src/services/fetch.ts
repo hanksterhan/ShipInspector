@@ -26,7 +26,6 @@ export class HttpClient {
             }
         } catch (error) {
             // Token not available - user not authenticated
-            console.debug("No Clerk token available");
         }
 
         return headers;
