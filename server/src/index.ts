@@ -86,7 +86,21 @@ app.use(
 app.use(express.json());
 
 // Clerk authentication middleware
-app.use(clerkMiddleware());
+// Note: Clerk middleware automatically reads CLERK_SECRET_KEY from environment
+// If CLERK_SECRET_KEY is not set, the middleware may fail silently or cause 405 errors
+try {
+    app.use(clerkMiddleware());
+    if (process.env.CLERK_SECRET_KEY) {
+        console.log("Clerk middleware initialized successfully");
+    } else {
+        console.warn(
+            "Clerk middleware initialized but CLERK_SECRET_KEY is missing - authentication may fail"
+        );
+    }
+} catch (error) {
+    console.error("Failed to initialize Clerk middleware:", error);
+    throw error;
+}
 
 app.use(globalRateLimiter); // Global rate limiting
 app.use(apiLogger); // Console logging for debugging
