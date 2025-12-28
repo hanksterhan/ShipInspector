@@ -6,7 +6,7 @@ const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTI
 
 if (!isServerless) {
     // Only initialize telemetry in traditional server environments
-    const { initializeTelemetry } = require('../server/src/config/telemetry');
+    const { initializeTelemetry } = require('../server/dist/server/src/config/telemetry');
     initializeTelemetry();
 }
 
@@ -16,21 +16,21 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { clerkMiddleware } from "@clerk/express";
 
-import * as routers from "../server/src/routes";
+import * as routers from "../server/dist/server/src/routes";
 import {
     apiLogger,
     telemetryLogger,
     errorHandler,
     globalRateLimiter,
-} from "../server/src/middlewares";
-import { swaggerSpec } from "../server/src/config/swagger";
+} from "../server/dist/server/src/middlewares";
+import { swaggerSpec } from "../server/dist/server/src/config/swagger";
 
 // Load environment variables
 dotenv.config();
 
 // Initialize user metrics (in serverless, this will run on cold start)
-import { getUserCount } from "../server/src/services/userService";
-import { totalUsersGauge } from "../server/src/config/metrics";
+import { getUserCount } from "../server/dist/server/src/services/userService";
+import { totalUsersGauge } from "../server/dist/server/src/config/metrics";
 
 // Track if metrics have been initialized to avoid duplicate work
 let metricsInitialized = false;

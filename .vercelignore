@@ -7,16 +7,15 @@
 # Admin files (not needed for deployment)
 admin/
 
-# Server source files (not needed, only compiled dist is needed)
-server/src/
-server/node_modules/
-server/scripts/
+# Server files that are not needed for build
 server/data/
 server/nodemon.json
-server/package-lock.json
+server/node_modules/
 
-# Keep server/dist and server/wasm-equity for API functions
-# Keep server/package.json for dependencies
+# Keep server/src/ - needed for TypeScript compilation during build
+# Keep server/dist/ - compiled server code used by API function
+# Keep server/package.json - needed for dependencies
+# Keep server/wasm-equity/ - needed for equity calculations
 
 # Development configs
 nodemon.json
