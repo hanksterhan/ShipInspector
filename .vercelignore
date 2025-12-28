@@ -10,7 +10,6 @@ admin/
 
 # Development configs
 nodemon.json
-tsconfig.json
 
 # Docker files
 docker-compose.yml
@@ -31,13 +30,15 @@ node_modules/
 # Source files (only need built dist)
 web/src/
 web/public/
-web/tsconfig.json
-web/webpack.config.cjs
 web/plopfile.js
 web/plop/
 
 common/src/
-common/tsconfig.json
+
+# Keep build config files (needed for compilation)
+!tsconfig.json
+!common/tsconfig.json
+!web/webpack.config.cjs
 
 # Keep only what's needed
 !common/package.json
