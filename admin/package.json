@@ -12,6 +12,7 @@
     "license": "ISC",
     "dependencies": {
         "@adobe/lit-mobx": "^2.2.2",
+        "@clerk/clerk-js": "^5.117.0",
         "@spectrum-web-components/bundle": "^0.47.0",
         "@spectrum-web-components/icons": "^0.47.0",
         "@spectrum-web-components/icons-ui": "^0.47.0",
@@ -32,6 +33,7 @@
         "@types/node": "^22.1.0",
         "@types/request": "^2.48.12",
         "css-loader": "^7.1.2",
+        "dotenv": "^17.2.3",
         "mini-css-extract-plugin": "^2.9.1",
         "nodemon": "^3.1.4",
         "plop": "^4.0.1",

@@ -1,5 +1,7 @@
 const path = require("path");
+const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+require("dotenv").config();
 
 module.exports = {
     mode: "development",
@@ -31,11 +33,20 @@ module.exports = {
             "stream": false,
             "buffer": false,
         },
+        fullySpecified: false,
     },
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist"),
     },
+    plugins: [
+        new MiniCssExtractPlugin(),
+        new webpack.DefinePlugin({
+            "process.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
+                process.env.VITE_CLERK_PUBLISHABLE_KEY
+            ),
+        }),
+    ],
     devServer: {
         static: {
             directory: path.join(__dirname, "public"),
