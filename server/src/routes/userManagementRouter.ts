@@ -1,6 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { userManagementHandler } from "../handlers/userManagementHandler";
-import { requireAdmin, authenticateSession } from "../middlewares/auth";
+import { requireAdmin, requireAuth } from "../middlewares/auth";
 
 /**
  * @swagger
@@ -43,7 +43,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/admin/users",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         userManagementHandler.getAllUsers
     );
@@ -77,7 +77,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/admin/users/role/:role",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         userManagementHandler.getUsersByRole
     );
@@ -110,7 +110,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/admin/users/:userId",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         userManagementHandler.getUserById
     );
@@ -157,7 +157,7 @@ function createRouter(): IRouter {
      */
     router.put(
         "/admin/users/:userId/role",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         userManagementHandler.updateUserRole
     );

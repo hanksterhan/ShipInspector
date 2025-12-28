@@ -4,4 +4,5 @@ import { AuthService } from "./authService";
 
 export const pokerService = new PokerService();
 export const authService = new AuthService();
+export { clerkService } from "./clerkService";
 // PLOP: APPEND SERVICE EXPORTS

@@ -1,6 +1,6 @@
 import { makeObservable, observable, action } from "mobx";
 
-export type Route = "/" | "/login" | "/poker-hands" | "/equity-calculator";
+export type Route = "/" | "/signin" | "/poker-hands" | "/equity-calculator";
 
 export class RouterStore {
     @observable
@@ -32,7 +32,7 @@ export class RouterStore {
     @action
     private setRouteFromPath(path: string): void {
         // Map paths to routes
-        if (path === "/" || path === "/login") {
+        if (path === "/" || path === "/signin" || path === "/login") {
             this.currentRoute = "/";
         } else if (path === "/poker-hands") {
             this.currentRoute = "/poker-hands";
@@ -45,6 +45,6 @@ export class RouterStore {
     }
 
     get isAuthenticatedRoute(): boolean {
-        return this.currentRoute !== "/" && this.currentRoute !== "/login";
+        return this.currentRoute !== "/" && this.currentRoute !== "/signin";
     }
 }

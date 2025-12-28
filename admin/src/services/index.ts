@@ -6,4 +6,5 @@ import { InviteCodeService } from "./inviteCodeService";
 export const pokerService = new PokerService();
 export const authService = new AuthService();
 export const inviteCodeService = new InviteCodeService();
+export { clerkService } from "./clerkService";
 // PLOP: APPEND SERVICE EXPORTS

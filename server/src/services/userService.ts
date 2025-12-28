@@ -3,10 +3,14 @@ import bcrypt from "bcryptjs";
 
 export type UserRole = "user" | "admin" | "moderator";
 
+/**
+ * User interface - represents user data stored in local database
+ * Note: With Clerk, passwordHash is deprecated but kept for legacy admin script
+ */
 export interface User {
     userId: string;
     email: string;
-    passwordHash: string;
+    passwordHash: string; // @deprecated - Not used with Clerk authentication
     role: UserRole;
     createdAt: number;
     updatedAt?: number;
@@ -14,6 +18,7 @@ export interface User {
 
 /**
  * Get a user by email
+ * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
  */
 export function getUserByEmail(email: string): User | null {
     const row = db
@@ -72,6 +77,7 @@ export function getUserById(userId: string): User | null {
 
 /**
  * Check if a user exists by email
+ * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
  */
 export function userExists(email: string): boolean {
     const user = getUserByEmail(email);
@@ -80,6 +86,8 @@ export function userExists(email: string): boolean {
 
 /**
  * Create a new user
+ * @deprecated Only used by create-admin script. With Clerk, users are created through Clerk.
+ * For new implementations, sync Clerk user IDs with local database roles instead.
  */
 export async function createUser(
     email: string,

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { getAuth, clerkClient } from "../middlewares/auth";
 import {
     createInviteCode,
     getAllInviteCodes,
@@ -9,11 +10,23 @@ import {
 
 /**
  * Create a new invite code (admin only)
+ * Uses Clerk authentication
  */
-export function createInviteCodeHandler(req: Request, res: Response): void {
+export async function createInviteCodeHandler(req: Request, res: Response): Promise<void> {
     try {
-        const session = req.session as any;
-        const createdBy = session.email || "system";
+        // Use Clerk's getAuth to get the user's userId
+        const { userId } = getAuth(req);
+
+        if (!userId) {
+            res.status(401).json({
+                error: "Authentication required",
+            });
+            return;
+        }
+
+        // Get Clerk user to get email
+        const clerkUser = await clerkClient.users.getUser(userId);
+        const createdBy = clerkUser.emailAddresses[0]?.emailAddress || "system";
 
         const code = createInviteCode(createdBy);
 

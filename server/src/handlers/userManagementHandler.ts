@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { getAuth } from "../middlewares/auth";
 import {
     getAllUsers,
     getUsersByRole,
@@ -76,6 +77,7 @@ export function getUsersByRoleHandler(req: Request, res: Response): void {
 
 /**
  * Update user role (admin only)
+ * Uses Clerk authentication
  */
 export function updateUserRoleHandler(req: Request, res: Response): void {
     try {
@@ -114,8 +116,9 @@ export function updateUserRoleHandler(req: Request, res: Response): void {
         }
 
         // Prevent admin from demoting themselves (safety check)
-        const session = req.session as any;
-        if (session.userId === userId && role !== "admin") {
+        // Use Clerk's getAuth to get the current user's ID
+        const { userId: currentUserId } = getAuth(req);
+        if (currentUserId === userId && role !== "admin") {
             res.status(400).json({
                 error: "Cannot demote yourself from admin role",
             });

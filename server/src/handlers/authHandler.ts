@@ -1,321 +1,124 @@
 import { Request, Response } from "express";
-import { AuthRequest } from "../middlewares/auth";
-import bcrypt from "bcryptjs";
-import {
-    getInviteCode,
-    markInviteCodeAsUsed,
-} from "../services/inviteCodeService";
-import {
-    getUserByEmail,
-    getUserById,
-    createUser,
-    userExists,
-} from "../services/userService";
-import {
-    userRegistrationCounter,
-    userLoginCounter,
-    totalUsersGauge,
-} from "../config/metrics";
-
-/**
- * Login handler - validates credentials and creates session
- */
-export async function login(req: Request, res: Response): Promise<void> {
-    try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            res.status(400).json({
-                error: "Email and password are required",
-            });
-            return;
-        }
-
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            res.status(400).json({
-                error: "Invalid email format",
-            });
-            return;
-        }
-
-        const user = getUserByEmail(email);
-        if (!user) {
-            userLoginCounter.add(1, {
-                status: "failure",
-                failure_reason: "user_not_found",
-            });
-            res.status(401).json({
-                error: "Invalid email or password",
-            });
-            return;
-        }
-
-        const isValidPassword = await bcrypt.compare(
-            password,
-            user.passwordHash
-        );
-        if (!isValidPassword) {
-            userLoginCounter.add(1, {
-                status: "failure",
-                failure_reason: "invalid_credentials",
-            });
-            res.status(401).json({
-                error: "Invalid email or password",
-            });
-            return;
-        }
-
-        // Log user info for debugging
-        console.log(
-            `[login] User ${user.email} (${user.userId}) logging in with role: "${user.role}"`
-        );
-
-        // Create session
-        (req.session as any).userId = user.userId;
-        (req.session as any).email = user.email;
-        (req.session as any).role = user.role;
-
-        // Save session explicitly to ensure it's persisted before sending response
-        await new Promise<void>((resolve, reject) => {
-            req.session.save((err) => {
-                if (err) {
-                    console.error("[login] Session save error:", err);
-                    reject(err);
-                } else {
-                    console.log(
-                        `[login] Session saved for userId: ${user.userId}`
-                    );
-                    resolve();
-                }
-            });
-        });
-
-        // Record successful login
-        userLoginCounter.add(1, {
-            status: "success",
-        });
-
-        res.json({
-            user: {
-                userId: user.userId,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({
-            error: "Internal server error during authentication",
-        });
-    }
-}
-
-/**
- * Register handler - creates a new user
- */
-export async function register(req: Request, res: Response): Promise<void> {
-    try {
-        const { email, password, inviteCode } = req.body;
-
-        if (!email || !password) {
-            res.status(400).json({
-                error: "Email and password are required",
-            });
-            return;
-        }
-
-        if (!inviteCode) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "missing_invite_code",
-            });
-            res.status(400).json({
-                error: "Invite code is required",
-            });
-            return;
-        }
-
-        // Validate invite code
-        const invite = getInviteCode(inviteCode);
-        if (!invite) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "invalid_invite_code",
-            });
-            res.status(400).json({
-                error: "Invalid invite code",
-            });
-            return;
-        }
-
-        if (invite.used) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "invite_code_already_used",
-            });
-            res.status(400).json({
-                error: "Invite code has already been used",
-            });
-            return;
-        }
-
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "invalid_email_format",
-            });
-            res.status(400).json({
-                error: "Invalid email format",
-            });
-            return;
-        }
-
-        const emailLower = email.toLowerCase();
-        if (userExists(emailLower)) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "email_already_registered",
-            });
-            res.status(409).json({
-                error: "Email already registered",
-            });
-            return;
-        }
-
-        if (password.length < 6) {
-            userRegistrationCounter.add(1, {
-                status: "failure",
-                failure_reason: "password_too_short",
-            });
-            res.status(400).json({
-                error: "Password must be at least 6 characters",
-            });
-            return;
-        }
-
-        // Create user in database
-        const user = await createUser(emailLower, password);
-
-        // Mark invite code as used
-        const codeMarked = markInviteCodeAsUsed(inviteCode, emailLower);
-        if (!codeMarked) {
-            // This shouldn't happen if we validated above, but handle it anyway
-            console.error(
-                `Failed to mark invite code ${inviteCode} as used for ${emailLower}`
-            );
-        }
-
-        // Record successful registration and update user count
-        userRegistrationCounter.add(1, {
-            status: "success",
-        });
-        totalUsersGauge.add(1);
-
-        // Create session
-        (req.session as any).userId = user.userId;
-        (req.session as any).email = user.email;
-        (req.session as any).role = user.role;
-
-        res.status(201).json({
-            user: {
-                userId: user.userId,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    } catch (error) {
-        console.error("Registration error:", error);
-        res.status(500).json({
-            error: "Internal server error during registration",
-        });
-    }
-}
+import { AuthRequest, getAuth, clerkClient } from "../middlewares/auth";
+import { getUserById } from "../services/userService";
 
 /**
  * Get current user info (requires authentication)
+ * Uses Clerk authentication
  */
-export function getCurrentUser(req: Request, res: Response): void {
-    const session = req.session as any;
+export async function getCurrentUser(req: Request, res: Response): Promise<void> {
+    try {
+        // Use Clerk's getAuth to get the user's userId
+        const { userId } = getAuth(req);
 
-    if (!session.userId || !session.email) {
-        res.status(401).json({
-            error: "Not authenticated",
+        if (!userId) {
+            res.status(401).json({
+                error: "Not authenticated",
+            });
+            return;
+        }
+
+        // Get Clerk user information
+        const clerkUser = await clerkClient.users.getUser(userId);
+
+        // Get local user data if you're storing additional info
+        const localUser = getUserById(userId);
+
+        res.json({
+            user: {
+                userId: clerkUser.id,
+                email: clerkUser.emailAddresses[0]?.emailAddress,
+                role: localUser?.role || "user",
+                clerkData: {
+                    firstName: clerkUser.firstName,
+                    lastName: clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                },
+            },
         });
-        return;
-    }
-
-    // Get user from database to ensure we have current role
-    const user = getUserById(session.userId);
-    if (!user) {
-        res.status(401).json({
-            error: "User not found",
+    } catch (error) {
+        console.error("Get current user error:", error);
+        res.status(500).json({
+            error: "Failed to retrieve user information",
         });
-        return;
     }
-
-    res.json({
-        user: {
-            userId: user.userId,
-            email: user.email,
-            role: user.role,
-        },
-    });
 }
 
 /**
  * Get current admin user info (requires admin authentication)
  * This is a dedicated endpoint for admin app that always requires admin role
  * Note: requireAdmin middleware already ensures user is admin, so we can use req.user
+ * Uses Clerk authentication
  */
-export function getCurrentAdminUser(req: AuthRequest, res: Response): void {
-    // The requireAdmin middleware already ensures:
-    // 1. User is authenticated
-    // 2. User has admin role
-    // 3. req.user is set with user info
-    if (!req.user) {
-        res.status(401).json({
-            error: "Not authenticated",
-        });
-        return;
-    }
-
-    res.json({
-        user: {
-            userId: req.user.userId,
-            email: req.user.email,
-            role: req.user.role,
-        },
-    });
-}
-
-/**
- * Logout handler - destroys session
- */
-export function logout(req: Request, res: Response): void {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error("Logout error:", err);
-            res.status(500).json({
-                error: "Failed to logout",
+export async function getCurrentAdminUser(req: AuthRequest, res: Response): Promise<void> {
+    try {
+        // The requireAdmin middleware already ensures:
+        // 1. User is authenticated via Clerk
+        // 2. User has admin role
+        // 3. req.user is set with user info
+        if (!req.user) {
+            res.status(401).json({
+                error: "Not authenticated",
             });
             return;
         }
-        res.clearCookie("connect.sid");
+
+        // Get full Clerk user information
+        const { userId } = getAuth(req);
+        const clerkUser = await clerkClient.users.getUser(userId!);
+
         res.json({
-            message: "Logged out successfully",
+            user: {
+                userId: req.user.userId,
+                email: req.user.email,
+                role: req.user.role,
+                clerkData: {
+                    firstName: clerkUser.firstName,
+                    lastName: clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                },
+            },
         });
-    });
+    } catch (error) {
+        console.error("Get current admin user error:", error);
+        res.status(500).json({
+            error: "Failed to retrieve admin user information",
+        });
+    }
+}
+
+/**
+ * Example protected route using Clerk authentication
+ * This demonstrates how to use getAuth() and clerkClient
+ * as shown in the Clerk tutorial
+ */
+export async function getClerkUserInfo(req: Request, res: Response): Promise<void> {
+    try {
+        // Use getAuth() to get the user's userId from Clerk
+        const { userId } = getAuth(req);
+
+        if (!userId) {
+            res.status(401).json({
+                error: "Not authenticated",
+            });
+            return;
+        }
+
+        // Use Clerk's JavaScript Backend SDK to get the user's User object
+        const user = await clerkClient.users.getUser(userId);
+
+        res.json({ user });
+    } catch (error) {
+        console.error("Error fetching Clerk user:", error);
+        res.status(500).json({
+            error: "Failed to fetch user information",
+        });
+    }
 }
 
 // Export as object to match other handlers pattern
 export const authHandler = {
-    login,
-    register,
     getCurrentUser,
     getCurrentAdminUser,
-    logout,
+    getClerkUserInfo,
 };

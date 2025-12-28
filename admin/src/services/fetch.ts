@@ -1,14 +1,36 @@
+import { clerkService } from "./clerkService";
+
 export class HttpClient {
     private baseUrl: string;
-    private headers: HeadersInit;
+    private defaultHeaders: HeadersInit;
 
     constructor(baseUrl: string, headers?: HeadersInit) {
         this.baseUrl = baseUrl;
-        this.headers = {
+        this.defaultHeaders = {
             "Content-Type": "application/json",
             Accept: "application/json",
             ...headers,
         };
+    }
+
+    /**
+     * Get headers with Clerk token included
+     */
+    private async getHeaders(): Promise<HeadersInit> {
+        const headers = { ...this.defaultHeaders };
+        
+        // Add Clerk token if available
+        try {
+            const token = await clerkService.getToken();
+            if (token) {
+                (headers as any)["Authorization"] = `Bearer ${token}`;
+            }
+        } catch (error) {
+            // Token not available - user not authenticated
+            console.debug("No Clerk token available");
+        }
+
+        return headers;
     }
 
     private async request(
@@ -17,12 +39,14 @@ export class HttpClient {
         body?: any,
         signal?: AbortSignal
     ): Promise<any> {
+        const headers = await this.getHeaders();
+        
         const response = await fetch(`${this.baseUrl}${url}`, {
             method,
-            headers: this.headers,
+            headers,
             body: body ? JSON.stringify(body) : null,
             signal,
-            credentials: "include", // Include cookies in requests
+            credentials: "include", // Include cookies for backward compatibility
         });
 
         if (!response.ok) {

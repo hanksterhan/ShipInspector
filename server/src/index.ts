@@ -10,9 +10,8 @@ import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
-import cookieParser from "cookie-parser";
-import session from "express-session";
 import swaggerUi from "swagger-ui-express";
+import { clerkMiddleware } from "@clerk/express";
 
 import * as routers from "./routes";
 import {
@@ -77,24 +76,9 @@ app.use(
 );
 
 app.use(express.json());
-app.use(cookieParser());
 
-// Session configuration
-const sessionSecret =
-    process.env.SESSION_SECRET || "your-session-secret-change-in-production";
-app.use(
-    session({
-        secret: sessionSecret,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === "production", // HTTPS only in production
-            httpOnly: true, // Prevent XSS attacks
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            sameSite: "lax", // CSRF protection
-        },
-    })
-);
+// Clerk authentication middleware
+app.use(clerkMiddleware());
 
 app.use(globalRateLimiter); // Global rate limiting
 app.use(apiLogger); // Console logging for debugging

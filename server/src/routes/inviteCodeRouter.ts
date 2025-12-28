@@ -1,6 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { inviteCodeHandler } from "../handlers/inviteCodeHandler";
-import { requireAdmin, authenticateSession } from "../middlewares/auth";
+import { requireAdmin, requireAuth } from "../middlewares/auth";
 
 /**
  * @swagger
@@ -42,7 +42,7 @@ function createRouter(): IRouter {
      */
     router.post(
         "/invite-codes",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         inviteCodeHandler.createInviteCode
     );
@@ -82,7 +82,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/invite-codes",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         inviteCodeHandler.getAllInviteCodes
     );
@@ -107,7 +107,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/invite-codes/unused",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         inviteCodeHandler.getUnusedInviteCodes
     );
@@ -132,7 +132,7 @@ function createRouter(): IRouter {
      */
     router.get(
         "/invite-codes/used",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         inviteCodeHandler.getUsedInviteCodes
     );
@@ -168,7 +168,7 @@ function createRouter(): IRouter {
      */
     router.delete(
         "/invite-codes/:code",
-        authenticateSession,
+        requireAuth(),
         requireAdmin,
         inviteCodeHandler.deleteInviteCode
     );

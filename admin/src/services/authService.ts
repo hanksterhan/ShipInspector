@@ -1,39 +1,20 @@
 import { httpClient } from "./fetch";
+import { clerkService } from "./clerkService";
 import { User } from "../stores/AuthStore/authStore";
 
 const AUTH_ENDPOINTS = {
-    login: "/auth/login",
-    register: "/auth/register",
-    logout: "/auth/logout",
     getCurrentUser: "/admin/auth/me",
 };
 
+/**
+ * Auth Service - Now uses Clerk for authentication
+ * All login/register/logout is handled by Clerk UI components
+ */
 export class AuthService {
-    async login(email: string, password: string): Promise<User> {
-        const response = await httpClient.post(AUTH_ENDPOINTS.login, {
-            email,
-            password,
-        });
-        return response.user;
-    }
-
-    async register(
-        email: string,
-        password: string,
-        inviteCode: string
-    ): Promise<User> {
-        const response = await httpClient.post(AUTH_ENDPOINTS.register, {
-            email,
-            password,
-            inviteCode,
-        });
-        return response.user;
-    }
-
-    async logout(): Promise<void> {
-        await httpClient.post(AUTH_ENDPOINTS.logout, {});
-    }
-
+    /**
+     * Get current admin user info from backend
+     * Uses Clerk token for authentication
+     */
     async getCurrentUser(): Promise<User> {
         try {
             const response = await httpClient.get(
@@ -49,6 +30,19 @@ export class AuthService {
                 (authError as any).isAuthError = true;
                 throw authError;
             }
+            throw error;
+        }
+    }
+
+    /**
+     * Sign out user through Clerk
+     */
+    async logout(): Promise<void> {
+        try {
+            const clerk = clerkService.getClerk();
+            await clerk.signOut();
+        } catch (error) {
+            console.error("Logout error:", error);
             throw error;
         }
     }
