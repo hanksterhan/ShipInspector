@@ -40,9 +40,9 @@ class ClerkService {
 
             // Handle different module formats (ESM vs CommonJS)
             // Try: default export, named Clerk export, or the module itself
-            // @ts-ignore
+            // Try to obtain the Clerk constructor from the module (handles both ESM and CommonJS)
             const ClerkConstructor =
-                ClerkModule.default || ClerkModule.Clerk || ClerkModule;
+                (ClerkModule as any).Clerk || (ClerkModule as any).default || ClerkModule;
 
             if (typeof ClerkConstructor !== "function") {
                 console.error("ClerkModule:", ClerkModule);
