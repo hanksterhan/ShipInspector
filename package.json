@@ -1,0 +1,18 @@
+{
+  "name": "ship-inspector",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix common && npm run build --prefix common && npm install --prefix web && npm run build --prefix web",
+    "build:web": "cd web && npm install && npm run build",
+    "build:admin": "cd admin && npm install && npm run build",
+    "build:common": "cd common && npm install && npm run build"
+  },
+  "workspaces": [
+    "common",
+    "web",
+    "admin",
+    "server"
+  ]
+}
+
