@@ -47,7 +47,8 @@ export class AuthStore {
             // Listen to Clerk session changes
             const clerk = clerkService.getClerk();
             clerk.addListener((event: any) => {
-                if (event.client) {
+                // Only react to actual session changes, not all client events
+                if (event.session !== undefined) {
                     this.checkAuth();
                 }
             });
