@@ -6,6 +6,22 @@
     "framework": null,
     "rewrites": [
         {
+            "source": "/poker/:path*",
+            "destination": "https://YOUR_SERVER_URL_HERE/poker/:path*"
+        },
+        {
+            "source": "/auth/:path*",
+            "destination": "https://YOUR_SERVER_URL_HERE/auth/:path*"
+        },
+        {
+            "source": "/admin/:path*",
+            "destination": "https://YOUR_SERVER_URL_HERE/admin/:path*"
+        },
+        {
+            "source": "/invite-codes/:path*",
+            "destination": "https://YOUR_SERVER_URL_HERE/invite-codes/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

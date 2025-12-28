@@ -107,6 +107,22 @@ export class HttpClient {
 
 // Get API URL from environment variable, fallback to localhost for development
 // @ts-ignore - process.env is replaced at build time by webpack
-const API_URL = process.env.API_URL || "http://localhost:3000";
+let API_URL = process.env.API_URL || "http://localhost:3000";
+
+// If API_URL is empty or "proxy", use relative paths (will be proxied by Vercel)
+// This allows requests to go through the Vercel proxy configured in vercel.json
+if (API_URL === "" || API_URL === "proxy" || API_URL === "relative") {
+    API_URL = "";
+} else {
+    // Normalize API_URL: ensure it has a protocol to prevent relative URL issues
+    // If API_URL doesn't start with http:// or https://, add https://
+    if (API_URL && !API_URL.startsWith("http://") && !API_URL.startsWith("https://")) {
+        // Assume https for production domains
+        API_URL = `https://${API_URL}`;
+    }
+
+    // Remove trailing slash if present
+    API_URL = API_URL.replace(/\/$/, "");
+}
 
 export const httpClient = new HttpClient(API_URL);

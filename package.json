@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd common && npm install && npm run build && cd ../web && npm install && npm run build",
-    "build:web": "cd web && npm install && npm run build",
+    "build": "node scripts/prepare-vercel-config.js && cd common && npm install && npm run build && cd ../web && npm install && npm run build",
+    "build:web": "node scripts/prepare-vercel-config.js && cd web && npm install && npm run build",
     "build:admin": "cd admin && npm install && npm run build",
-    "build:common": "cd common && npm install && npm run build"
+    "build:common": "cd common && npm install && npm run build",
+    "prepare:vercel": "node scripts/prepare-vercel-config.js"
   },
   "engines": {
     "node": ">=18.0.0"
