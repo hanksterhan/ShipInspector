@@ -27,22 +27,15 @@ otel-collector-logs/
 # Node modules (will be installed during build)
 node_modules/
 
-# Source files (only need built dist)
-web/src/
-web/public/
+# Development tools (not needed for build)
 web/plopfile.js
 web/plop/
 
-common/src/
-
-# Keep build config files (needed for compilation)
-!tsconfig.json
-!common/tsconfig.json
-!web/webpack.config.cjs
-
-# Keep only what's needed
-!common/package.json
-!common/package-lock.json
-!web/package.json
-!web/package-lock.json
-
+# IMPORTANT: Source files and configs are NEEDED for build
+# We explicitly include them by NOT excluding them
+# - web/src/ (needed for webpack)
+# - web/public/ (needed for webpack to copy index.html)
+# - common/src/ (needed for TypeScript compilation)
+# - tsconfig.json files (needed for TypeScript)
+# - webpack.config.cjs (needed for webpack)
+# - package.json files (needed for npm install)
