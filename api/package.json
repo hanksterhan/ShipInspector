@@ -1,0 +1,16 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@clerk/express": "^1.7.60",
+    "@neondatabase/serverless": "^1.0.2",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "swagger-ui-express": "^5.0.1",
+    "express-rate-limit": "^8.2.1"
+  }
+}
+

@@ -4,9 +4,19 @@
 .git
 .gitignore
 
-# Server files (not needed for static frontend)
-server/
+# Admin files (not needed for deployment)
 admin/
+
+# Server source files (not needed, only compiled dist is needed)
+server/src/
+server/node_modules/
+server/scripts/
+server/data/
+server/nodemon.json
+server/package-lock.json
+
+# Keep server/dist and server/wasm-equity for API functions
+# Keep server/package.json for dependencies
 
 # Development configs
 nodemon.json
