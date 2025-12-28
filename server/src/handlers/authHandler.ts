@@ -18,11 +18,39 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
             return;
         }
 
+        console.log(`[getCurrentUser] Getting user info for userId: ${userId}`);
+
         // Get Clerk user information
-        const clerkUser = await clerkClient.users.getUser(userId);
+        let clerkUser;
+        try {
+            clerkUser = await clerkClient.users.getUser(userId);
+            console.log(`[getCurrentUser] Got Clerk user: ${clerkUser.emailAddresses[0]?.emailAddress}`);
+        } catch (clerkError: any) {
+            console.error(`[getCurrentUser] Clerk API error:`, clerkError);
+            // If Clerk API fails, check if it's an authentication issue
+            if (clerkError.status === 401 || clerkError.status === 403) {
+                res.status(401).json({
+                    error: "Invalid Clerk token",
+                });
+                return;
+            }
+            throw clerkError;
+        }
 
         // Get local user data if you're storing additional info
-        const localUser = await getUserById(userId);
+        // Note: User might not exist in local DB yet - that's OK, default to "user" role
+        let localUser = null;
+        try {
+            localUser = await getUserById(userId);
+            if (localUser) {
+                console.log(`[getCurrentUser] Found local user with role: ${localUser.role}`);
+            } else {
+                console.log(`[getCurrentUser] User not in local DB yet, defaulting to "user" role`);
+            }
+        } catch (dbError) {
+            console.error(`[getCurrentUser] Database error (non-fatal):`, dbError);
+            // Continue even if database query fails - user is authenticated via Clerk
+        }
 
         res.json({
             user: {
@@ -36,10 +64,16 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
                 },
             },
         });
-    } catch (error) {
-        console.error("Get current user error:", error);
+    } catch (error: any) {
+        console.error("[getCurrentUser] Unexpected error:", error);
+        console.error("Error details:", {
+            message: error.message,
+            status: error.status,
+            stack: error.stack
+        });
         res.status(500).json({
             error: "Failed to retrieve user information",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 }

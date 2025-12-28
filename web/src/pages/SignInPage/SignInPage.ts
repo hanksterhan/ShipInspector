@@ -3,7 +3,7 @@ import { styles } from "./styles.css";
 import { customElement, state } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { clerkService } from "../../services/index";
-import { authStore, routerStore } from "../../stores/index";
+import { authStore } from "../../stores/index";
 
 @customElement("sign-in-page")
 export class SignInPage extends MobxLitElement {
@@ -14,15 +14,20 @@ export class SignInPage extends MobxLitElement {
 
     @state()
     private mountNodeId = "clerk-sign-in";
-
+    
     @state()
-    private errorMessage = "";
-
+    private error: string | null = null;
+    
     @state()
     private isLoading = true;
 
+    private clerkUnsubscribe?: (() => void) | null = null;
+
     async firstUpdated() {
         console.log("SignInPage mounted, initializing Clerk...");
+        
+        // Wait for the DOM to be ready
+        await this.updateComplete;
         
         try {
             // Wait for Clerk to be initialized
@@ -30,57 +35,82 @@ export class SignInPage extends MobxLitElement {
             console.log("Clerk initialized successfully");
 
             const clerk = clerkService.getClerk();
-            console.log("Got Clerk instance:", clerk);
 
             const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
 
             if (!mountNode) {
-                console.error("Mount node not found");
-                this.errorMessage = "Failed to find mount node";
+                console.error("Mount node not found in shadow DOM");
+                console.error("Shadow root:", this.shadowRoot);
+                console.error("Available elements:", this.shadowRoot?.querySelectorAll("*"));
+                this.error = "Failed to initialize sign-in form";
                 this.isLoading = false;
                 return;
             }
 
-            console.log("Mounting Clerk SignIn to:", mountNode);
+            console.log("Mounting Clerk SignIn component to:", mountNode);
 
-            // Mount Clerk SignIn component
+            // Mount Clerk SignIn component with proper configuration
+            // Clerk will automatically handle users who are already signed in
             clerk.mountSignIn(mountNode, {
+                // Redirect after successful sign-in
                 afterSignInUrl: "/poker-hands",
+                // Redirect to sign-up page if user doesn't have an account
+                signUpUrl: "/sign-up",
+                // Appearance customization
                 appearance: {
                     elements: {
                         rootBox: "clerk-root-box",
-                        card: "clerk-card",
-                    },
-                },
+                        card: "clerk-card"
+                    }
+                }
             });
 
-            this.isLoading = false;
             console.log("Clerk SignIn mounted successfully");
+            this.isLoading = false;
 
-            // Listen for sign-in success
-            clerk.addListener((event: any) => {
+            // Listen for authentication state changes
+            this.clerkUnsubscribe = clerk.addListener((event: any) => {
                 console.log("Clerk event:", event);
-                if (event.user && !authStore.isAuthenticated) {
-                    // User signed in, refresh auth state
+                
+                if (event.user) {
+                    // User signed in successfully
+                    console.log("User signed in:", event.user);
+                    
+                    // Refresh auth state - AppRoot will handle redirect
+                    // Only call checkAuth when user actually signs in (not on initial mount)
                     authStore.checkAuth().then(() => {
-                        routerStore.navigate("/poker-hands");
+                        console.log("Auth state updated, AppRoot will handle redirect");
+                    }).catch((err) => {
+                        console.error("Failed to verify auth:", err);
+                        // Don't set error here as it might be a temporary backend issue
+                        // The user is signed in with Clerk, so show a warning but allow them to proceed
+                        console.warn("Backend verification failed, but Clerk auth is valid");
                     });
                 }
             });
         } catch (error) {
             console.error("Failed to mount Clerk SignIn:", error);
-            this.errorMessage = error instanceof Error ? error.message : "Failed to initialize authentication";
+            this.error = error instanceof Error ? error.message : "Failed to load sign-in form";
             this.isLoading = false;
         }
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
+        
+        // Unsubscribe from Clerk events
+        if (this.clerkUnsubscribe) {
+            this.clerkUnsubscribe();
+            this.clerkUnsubscribe = null;
+        }
+        
+        // Unmount Clerk component
         try {
             const clerk = clerkService.getClerk();
             const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
             if (mountNode) {
                 clerk.unmountSignIn(mountNode);
+                console.log("Clerk SignIn unmounted");
             }
         } catch (error) {
             // Clerk might not be initialized
@@ -90,31 +120,25 @@ export class SignInPage extends MobxLitElement {
 
     render() {
         return html`
-            <sp-theme system="spectrum" color="light" scale="medium" dir="ltr">
-                <div class="signin-container">
-                    <div class="signin-card">
-                        <h1 class="signin-title">Ship Inspector</h1>
-                        ${this.errorMessage
-                            ? html`
-                                <div class="error-message">
-                                    <strong>Error:</strong> ${this.errorMessage}
-                                    <br /><br />
-                                    <small>Make sure you have set VITE_CLERK_PUBLISHABLE_KEY in your .env file</small>
-                                </div>
-                            `
-                            : null}
-                        ${this.isLoading
-                            ? html`
-                                <div class="loading-message">
-                                    <sp-progress-circle indeterminate size="l"></sp-progress-circle>
-                                    <p>Loading authentication...</p>
-                                </div>
-                            `
-                            : null}
-                        <div id="${this.mountNodeId}" class="clerk-mount-point"></div>
+            <div class="sign-in-wrapper">
+                ${this.error ? html`
+                    <div class="error-container">
+                        <h2>Sign In Error</h2>
+                        <p>${this.error}</p>
+                        <button @click=${() => window.location.reload()}>Retry</button>
                     </div>
+                ` : ''}
+                
+                ${this.isLoading && !this.error ? html`
+                    <div class="loading-container">
+                        <p>Loading sign-in form...</p>
+                    </div>
+                ` : ''}
+                
+                <div class="sign-in-container" style="${this.isLoading || this.error ? 'display: none;' : ''}">
+                    <div id="${this.mountNodeId}"></div>
                 </div>
-            </sp-theme>
+            </div>
         `;
     }
 }

@@ -2,67 +2,72 @@ import { css } from "lit";
 
 export const styles = css`
     :host {
-        display: block;
-        width: 100%;
-        height: 100vh;
-    }
-
-    .signin-container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--background-color, #f5f5f5);
+    }
+
+    .sign-in-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .sign-in-container {
+        width: 100%;
+        max-width: 480px;
         padding: 20px;
     }
 
-    .signin-card {
+    .loading-container,
+    .error-container {
+        text-align: center;
+        padding: 40px 20px;
         background: white;
-        border-radius: 16px;
-        padding: 48px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        max-width: 450px;
-        width: 100%;
-    }
-
-    .signin-title {
-        text-align: center;
-        margin: 0 0 8px 0;
-        font-size: 32px;
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    .signin-subtitle {
-        text-align: center;
-        margin: 0 0 24px 0;
-        font-size: 14px;
-        color: #666;
-    }
-
-    .error-message {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #dc2626;
-        padding: 12px;
         border-radius: 8px;
-        margin-bottom: 16px;
-        font-size: 14px;
-        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
     }
 
-    .clerk-mount-point {
-        min-height: 400px;
+    .error-container h2 {
+        color: #d32f2f;
+        margin: 0 0 16px 0;
+        font-size: 24px;
     }
 
-    /* Clerk styling customization */
-    :host ::part(clerk-root-box) {
-        width: 100%;
+    .error-container p {
+        color: #666;
+        margin: 0 0 24px 0;
+        line-height: 1.5;
     }
 
-    :host ::part(clerk-card) {
-        box-shadow: none;
+    .error-container button {
+        background: #1976d2;
+        color: white;
         border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.2s;
+    }
+
+    .error-container button:hover {
+        background: #1565c0;
+    }
+
+    .loading-container p {
+        color: #666;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    /* Clerk component styling overrides */
+    #clerk-sign-in {
+        width: 100%;
     }
 `;
-
