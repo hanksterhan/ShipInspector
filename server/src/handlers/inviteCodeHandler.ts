@@ -28,7 +28,7 @@ export async function createInviteCodeHandler(req: Request, res: Response): Prom
         const clerkUser = await clerkClient.users.getUser(userId);
         const createdBy = clerkUser.emailAddresses[0]?.emailAddress || "system";
 
-        const code = createInviteCode(createdBy);
+        const code = await createInviteCode(createdBy);
 
         res.status(201).json({
             code,
@@ -45,9 +45,9 @@ export async function createInviteCodeHandler(req: Request, res: Response): Prom
 /**
  * Get all invite codes (admin only)
  */
-export function getAllInviteCodesHandler(req: Request, res: Response): void {
+export async function getAllInviteCodesHandler(req: Request, res: Response): Promise<void> {
     try {
-        const codes = getAllInviteCodes();
+        const codes = await getAllInviteCodes();
 
         res.json({
             inviteCodes: codes,
@@ -66,9 +66,9 @@ export function getAllInviteCodesHandler(req: Request, res: Response): void {
 /**
  * Get unused invite codes (admin only)
  */
-export function getUnusedInviteCodesHandler(req: Request, res: Response): void {
+export async function getUnusedInviteCodesHandler(req: Request, res: Response): Promise<void> {
     try {
-        const codes = getUnusedInviteCodes();
+        const codes = await getUnusedInviteCodes();
 
         res.json({
             inviteCodes: codes,
@@ -85,9 +85,9 @@ export function getUnusedInviteCodesHandler(req: Request, res: Response): void {
 /**
  * Get used invite codes (admin only)
  */
-export function getUsedInviteCodesHandler(req: Request, res: Response): void {
+export async function getUsedInviteCodesHandler(req: Request, res: Response): Promise<void> {
     try {
-        const codes = getUsedInviteCodes();
+        const codes = await getUsedInviteCodes();
 
         res.json({
             inviteCodes: codes,
@@ -104,7 +104,7 @@ export function getUsedInviteCodesHandler(req: Request, res: Response): void {
 /**
  * Delete an invite code (admin only)
  */
-export function deleteInviteCodeHandler(req: Request, res: Response): void {
+export async function deleteInviteCodeHandler(req: Request, res: Response): Promise<void> {
     try {
         const { code } = req.params;
 
@@ -115,7 +115,7 @@ export function deleteInviteCodeHandler(req: Request, res: Response): void {
             return;
         }
 
-        const deleted = deleteInviteCode(code);
+        const deleted = await deleteInviteCode(code);
 
         if (!deleted) {
             res.status(404).json({

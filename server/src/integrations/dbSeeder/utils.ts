@@ -1,19 +1,13 @@
-import db from "../../config/database";
-
-interface LeagueId {
-    league_id: string;
-}
+import sql from "../../config/database";
 
 export function createValuesString(numVars: number): string {
     return Array(numVars).fill("?").join(", ");
 }
 
-export function getAllLeagueIds(): string[] {
-    const data = db
-        .prepare(`SELECT league_id FROM leagues`)
-        .all() as unknown as LeagueId[];
+export async function getAllLeagueIds(): Promise<string[]> {
+    const data = await sql`SELECT league_id FROM leagues`;
 
-    const leagueIds = data.map((league: LeagueId) => {
+    const leagueIds = data.map((league: any) => {
         return league.league_id;
     });
 

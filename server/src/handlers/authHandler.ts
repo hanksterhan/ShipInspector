@@ -22,7 +22,7 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
         const clerkUser = await clerkClient.users.getUser(userId);
 
         // Get local user data if you're storing additional info
-        const localUser = getUserById(userId);
+        const localUser = await getUserById(userId);
 
         res.json({
             user: {

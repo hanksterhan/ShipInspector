@@ -3,8 +3,9 @@ import { initializeTelemetry } from "./config/telemetry";
 initializeTelemetry();
 
 // Pyroscope profiling should also be initialized early
-import { initializePyroscope, shutdownPyroscope } from "./config/pyroscope";
-initializePyroscope();
+// TEMPORARILY DISABLED
+// import { initializePyroscope, shutdownPyroscope } from "./config/pyroscope";
+// initializePyroscope();
 
 import express from "express";
 import dotenv from "dotenv";
@@ -29,10 +30,17 @@ import { getUserCount } from "./services/userService";
 import { totalUsersGauge } from "./config/metrics";
 
 // Initialize total users gauge with current user count from database
-const userCount = getUserCount();
-totalUsersGauge.add(userCount);
-console.log(`Initialized user metrics with ${userCount} users`);
-console.log(`Note: Create admin user by running: npm run create-admin`);
+async function initializeUserMetrics() {
+    const userCount = await getUserCount();
+    totalUsersGauge.add(userCount);
+    console.log(`Initialized user metrics with ${userCount} users`);
+    console.log(`Note: Create admin user by running: npm run create-admin`);
+}
+
+// Call async initialization (don't await to allow server to start)
+initializeUserMetrics().catch((error) => {
+    console.error("Failed to initialize user metrics:", error);
+});
 
 const port = process.env.PORT || 3000;
 
@@ -111,11 +119,11 @@ app.listen(port, () => {
 
 // Gracefully shutdown Pyroscope on process termination
 process.on("SIGTERM", () => {
-    shutdownPyroscope();
+    // shutdownPyroscope(); // TEMPORARILY DISABLED
     process.exit(0);
 });
 
 process.on("SIGINT", () => {
-    shutdownPyroscope();
+    // shutdownPyroscope(); // TEMPORARILY DISABLED
     process.exit(0);
 });

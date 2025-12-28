@@ -22,52 +22,12 @@ export interface AuthRequest extends Request {
  * Checks if user is authenticated via Clerk and has admin role
  * Use this AFTER requireAuth() middleware
  */
-export function requireAdmin(
+export async function requireAdmin(
     req: AuthRequest,
     res: Response,
     next: NextFunction
-): void {
-    // Use Clerk's getAuth to get the authenticated user's ID
-    const { userId } = getAuth(req);
-
-    if (!userId) {
-        res.status(401).json({ error: "Authentication required" });
-        return;
-    }
-
-    // Get user from database to ensure we have current role
-    const user = getUserById(userId);
-    if (!user) {
-        console.error(
-            `[requireAdmin] User not found for userId: ${userId}`
-        );
-        res.status(401).json({ error: "User not found" });
-        return;
-    }
-
-    // Check if user has admin role in database (case-insensitive check)
-    const userRole = (user.role || "").toLowerCase().trim();
-    if (userRole !== "admin") {
-        console.error(
-            `[requireAdmin] User ${userId} (${user.email}) has role "${user.role}" (normalized: "${userRole}"), not "admin"`
-        );
-        res.status(403).json({ error: "Admin access required" });
-        return;
-    }
-
-    req.user = {
-        userId: user.userId,
-        email: user.email,
-        role: user.role,
-    };
-    next();
-}
-
-/**
- * Require specific role middleware using Clerk
- */
-export function requireRole(role: UserRole) {
-    return (req: AuthRequest, res: Response, next: NextFunction): void => {
+): Promise<void> {
+    try {
         // Use Clerk's getAuth to get the authenticated user's ID
         const { userId } = getAuth(req);
 
@@ -77,14 +37,22 @@ export function requireRole(role: UserRole) {
         }
 
         // Get user from database to ensure we have current role
-        const user = getUserById(userId);
+        const user = await getUserById(userId);
         if (!user) {
+            console.error(
+                `[requireAdmin] User not found for userId: ${userId}`
+            );
             res.status(401).json({ error: "User not found" });
             return;
         }
 
-        if (user.role !== role) {
-            res.status(403).json({ error: `${role} access required` });
+        // Check if user has admin role in database (case-insensitive check)
+        const userRole = (user.role || "").toLowerCase().trim();
+        if (userRole !== "admin") {
+            console.error(
+                `[requireAdmin] User ${userId} (${user.email}) has role "${user.role}" (normalized: "${userRole}"), not "admin"`
+            );
+            res.status(403).json({ error: "Admin access required" });
             return;
         }
 
@@ -94,6 +62,48 @@ export function requireRole(role: UserRole) {
             role: user.role,
         };
         next();
+    } catch (error) {
+        console.error("[requireAdmin] Error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+/**
+ * Require specific role middleware using Clerk
+ */
+export function requireRole(role: UserRole) {
+    return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            // Use Clerk's getAuth to get the authenticated user's ID
+            const { userId } = getAuth(req);
+
+            if (!userId) {
+                res.status(401).json({ error: "Authentication required" });
+                return;
+            }
+
+            // Get user from database to ensure we have current role
+            const user = await getUserById(userId);
+            if (!user) {
+                res.status(401).json({ error: "User not found" });
+                return;
+            }
+
+            if (user.role !== role) {
+                res.status(403).json({ error: `${role} access required` });
+                return;
+            }
+
+            req.user = {
+                userId: user.userId,
+                email: user.email,
+                role: user.role,
+            };
+            next();
+        } catch (error) {
+            console.error("[requireRole] Error:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
     };
 }
 

@@ -1,4 +1,4 @@
-import db from "../config/database";
+import sql from "../config/database";
 import bcrypt from "bcryptjs";
 
 export type UserRole = "user" | "admin" | "moderator";
@@ -20,37 +20,37 @@ export interface User {
  * Get a user by email
  * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
  */
-export function getUserByEmail(email: string): User | null {
-    const row = db
-        .prepare(`SELECT * FROM users WHERE email = ?`)
-        .get(email.toLowerCase()) as any;
+export async function getUserByEmail(email: string): Promise<User | null> {
+    const rows = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`;
 
-    if (!row) {
+    if (!rows || rows.length === 0) {
         return null;
     }
+
+    const row = rows[0];
 
     return {
         userId: row.user_id,
         email: row.email,
         passwordHash: row.password_hash,
         role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     };
 }
 
 /**
  * Get a user by user ID
  */
-export function getUserById(userId: string): User | null {
-    const row = db
-        .prepare(`SELECT * FROM users WHERE user_id = ?`)
-        .get(userId) as any;
+export async function getUserById(userId: string): Promise<User | null> {
+    const rows = await sql`SELECT * FROM users WHERE user_id = ${userId}`;
 
-    if (!row) {
+    if (!rows || rows.length === 0) {
         console.error(`[getUserById] No user found with userId: ${userId}`);
         return null;
     }
+
+    const row = rows[0];
 
     // Handle role - check for null, undefined, or empty string
     let role = row.role;
@@ -70,8 +70,8 @@ export function getUserById(userId: string): User | null {
         email: row.email,
         passwordHash: row.password_hash,
         role: role,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     };
 }
 
@@ -79,8 +79,8 @@ export function getUserById(userId: string): User | null {
  * Check if a user exists by email
  * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
  */
-export function userExists(email: string): boolean {
-    const user = getUserByEmail(email);
+export async function userExists(email: string): Promise<boolean> {
+    const user = await getUserByEmail(email);
     return user !== null;
 }
 
@@ -97,7 +97,7 @@ export async function createUser(
     const emailLower = email.toLowerCase();
 
     // Check if user already exists
-    if (userExists(emailLower)) {
+    if (await userExists(emailLower)) {
         throw new Error("User already exists");
     }
 
@@ -109,10 +109,10 @@ export async function createUser(
     const createdAt = Date.now();
 
     // Insert user into database
-    db.prepare(
-        `INSERT INTO users (user_id, email, password_hash, role, created_at)
-         VALUES (?, ?, ?, ?, ?)`
-    ).run(userId, emailLower, passwordHash, role, createdAt);
+    await sql`
+        INSERT INTO users (user_id, email, password_hash, role, created_at)
+        VALUES (${userId}, ${emailLower}, ${passwordHash}, ${role}, ${createdAt})
+    `;
 
     return {
         userId,
@@ -127,73 +127,70 @@ export async function createUser(
 /**
  * Get total user count
  */
-export function getUserCount(): number {
-    const result = db
-        .prepare(`SELECT COUNT(*) as count FROM users`)
-        .get() as any;
-    return result.count || 0;
+export async function getUserCount(): Promise<number> {
+    const result = await sql`SELECT COUNT(*) as count FROM users`;
+    return result[0]?.count ? Number(result[0].count) : 0;
 }
 
 /**
  * Update user role (admin only)
  */
-export function updateUserRole(userId: string, newRole: UserRole): boolean {
+export async function updateUserRole(
+    userId: string,
+    newRole: UserRole
+): Promise<boolean> {
     const now = Date.now();
-    const result = db
-        .prepare(`UPDATE users SET role = ?, updated_at = ? WHERE user_id = ?`)
-        .run(newRole, now, userId);
+    const result =
+        await sql`UPDATE users SET role = ${newRole}, updated_at = ${now} WHERE user_id = ${userId}`;
 
-    return result.changes > 0;
+    return result.length > 0;
 }
 
 /**
  * Get all users (admin only)
  */
-export function getAllUsers(): User[] {
-    const rows = db
-        .prepare(`SELECT * FROM users ORDER BY created_at DESC`)
-        .all() as any[];
+export async function getAllUsers(): Promise<User[]> {
+    const rows = await sql`SELECT * FROM users ORDER BY created_at DESC`;
 
     return rows.map((row) => ({
         userId: row.user_id,
         email: row.email,
         passwordHash: row.password_hash,
         role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     }));
 }
 
 /**
  * Get users by role
  */
-export function getUsersByRole(role: UserRole): User[] {
-    const rows = db
-        .prepare(`SELECT * FROM users WHERE role = ? ORDER BY created_at DESC`)
-        .all(role) as any[];
+export async function getUsersByRole(role: UserRole): Promise<User[]> {
+    const rows =
+        await sql`SELECT * FROM users WHERE role = ${role} ORDER BY created_at DESC`;
 
     return rows.map((row) => ({
         userId: row.user_id,
         email: row.email,
         passwordHash: row.password_hash,
         role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     }));
 }
 
 /**
  * Check if user has admin role
  */
-export function isAdmin(userId: string): boolean {
-    const user = getUserById(userId);
+export async function isAdmin(userId: string): Promise<boolean> {
+    const user = await getUserById(userId);
     return user?.role === "admin";
 }
 
 /**
  * Check if user has role
  */
-export function hasRole(userId: string, role: UserRole): boolean {
-    const user = getUserById(userId);
+export async function hasRole(userId: string, role: UserRole): Promise<boolean> {
+    const user = await getUserById(userId);
     return user?.role === role;
 }

@@ -11,9 +11,9 @@ import {
 /**
  * Get all users (admin only)
  */
-export function getAllUsersHandler(req: Request, res: Response): void {
+export async function getAllUsersHandler(req: Request, res: Response): Promise<void> {
     try {
-        const users = getAllUsers();
+        const users = await getAllUsers();
 
         // Remove password hashes from response
         const safeUsers = users.map((user) => ({
@@ -39,7 +39,7 @@ export function getAllUsersHandler(req: Request, res: Response): void {
 /**
  * Get users by role (admin only)
  */
-export function getUsersByRoleHandler(req: Request, res: Response): void {
+export async function getUsersByRoleHandler(req: Request, res: Response): Promise<void> {
     try {
         const role = req.params.role as UserRole;
 
@@ -51,7 +51,7 @@ export function getUsersByRoleHandler(req: Request, res: Response): void {
             return;
         }
 
-        const users = getUsersByRole(role);
+        const users = await getUsersByRole(role);
 
         // Remove password hashes from response
         const safeUsers = users.map((user) => ({
@@ -79,7 +79,7 @@ export function getUsersByRoleHandler(req: Request, res: Response): void {
  * Update user role (admin only)
  * Uses Clerk authentication
  */
-export function updateUserRoleHandler(req: Request, res: Response): void {
+export async function updateUserRoleHandler(req: Request, res: Response): Promise<void> {
     try {
         const { userId } = req.params;
         const { role } = req.body;
@@ -107,7 +107,7 @@ export function updateUserRoleHandler(req: Request, res: Response): void {
         }
 
         // Check if user exists
-        const user = getUserById(userId);
+        const user = await getUserById(userId);
         if (!user) {
             res.status(404).json({
                 error: "User not found",
@@ -126,7 +126,7 @@ export function updateUserRoleHandler(req: Request, res: Response): void {
         }
 
         // Update role
-        const updated = updateUserRole(userId, role as UserRole);
+        const updated = await updateUserRole(userId, role as UserRole);
         if (!updated) {
             res.status(500).json({
                 error: "Failed to update user role",
@@ -135,7 +135,7 @@ export function updateUserRoleHandler(req: Request, res: Response): void {
         }
 
         // Get updated user
-        const updatedUser = getUserById(userId);
+        const updatedUser = await getUserById(userId);
         if (!updatedUser) {
             res.status(500).json({
                 error: "Failed to retrieve updated user",
@@ -164,7 +164,7 @@ export function updateUserRoleHandler(req: Request, res: Response): void {
 /**
  * Get user by ID (admin only)
  */
-export function getUserByIdHandler(req: Request, res: Response): void {
+export async function getUserByIdHandler(req: Request, res: Response): Promise<void> {
     try {
         const { userId } = req.params;
 
@@ -175,7 +175,7 @@ export function getUserByIdHandler(req: Request, res: Response): void {
             return;
         }
 
-        const user = getUserById(userId);
+        const user = await getUserById(userId);
         if (!user) {
             res.status(404).json({
                 error: "User not found",

@@ -1,4 +1,4 @@
-import db from "../config/database";
+import sql from "../config/database";
 
 export interface InviteCode {
     code: string;
@@ -24,7 +24,7 @@ export function generateInviteCode(length: number = 8): string {
 /**
  * Create a new invite code
  */
-export function createInviteCode(createdBy?: string): string {
+export async function createInviteCode(createdBy?: string): Promise<string> {
     let code: string;
     let attempts = 0;
     const maxAttempts = 10;
@@ -36,13 +36,13 @@ export function createInviteCode(createdBy?: string): string {
         if (attempts > maxAttempts) {
             throw new Error("Failed to generate unique invite code");
         }
-    } while (getInviteCode(code) !== null);
+    } while ((await getInviteCode(code)) !== null);
 
     const now = Date.now();
-    db.prepare(
-        `INSERT INTO invite_codes (code, used, created_at, created_by)
-         VALUES (?, 0, ?, ?)`
-    ).run(code, now, createdBy || null);
+    await sql`
+        INSERT INTO invite_codes (code, used, created_at, created_by)
+        VALUES (${code}, 0, ${now}, ${createdBy || null})
+    `;
 
     return code;
 }
@@ -50,21 +50,21 @@ export function createInviteCode(createdBy?: string): string {
 /**
  * Get an invite code by code string
  */
-export function getInviteCode(code: string): InviteCode | null {
-    const row = db
-        .prepare(`SELECT * FROM invite_codes WHERE code = ?`)
-        .get(code) as any;
+export async function getInviteCode(code: string): Promise<InviteCode | null> {
+    const rows = await sql`SELECT * FROM invite_codes WHERE code = ${code}`;
 
-    if (!row) {
+    if (!rows || rows.length === 0) {
         return null;
     }
+
+    const row = rows[0];
 
     return {
         code: row.code,
         used: row.used === 1,
         usedByEmail: row.used_by_email || undefined,
-        usedAt: row.used_at || undefined,
-        createdAt: row.created_at,
+        usedAt: row.used_at ? Number(row.used_at) : undefined,
+        createdAt: Number(row.created_at),
         createdBy: row.created_by || undefined,
     };
 }
@@ -72,11 +72,11 @@ export function getInviteCode(code: string): InviteCode | null {
 /**
  * Mark an invite code as used
  */
-export function markInviteCodeAsUsed(
+export async function markInviteCodeAsUsed(
     code: string,
     usedByEmail: string
-): boolean {
-    const inviteCode = getInviteCode(code);
+): Promise<boolean> {
+    const inviteCode = await getInviteCode(code);
     if (!inviteCode) {
         return false;
     }
@@ -86,31 +86,27 @@ export function markInviteCodeAsUsed(
     }
 
     const now = Date.now();
-    const result = db
-        .prepare(
-            `UPDATE invite_codes 
-             SET used = 1, used_by_email = ?, used_at = ?
-             WHERE code = ? AND used = 0`
-        )
-        .run(usedByEmail, now, code);
+    const result = await sql`
+        UPDATE invite_codes 
+        SET used = 1, used_by_email = ${usedByEmail}, used_at = ${now}
+        WHERE code = ${code} AND used = 0
+    `;
 
-    return result.changes > 0;
+    return result.length > 0;
 }
 
 /**
  * Get all invite codes (for admin)
  */
-export function getAllInviteCodes(): InviteCode[] {
-    const rows = db
-        .prepare(`SELECT * FROM invite_codes ORDER BY created_at DESC`)
-        .all() as any[];
+export async function getAllInviteCodes(): Promise<InviteCode[]> {
+    const rows = await sql`SELECT * FROM invite_codes ORDER BY created_at DESC`;
 
     return rows.map((row) => ({
         code: row.code,
         used: row.used === 1,
         usedByEmail: row.used_by_email || undefined,
-        usedAt: row.used_at || undefined,
-        createdAt: row.created_at,
+        usedAt: row.used_at ? Number(row.used_at) : undefined,
+        createdAt: Number(row.created_at),
         createdBy: row.created_by || undefined,
     }));
 }
@@ -118,19 +114,16 @@ export function getAllInviteCodes(): InviteCode[] {
 /**
  * Get unused invite codes
  */
-export function getUnusedInviteCodes(): InviteCode[] {
-    const rows = db
-        .prepare(
-            `SELECT * FROM invite_codes WHERE used = 0 ORDER BY created_at DESC`
-        )
-        .all() as any[];
+export async function getUnusedInviteCodes(): Promise<InviteCode[]> {
+    const rows =
+        await sql`SELECT * FROM invite_codes WHERE used = 0 ORDER BY created_at DESC`;
 
     return rows.map((row) => ({
         code: row.code,
         used: false,
         usedByEmail: undefined,
         usedAt: undefined,
-        createdAt: row.created_at,
+        createdAt: Number(row.created_at),
         createdBy: row.created_by || undefined,
     }));
 }
@@ -138,19 +131,16 @@ export function getUnusedInviteCodes(): InviteCode[] {
 /**
  * Get used invite codes
  */
-export function getUsedInviteCodes(): InviteCode[] {
-    const rows = db
-        .prepare(
-            `SELECT * FROM invite_codes WHERE used = 1 ORDER BY used_at DESC`
-        )
-        .all() as any[];
+export async function getUsedInviteCodes(): Promise<InviteCode[]> {
+    const rows =
+        await sql`SELECT * FROM invite_codes WHERE used = 1 ORDER BY used_at DESC`;
 
     return rows.map((row) => ({
         code: row.code,
         used: true,
         usedByEmail: row.used_by_email || undefined,
-        usedAt: row.used_at || undefined,
-        createdAt: row.created_at,
+        usedAt: row.used_at ? Number(row.used_at) : undefined,
+        createdAt: Number(row.created_at),
         createdBy: row.created_by || undefined,
     }));
 }
@@ -158,9 +148,7 @@ export function getUsedInviteCodes(): InviteCode[] {
 /**
  * Delete an invite code
  */
-export function deleteInviteCode(code: string): boolean {
-    const result = db
-        .prepare(`DELETE FROM invite_codes WHERE code = ?`)
-        .run(code);
-    return result.changes > 0;
+export async function deleteInviteCode(code: string): Promise<boolean> {
+    const result = await sql`DELETE FROM invite_codes WHERE code = ${code}`;
+    return result.length > 0;
 }

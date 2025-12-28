@@ -14,7 +14,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
-import db from "../src/config/database";
+import sql from "../src/config/database";
 import bcrypt from "bcryptjs";
 import { userExists } from "../src/services/userService";
 
@@ -65,7 +65,7 @@ async function createAdminUser() {
     }
 
     // Check if admin user already exists
-    if (userExists(adminEmail)) {
+    if (await userExists(adminEmail)) {
         console.log(`⚠️  Admin user ${adminEmail} already exists in database`);
         console.log("   If you want to reset the password, delete the user first or use a different email");
         process.exit(0);
@@ -80,10 +80,10 @@ async function createAdminUser() {
         const createdAt = Date.now();
 
         // Insert admin user into database
-        db.prepare(
-            `INSERT INTO users (user_id, email, password_hash, role, created_at)
-             VALUES (?, ?, ?, 'admin', ?)`
-        ).run(userId, adminEmail.toLowerCase(), passwordHash, createdAt);
+        await sql`
+            INSERT INTO users (user_id, email, password_hash, role, created_at)
+            VALUES (${userId}, ${adminEmail.toLowerCase()}, ${passwordHash}, 'admin', ${createdAt})
+        `;
 
         console.log("✅ Admin user created successfully!");
         console.log(`   Email: ${adminEmail}`);
@@ -91,7 +91,7 @@ async function createAdminUser() {
         console.log(`   Role: admin`);
         console.log("\n⚠️  IMPORTANT: Keep your .env file secure and never commit it to version control!");
     } catch (error: any) {
-        if (error.message?.includes("UNIQUE constraint")) {
+        if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
             console.log(`⚠️  Admin user ${adminEmail} already exists in database`);
         } else {
             console.error("❌ ERROR: Failed to create admin user:", error.message);
