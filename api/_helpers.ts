@@ -45,3 +45,8 @@ try {
     console.warn("[Path Resolver] Make sure common package is built and accessible");
 }
 
+// Initialize Clerk middleware at module load time
+// This ensures clerkMiddleware is registered before any getAuth() calls
+import { clerkMiddleware } from "@clerk/express";
+export const clerkMiddlewareInstance = clerkMiddleware();
+

@@ -2,7 +2,8 @@
 // Routes requests to individual serverless functions based on path
 
 // Register path aliases for @common/* imports (must be first)
-import "./_helpers";
+// This also initializes Clerk middleware
+import { clerkMiddlewareInstance } from "./_helpers";
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import authMeHandler from "./auth/me";
@@ -19,6 +20,18 @@ export default async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {
+    // Apply Clerk middleware before routing
+    // This must be done before any handler uses getAuth()
+    await new Promise<void>((resolve, reject) => {
+        clerkMiddlewareInstance(req as any, res as any, (err?: any) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+
     // Get path from URL or query
     // Vercel rewrites preserve the original path in req.url
     const path = req.url || "";
