@@ -32,6 +32,20 @@ const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     : ["http://localhost:4000", "http://localhost:8080"];
 
+// Helper function to normalize hostnames (remove www. prefix for comparison)
+const normalizeHost = (host: string): string => host.replace(/^www\./, "");
+
+// Helper function to check if two origins are the same domain (handles www/non-www)
+const isSameDomain = (origin1: string, origin2: string): boolean => {
+    try {
+        const url1 = new URL(origin1);
+        const url2 = new URL(origin2);
+        return normalizeHost(url1.hostname) === normalizeHost(url2.hostname);
+    } catch {
+        return false;
+    }
+};
+
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 app.use(
@@ -51,11 +65,20 @@ app.use(
             if (allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
-                // In production, reject unknown origins
-                if (isDevelopment) {
-                    callback(null, true); // Allow in development
+                // Check if origin matches any allowed origin (handles www/non-www mismatch)
+                const matchesAllowedOrigin = allowedOrigins.some((allowedOrigin) =>
+                    isSameDomain(origin, allowedOrigin)
+                );
+                
+                if (matchesAllowedOrigin) {
+                    callback(null, true);
                 } else {
-                    callback(new Error("Not allowed by CORS"));
+                    // In production, reject unknown origins
+                    if (isDevelopment) {
+                        callback(null, true); // Allow in development
+                    } else {
+                        callback(new Error("Not allowed by CORS"));
+                    }
                 }
             }
         },

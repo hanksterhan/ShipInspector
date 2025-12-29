@@ -111,6 +111,31 @@ if (API_URL === "" || API_URL === "proxy" || API_URL === "relative") {
 
     // Remove trailing slash if present
     API_URL = API_URL.replace(/\/$/, "");
+    
+    // In production, if we're on the same domain (www vs non-www mismatch),
+    // use relative paths to avoid CORS redirect issues
+    if (typeof window !== "undefined" && window.location.origin) {
+        const currentOrigin = window.location.origin;
+        const apiOrigin = API_URL.replace(/\/$/, "");
+        
+        // Check if API_URL is the same domain but with www/non-www mismatch
+        // e.g., www.sipoker.club vs sipoker.club
+        const currentHost = new URL(currentOrigin).hostname;
+        const apiHost = new URL(apiOrigin).hostname;
+        
+        // Remove www. prefix for comparison
+        const normalizeHost = (host: string) => host.replace(/^www\./, "");
+        const normalizedCurrent = normalizeHost(currentHost);
+        const normalizedApi = normalizeHost(apiHost);
+        
+        // If hosts match after normalization, use relative paths to avoid CORS redirect issues
+        if (normalizedCurrent === normalizedApi && currentHost !== apiHost) {
+            console.log(
+                `Detected www/non-www mismatch: ${currentOrigin} vs ${apiOrigin}. Using relative paths.`
+            );
+            API_URL = "";
+        }
+    }
 }
 
 export const httpClient = new HttpClient(API_URL);
