@@ -15,12 +15,14 @@ export interface User {
 
 /**
  * AuthStore - Uses Clerk for authentication
- * 
+ *
  * Authentication is checked in these circumstances only:
- * 1. On app startup / initial render (initializeClerk)
- * 2. When route or view changes (via RouterStore listener)
+ * 1. On app startup / initial render (to determine if user is already logged in)
+ * 2. When Clerk emits an auth change event (login/logout via clerk.addListener)
  * 3. When user performs auth-sensitive actions (token automatically included in HTTP requests)
- * 4. When Clerk emits an auth change event (via clerk.addListener)
+ *
+ * Note: Authentication is NOT checked on route changes to avoid unnecessary server calls.
+ * The server validates the token on each API request automatically.
  */
 export class AuthStore {
     @observable
@@ -35,24 +37,13 @@ export class AuthStore {
     @observable
     isClerkLoaded = false;
 
+    // Track previous user ID to detect actual sign in/out events, not periodic updates
+    private previousUserId: string | null = null;
+
     constructor() {
         makeObservable(this);
         // 1. Initialize Clerk and perform initial auth check (app startup)
         this.initializeClerk();
-    }
-
-    /**
-     * Set up route change listener for auth checks
-     * Called after RouterStore is initialized
-     */
-    setupRouteListener(routerStore: any): void {
-        // 2. Check auth when route changes to a protected route
-        routerStore.setRouteChangeListener((route: string) => {
-            // Only check auth when navigating to protected routes
-            if (route !== "/" && route !== "/signin") {
-                this.checkAuth();
-            }
-        });
     }
 
     @action
@@ -63,16 +54,26 @@ export class AuthStore {
                 this.isClerkLoaded = true;
             });
 
-            // 4. Listen to Clerk session changes (auth events)
+            // 2. Listen to Clerk session changes (auth events - login/logout only)
             const clerk = clerkService.getClerk();
+            
             clerk.addListener((event: any) => {
-                // Only react to actual session changes, not all client events
-                if (event.session !== undefined) {
+                // Only react to actual authentication state changes (sign in/out), not periodic session updates
+                // Check if the user ID has actually changed, indicating a sign in or sign out
+                const currentUserId = clerk.user?.id || null;
+                
+                // Only trigger checkAuth if the user authentication state actually changed
+                // This prevents periodic session refresh events from causing page reloads
+                if (this.previousUserId !== currentUserId) {
+                    this.previousUserId = currentUserId;
                     this.checkAuth();
                 }
             });
 
-            // 1. Initial auth check on startup
+            // Set initial user ID for comparison
+            this.previousUserId = clerk.user?.id || null;
+
+            // 1. Initial auth check on startup (to determine if user is already logged in)
             await this.checkAuth();
         } catch (error: any) {
             console.error("Failed to initialize Clerk:", error);
@@ -85,8 +86,12 @@ export class AuthStore {
     }
 
     @action
-    async checkAuth(): Promise<void> {
-        this.isLoading = true;
+    async checkAuth(skipLoadingState = false): Promise<void> {
+        // Only set loading state if this is the initial check or if explicitly requested
+        // This prevents periodic session updates from causing page reloads
+        if (!skipLoadingState) {
+            this.isLoading = true;
+        }
         this.error = null;
 
         try {
@@ -96,6 +101,7 @@ export class AuthStore {
             if (!clerk.user) {
                 runInAction(() => {
                     this.user = null;
+                    this.previousUserId = null;
                     this.isLoading = false;
                 });
                 return;
@@ -105,12 +111,15 @@ export class AuthStore {
             const user = await authService.getCurrentUser();
             runInAction(() => {
                 this.user = user;
+                // Update previousUserId to keep it in sync
+                this.previousUserId = clerk.user?.id || null;
                 this.isLoading = false;
             });
         } catch (error: any) {
             // Silently handle authentication errors (401) - user is just not logged in
             runInAction(() => {
                 this.user = null;
+                this.previousUserId = null;
                 this.isLoading = false;
                 // Only set error if it's not a 401 (authentication required)
                 if (error.status !== 401 && !error.isAuthError) {

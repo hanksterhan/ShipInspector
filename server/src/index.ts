@@ -1,11 +1,11 @@
 /**
  * @deprecated This Express server is deprecated for Vercel deployment.
- * 
+ *
  * All serverless functions have been migrated to /api directory.
  * This file is kept for local development/testing purposes only.
- * 
+ *
  * For production deployment, use the serverless functions in /api.
- * 
+ *
  * To run locally for testing:
  *   npm run start (in server directory)
  */
@@ -18,11 +18,7 @@ import swaggerUi from "swagger-ui-express";
 import { clerkMiddleware } from "@clerk/express";
 
 import * as routers from "./routes";
-import {
-    apiLogger,
-    errorHandler,
-    globalRateLimiter,
-} from "./middlewares";
+import { apiLogger, errorHandler, globalRateLimiter } from "./middlewares";
 import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
@@ -35,7 +31,7 @@ const port = process.env.PORT || 3000;
 const app = express();
 
 // Trust proxy - required for Vercel and other reverse proxies
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // CORS configuration
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -70,10 +66,10 @@ app.use(
             if (allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
-                const matchesAllowedOrigin = allowedOrigins.some((allowedOrigin) =>
-                    isSameDomain(origin, allowedOrigin)
+                const matchesAllowedOrigin = allowedOrigins.some(
+                    (allowedOrigin) => isSameDomain(origin, allowedOrigin)
                 );
-                
+
                 if (matchesAllowedOrigin) {
                     callback(null, true);
                 } else {
@@ -133,11 +129,17 @@ app.use(errorHandler);
 // Only start server if not in Vercel environment
 if (!process.env.VERCEL) {
     app.listen(port, () => {
-        console.log(`⚠️  DEPRECATED Express server running at http://localhost:${port}`);
-        console.log(`   This is for local development only. Use /api functions for production.`);
+        console.log(
+            `⚠️  DEPRECATED Express server running at http://localhost:${port}`
+        );
+        console.log(
+            `   This is for local development only. Use /api functions for production.`
+        );
     });
 } else {
-    console.log("Running in Vercel - serverless functions should be used instead");
+    console.log(
+        "Running in Vercel - serverless functions should be used instead"
+    );
 }
 
 // Export app for potential use in other contexts (though deprecated)

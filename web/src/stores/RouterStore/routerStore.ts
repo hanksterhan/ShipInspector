@@ -30,7 +30,7 @@ export class RouterStore {
      */
     setRouteChangeListener = (callback: (route: Route) => void): void => {
         this.onRouteChange = callback;
-    }
+    };
 
     @action
     navigate(route: Route): void {
@@ -38,7 +38,7 @@ export class RouterStore {
             const oldRoute = this.currentRoute;
             this.currentRoute = route;
             window.history.pushState({}, "", route);
-            
+
             // Notify listener of route change (for auth checks)
             if (this.onRouteChange && oldRoute !== route) {
                 this.onRouteChange(route);
@@ -49,7 +49,7 @@ export class RouterStore {
     @action
     private setRouteFromPath(path: string): void {
         const oldRoute = this.currentRoute;
-        
+
         // Map paths to routes
         if (path === "/" || path === "/signin" || path === "/login") {
             this.currentRoute = "/";
@@ -61,7 +61,7 @@ export class RouterStore {
             // Default to root
             this.currentRoute = "/";
         }
-        
+
         // Notify listener of route change (for auth checks)
         if (this.onRouteChange && oldRoute !== this.currentRoute) {
             this.onRouteChange(this.currentRoute);

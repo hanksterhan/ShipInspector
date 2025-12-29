@@ -1,12 +1,14 @@
 import { css } from "lit";
 
 export const styles = css`
-    :host {
+    /* Styles for light DOM rendering - :host replaced with tag name */
+    sign-in-page {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-        background: var(--background-color, #f5f5f5);
+        background: #0f5132; /* Match main application green background */
+        padding: 20px;
     }
 
     .sign-in-wrapper {
@@ -19,30 +21,37 @@ export const styles = css`
 
     .sign-in-container {
         width: 100%;
-        max-width: 480px;
-        padding: 20px;
+        max-width: 420px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        padding: 40px 32px;
+        box-sizing: border-box;
     }
 
     .loading-container,
     .error-container {
         text-align: center;
-        padding: 40px 20px;
+        padding: 40px 32px;
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        max-width: 400px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-width: 420px;
+        width: 100%;
     }
 
     .error-container h2 {
         color: #d32f2f;
         margin: 0 0 16px 0;
         font-size: 24px;
+        font-weight: 600;
     }
 
     .error-container p {
         color: #666;
         margin: 0 0 24px 0;
         line-height: 1.5;
+        font-size: 14px;
     }
 
     .error-container button {
@@ -50,9 +59,10 @@ export const styles = css`
         color: white;
         border: none;
         padding: 12px 24px;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 16px;
+        font-weight: 500;
         transition: background 0.2s;
     }
 
@@ -69,5 +79,17 @@ export const styles = css`
     /* Clerk component styling overrides */
     #clerk-sign-in {
         width: 100%;
+    }
+
+    /* Style Clerk root elements - light DOM version (no ::slotted needed) */
+    .clerk-root-box {
+        background: transparent !important;
+    }
+
+    .clerk-card {
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
     }
 `;
