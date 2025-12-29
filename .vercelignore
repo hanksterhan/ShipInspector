@@ -4,9 +4,6 @@
 .git
 .gitignore
 
-# Admin files (not needed for deployment)
-admin/
-
 # Server files that are not needed for build
 server/data/
 server/nodemon.json

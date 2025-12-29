@@ -15,7 +15,7 @@ import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
-console.log(`Note: Create admin user by running: npm run create-admin`);
+console.log(`Server starting...`);
 
 const port = process.env.PORT || 3000;
 

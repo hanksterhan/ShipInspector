@@ -24,14 +24,6 @@
             "destination": "/api"
         },
         {
-            "source": "/admin/:path*",
-            "destination": "/api"
-        },
-        {
-            "source": "/invite-codes/:path*",
-            "destination": "/api"
-        },
-        {
             "source": "/api-docs/:path*",
             "destination": "/api"
         },

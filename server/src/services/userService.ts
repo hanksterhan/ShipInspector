@@ -1,11 +1,11 @@
 import sql from "../config/database";
 import bcrypt from "bcryptjs";
 
-export type UserRole = "user" | "admin" | "moderator";
+export type UserRole = "user";
 
 /**
  * User interface - represents user data stored in local database
- * Note: With Clerk, passwordHash is deprecated but kept for legacy admin script
+ * Note: With Clerk, passwordHash is deprecated and not used for authentication
  */
 export interface User {
     userId: string;
@@ -18,7 +18,7 @@ export interface User {
 
 /**
  * Get a user by email
- * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
+ * @deprecated With Clerk, use Clerk's user management. Kept for backward compatibility.
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
     const rows =
@@ -78,7 +78,7 @@ export async function getUserById(userId: string): Promise<User | null> {
 
 /**
  * Check if a user exists by email
- * @deprecated Only used by create-admin script. With Clerk, use Clerk's user management.
+ * @deprecated With Clerk, use Clerk's user management. Kept for backward compatibility.
  */
 export async function userExists(email: string): Promise<boolean> {
     const user = await getUserByEmail(email);
@@ -87,8 +87,8 @@ export async function userExists(email: string): Promise<boolean> {
 
 /**
  * Create a new user
- * @deprecated Only used by create-admin script. With Clerk, users are created through Clerk.
- * For new implementations, sync Clerk user IDs with local database roles instead.
+ * @deprecated With Clerk, users are created through Clerk.
+ * For new implementations, sync Clerk user IDs with local database instead.
  */
 export async function createUser(
     email: string,
@@ -134,69 +134,11 @@ export async function getUserCount(): Promise<number> {
 }
 
 /**
- * Update user role (admin only)
+ * Get total user count
  */
-export async function updateUserRole(
-    userId: string,
-    newRole: UserRole
-): Promise<boolean> {
-    const now = Date.now();
-    const result =
-        await sql`UPDATE users SET role = ${newRole}, updated_at = ${now} WHERE user_id = ${userId}`;
-
-    return result.length > 0;
-}
-
-/**
- * Get all users (admin only)
- */
-export async function getAllUsers(): Promise<User[]> {
-    const rows = await sql`SELECT * FROM users ORDER BY created_at DESC`;
-
-    return rows.map((row) => ({
-        userId: row.user_id,
-        email: row.email,
-        passwordHash: row.password_hash,
-        role: (row.role || "user") as UserRole,
-        createdAt: Number(row.created_at),
-        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
-    }));
-}
-
-/**
- * Get users by role
- */
-export async function getUsersByRole(role: UserRole): Promise<User[]> {
-    const rows =
-        await sql`SELECT * FROM users WHERE role = ${role} ORDER BY created_at DESC`;
-
-    return rows.map((row) => ({
-        userId: row.user_id,
-        email: row.email,
-        passwordHash: row.password_hash,
-        role: (row.role || "user") as UserRole,
-        createdAt: Number(row.created_at),
-        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
-    }));
-}
-
-/**
- * Check if user has admin role
- */
-export async function isAdmin(userId: string): Promise<boolean> {
-    const user = await getUserById(userId);
-    return user?.role === "admin";
-}
-
-/**
- * Check if user has role
- */
-export async function hasRole(
-    userId: string,
-    role: UserRole
-): Promise<boolean> {
-    const user = await getUserById(userId);
-    return user?.role === role;
+export async function getTotalUsers(): Promise<number> {
+    const rows = await sql`SELECT COUNT(*) as count FROM users`;
+    return rows[0]?.count ? Number(rows[0].count) : 0;
 }
 
 /**
