@@ -1,9 +1,8 @@
 import { html } from "lit";
 import { styles } from "./styles.css";
-import { customElement, state } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { clerkService } from "../../services/index";
-import { authStore } from "../../stores/index";
 
 @customElement("sign-in-page")
 export class SignInPage extends MobxLitElement {
@@ -12,122 +11,45 @@ export class SignInPage extends MobxLitElement {
         return styles;
     }
 
-    @state()
-    private mountNodeId = "clerk-sign-in";
-
-    @state()
-    private error: string | null = null;
-
-    @state()
-    private isLoading = true;
-
-    private clerkUnsubscribe?: (() => void) | null = null;
-
     async firstUpdated() {
-        // Wait for the DOM to be ready
         await this.updateComplete;
 
         try {
-            // Wait for Clerk to be initialized
+            // Initialize Clerk
             await clerkService.initialize();
-
             const clerk = clerkService.getClerk();
 
-            const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
+            // Redirect to Clerk's hosted sign-in page
+            // Clerk will handle the redirect back to the app after sign-in
+            const returnBackUrl = window.location.origin + "/poker-hands";
 
-            if (!mountNode) {
-                this.error = "Failed to initialize sign-in form";
-                this.isLoading = false;
-                return;
-            }
+            // Use Clerk's redirectToSignIn method if available
+            if (clerk.redirectToSignIn) {
+                clerk.redirectToSignIn({
+                    redirectUrl: returnBackUrl,
+                });
+            } else {
+                // Fallback: redirect using window.location
+                // Clerk will redirect back to returnBackUrl after sign-in
+                const signInUrl = clerk.buildSignInUrl
+                    ? await clerk.buildSignInUrl({ redirectUrl: returnBackUrl })
+                    : `${window.location.origin}/sign-in?redirect_url=${encodeURIComponent(returnBackUrl)}`;
 
-            // Mount Clerk SignIn component with proper configuration
-            // Clerk will automatically handle users who are already signed in
-            clerk.mountSignIn(mountNode, {
-                // Redirect after successful sign-in
-                afterSignInUrl: "/poker-hands",
-                // Redirect to sign-up page if user doesn't have an account
-                signUpUrl: "/sign-up",
-                // Appearance customization
-                appearance: {
-                    elements: {
-                        rootBox: "clerk-root-box",
-                        card: "clerk-card",
-                    },
-                },
-            });
-
-            this.isLoading = false;
-
-            // Listen for authentication state changes
-            this.clerkUnsubscribe = clerk.addListener((event: any) => {
-                if (event.user) {
-                    // User signed in successfully - refresh auth state
-                    // AppRoot will handle redirect
-                    authStore.checkAuth().catch(() => {
-                        // Ignore errors - user is authenticated via Clerk
-                    });
-                }
-            });
-        } catch (error) {
-            this.error =
-                error instanceof Error
-                    ? error.message
-                    : "Failed to load sign-in form";
-            this.isLoading = false;
-        }
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
-
-        // Unsubscribe from Clerk events
-        if (this.clerkUnsubscribe) {
-            this.clerkUnsubscribe();
-            this.clerkUnsubscribe = null;
-        }
-
-        // Unmount Clerk component
-        try {
-            const clerk = clerkService.getClerk();
-            const mountNode = this.shadowRoot?.getElementById(this.mountNodeId);
-            if (mountNode) {
-                clerk.unmountSignIn(mountNode);
+                window.location.href = signInUrl;
             }
         } catch (error) {
-            // Clerk might not be initialized
+            console.error("Failed to redirect to sign-in:", error);
+            // Fallback: try direct redirect
+            window.location.href = "/sign-in";
         }
     }
 
     render() {
+        // Show loading state while redirecting
         return html`
             <div class="sign-in-wrapper">
-                ${this.error
-                    ? html`
-                          <div class="error-container">
-                              <h2>Sign In Error</h2>
-                              <p>${this.error}</p>
-                              <button @click=${() => window.location.reload()}>
-                                  Retry
-                              </button>
-                          </div>
-                      `
-                    : ""}
-                ${this.isLoading && !this.error
-                    ? html`
-                          <div class="loading-container">
-                              <p>Loading sign-in form...</p>
-                          </div>
-                      `
-                    : ""}
-
-                <div
-                    class="sign-in-container"
-                    style="${this.isLoading || this.error
-                        ? "display: none;"
-                        : ""}"
-                >
-                    <div id="${this.mountNodeId}"></div>
+                <div class="loading-container">
+                    <p>Redirecting to sign-in...</p>
                 </div>
             </div>
         `;

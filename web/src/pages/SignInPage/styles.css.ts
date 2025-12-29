@@ -1,7 +1,8 @@
 import { css } from "lit";
 
 export const styles = css`
-    :host {
+    /* Styles for light DOM rendering - :host replaced with tag name */
+    sign-in-page {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -80,13 +81,11 @@ export const styles = css`
         width: 100%;
     }
 
-    /* Style Clerk root elements */
-    :host ::slotted(.clerk-root-box),
+    /* Style Clerk root elements - light DOM version (no ::slotted needed) */
     .clerk-root-box {
         background: transparent !important;
     }
 
-    :host ::slotted(.clerk-card),
     .clerk-card {
         background: white !important;
         box-shadow: none !important;
