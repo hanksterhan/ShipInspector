@@ -11,7 +11,7 @@
         "test": "jest",
         "copy-assets": "copyfiles -u 1 src/docs/*.yaml dist/ && mkdir -p dist/server/wasm-equity/pkg && cp -r wasm-equity/pkg/* dist/server/wasm-equity/pkg/ 2>/dev/null || true",
         "create-admin": "npm run build && ts-node dist/server/scripts/create-admin.js",
-        "build:wasm": "cd wasm-equity && wasm-pack build --target nodejs --out-dir pkg"
+        "build:wasm": "cd wasm-equity && bash build.sh"
     },
     "keywords": [],
     "author": "",
