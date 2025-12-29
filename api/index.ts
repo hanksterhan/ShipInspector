@@ -1,15 +1,6 @@
 // Vercel Serverless Function Entry Point
 // This wraps the Express app to work as a serverless function
 
-// Conditionally initialize telemetry only if not in serverless environment
-const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
-
-if (!isServerless) {
-    // Only initialize telemetry in traditional server environments
-    const { initializeTelemetry } = require('../server/dist/server/src/config/telemetry');
-    initializeTelemetry();
-}
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -19,7 +10,6 @@ import { clerkMiddleware } from "@clerk/express";
 import * as routers from "../server/dist/server/src/routes";
 import {
     apiLogger,
-    telemetryLogger,
     errorHandler,
     globalRateLimiter,
 } from "../server/dist/server/src/middlewares";
@@ -31,31 +21,10 @@ dotenv.config();
 // Log environment info for debugging
 console.log('=== API Function Startup ===');
 console.log('Environment:', process.env.NODE_ENV);
-console.log('Is Serverless:', isServerless);
 console.log('VERCEL env:', process.env.VERCEL);
 console.log('Clerk Secret Key present:', !!process.env.CLERK_SECRET_KEY);
 console.log('Database URL present:', !!process.env.DATABASE_URL);
 console.log('===========================');
-
-// Initialize user metrics (in serverless, this will run on cold start)
-import { getUserCount } from "../server/dist/server/src/services/userService";
-import { totalUsersGauge } from "../server/dist/server/src/config/metrics";
-
-// Track if metrics have been initialized to avoid duplicate work
-let metricsInitialized = false;
-
-async function initializeUserMetrics() {
-    if (metricsInitialized) return;
-    
-    try {
-        const userCount = await getUserCount();
-        totalUsersGauge.add(userCount);
-        console.log(`Initialized user metrics with ${userCount} users`);
-        metricsInitialized = true;
-    } catch (error) {
-        console.error("Failed to initialize user metrics:", error);
-    }
-}
 
 // Create Express app
 const app = express();
@@ -137,12 +106,6 @@ try {
 app.use(globalRateLimiter); // Global rate limiting
 app.use(apiLogger); // Console logging for debugging
 
-// Only use telemetry logger if not in serverless environment
-// (telemetry SDK is not initialized in serverless to reduce cold start time)
-if (!isServerless) {
-    app.use(telemetryLogger); // OpenTelemetry tracing
-}
-
 // Swagger UI (primarily for development)
 app.use(
     "/api-docs",
@@ -160,13 +123,6 @@ Object.values(routers).forEach((router) => {
 
 // Error handler
 app.use(errorHandler);
-
-// Initialize metrics asynchronously (don't block function execution)
-if (isServerless) {
-    initializeUserMetrics().catch((error) => {
-        console.error("Failed to initialize user metrics:", error);
-    });
-}
 
 // Export for Vercel serverless
 export default app;
