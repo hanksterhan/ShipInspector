@@ -28,7 +28,7 @@ function getClientIp(req: VercelRequest): string {
         return Array.isArray(forwarded) ? forwarded[0] : forwarded.split(",")[0].trim();
     }
     if (realIp) {
-        return Array.isArray(realIp) ? realIp : realIp;
+        return Array.isArray(realIp) ? realIp[0] : realIp;
     }
     return req.socket?.remoteAddress || "unknown";
 }

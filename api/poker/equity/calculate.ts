@@ -11,7 +11,7 @@ import {
     parseHole,
     parseBoard,
     parseCard,
-} from "../../../../common/src/interfaces";
+} from "@common/interfaces";
 import { computeEquity } from "../../../server/src/integrations/hand/equity";
 import { requireAuth } from "../../utils/auth";
 import { handleCors } from "../../utils/cors";

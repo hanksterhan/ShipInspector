@@ -8,7 +8,7 @@ import {
     ApiErrorResponse,
     parseHole,
     parseBoard,
-} from "../../../common/src/interfaces";
+} from "@common/interfaces";
 import { hand } from "../../../server/src/integrations/hand";
 import { requireAuth } from "../../utils/auth";
 import { handleCors } from "../../utils/cors";
