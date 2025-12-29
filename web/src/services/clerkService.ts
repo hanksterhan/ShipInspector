@@ -26,12 +26,12 @@ class ClerkService {
         this.initPromise = (async () => {
             // Get publishable key from environment (injected by webpack)
             // @ts-ignore - process.env is replaced at build time by webpack
-            const publishableKey = process.env.VITE_CLERK_PUBLISHABLE_KEY;
+            const publishableKey = process.env.CLERK_PUBLISHABLE_KEY;
 
             if (!publishableKey) {
                 throw new Error(
-                    "Missing VITE_CLERK_PUBLISHABLE_KEY environment variable. " +
-                        "Make sure you have a .env file with VITE_CLERK_PUBLISHABLE_KEY set."
+                    "Missing CLERK_PUBLISHABLE_KEY environment variable. " +
+                        "Make sure you have a .env file with CLERK_PUBLISHABLE_KEY set."
                 );
             }
 

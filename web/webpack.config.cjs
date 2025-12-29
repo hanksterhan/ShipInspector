@@ -41,8 +41,8 @@ module.exports = {
     plugins: [
         new MiniCssExtractPlugin(),
         new webpack.DefinePlugin({
-            "process.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
-                process.env.VITE_CLERK_PUBLISHABLE_KEY || ""
+            "process.env.CLERK_PUBLISHABLE_KEY": JSON.stringify(
+                process.env.CLERK_PUBLISHABLE_KEY || ""
             ),
             "process.env.API_URL": JSON.stringify(
                 process.env.API_URL || "http://localhost:3000"
