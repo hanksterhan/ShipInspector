@@ -21,6 +21,11 @@ const port = process.env.PORT || 3000;
 
 const app = express();
 
+// Trust proxy - required for Vercel and other reverse proxies
+// This allows express-rate-limit to correctly identify users by IP
+// See: https://expressjs.com/en/guide/behind-proxies.html
+app.set('trust proxy', 1);
+
 // CORS configuration - allow credentials for cookies
 // Support multiple origins for development
 const allowedOrigins = process.env.CORS_ORIGIN
