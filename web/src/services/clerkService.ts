@@ -51,7 +51,12 @@ class ClerkService {
                 );
             }
 
-            this.clerk = new ClerkConstructor(publishableKey);
+            // Initialize Clerk with options to reduce unnecessary polling
+            // sessionCheckInterval: 0 disables automatic session polling
+            // Clerk will still refresh tokens when needed, but won't poll periodically
+            this.clerk = new ClerkConstructor(publishableKey, {
+                sessionCheckInterval: 0, // Disable periodic session checks
+            });
             await this.clerk.load();
             return this.clerk;
         })();
