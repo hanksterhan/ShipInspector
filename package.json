@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/prepare-vercel-config.js && cd common && npm install && npm run build && cd ../server && npm install && npm run build && cd ../web && npm install && npm run build",
+    "build": "node scripts/prepare-vercel-config.js && npm run build:common && npm run build:server && npm run build:web",
     "build:web": "node scripts/prepare-vercel-config.js && cd web && npm install && npm run build",
     "build:common": "cd common && npm install && npm run build",
     "build:server": "cd server && npm install && npm run build",
+    "build:wasm": "cd server/wasm-equity && bash build.sh",
+    "prebuild:wasm": "bash scripts/prebuild-wasm.sh",
     "prepare:vercel": "node scripts/prepare-vercel-config.js"
   },
   "engines": {
