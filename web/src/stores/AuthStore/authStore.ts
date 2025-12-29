@@ -17,10 +17,12 @@ export interface User {
  * AuthStore - Uses Clerk for authentication
  *
  * Authentication is checked in these circumstances only:
- * 1. On app startup / initial render (initializeClerk)
- * 2. When route or view changes (via RouterStore listener)
+ * 1. On app startup / initial render (to determine if user is already logged in)
+ * 2. When Clerk emits an auth change event (login/logout via clerk.addListener)
  * 3. When user performs auth-sensitive actions (token automatically included in HTTP requests)
- * 4. When Clerk emits an auth change event (via clerk.addListener)
+ *
+ * Note: Authentication is NOT checked on route changes to avoid unnecessary server calls.
+ * The server validates the token on each API request automatically.
  */
 export class AuthStore {
     @observable
@@ -41,20 +43,6 @@ export class AuthStore {
         this.initializeClerk();
     }
 
-    /**
-     * Set up route change listener for auth checks
-     * Called after RouterStore is initialized
-     */
-    setupRouteListener(routerStore: any): void {
-        // 2. Check auth when route changes to a protected route
-        routerStore.setRouteChangeListener((route: string) => {
-            // Only check auth when navigating to protected routes
-            if (route !== "/" && route !== "/signin") {
-                this.checkAuth();
-            }
-        });
-    }
-
     @action
     private async initializeClerk(): Promise<void> {
         try {
@@ -63,7 +51,7 @@ export class AuthStore {
                 this.isClerkLoaded = true;
             });
 
-            // 4. Listen to Clerk session changes (auth events)
+            // 2. Listen to Clerk session changes (auth events - login/logout)
             const clerk = clerkService.getClerk();
             clerk.addListener((event: any) => {
                 // Only react to actual session changes, not all client events
@@ -72,7 +60,7 @@ export class AuthStore {
                 }
             });
 
-            // 1. Initial auth check on startup
+            // 1. Initial auth check on startup (to determine if user is already logged in)
             await this.checkAuth();
         } catch (error: any) {
             console.error("Failed to initialize Clerk:", error);

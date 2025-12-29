@@ -21,6 +21,3 @@ export const authStore = new AuthStore();
 export * from "./RouterStore";
 export const routerStore = new RouterStore();
 // PLOP: APPEND STORE EXPORTS
-
-// Set up route change listener for auth checks
-authStore.setupRouteListener(routerStore);
