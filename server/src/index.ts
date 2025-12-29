@@ -1,3 +1,15 @@
+/**
+ * @deprecated This Express server is deprecated for Vercel deployment.
+ * 
+ * All serverless functions have been migrated to /api directory.
+ * This file is kept for local development/testing purposes only.
+ * 
+ * For production deployment, use the serverless functions in /api.
+ * 
+ * To run locally for testing:
+ *   npm run start (in server directory)
+ */
+
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -15,27 +27,23 @@ import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
-console.log(`Server starting...`);
+console.log(`⚠️  DEPRECATED: Express server starting (for local dev only)`);
+console.log(`   For production, use serverless functions in /api directory`);
 
 const port = process.env.PORT || 3000;
 
 const app = express();
 
 // Trust proxy - required for Vercel and other reverse proxies
-// This allows express-rate-limit to correctly identify users by IP
-// See: https://expressjs.com/en/guide/behind-proxies.html
 app.set('trust proxy', 1);
 
-// CORS configuration - allow credentials for cookies
-// Support multiple origins for development
+// CORS configuration
 const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     : ["http://localhost:4000", "http://localhost:8080"];
 
-// Helper function to normalize hostnames (remove www. prefix for comparison)
 const normalizeHost = (host: string): string => host.replace(/^www\./, "");
 
-// Helper function to check if two origins are the same domain (handles www/non-www)
 const isSameDomain = (origin1: string, origin2: string): boolean => {
     try {
         const url1 = new URL(origin1);
@@ -51,21 +59,17 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 app.use(
     cors({
         origin: (origin, callback) => {
-            // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) {
                 return callback(null, true);
             }
 
-            // In development, allow localhost with any port
             if (isDevelopment && origin.startsWith("http://localhost:")) {
                 return callback(null, true);
             }
 
-            // Check if origin is in allowed list
             if (allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
-                // Check if origin matches any allowed origin (handles www/non-www mismatch)
                 const matchesAllowedOrigin = allowedOrigins.some((allowedOrigin) =>
                     isSameDomain(origin, allowedOrigin)
                 );
@@ -73,9 +77,8 @@ app.use(
                 if (matchesAllowedOrigin) {
                     callback(null, true);
                 } else {
-                    // In production, reject unknown origins
                     if (isDevelopment) {
-                        callback(null, true); // Allow in development
+                        callback(null, true);
                     } else {
                         callback(new Error("Not allowed by CORS"));
                     }
@@ -89,8 +92,6 @@ app.use(
 app.use(express.json());
 
 // Clerk authentication middleware
-// Note: Clerk middleware automatically reads CLERK_SECRET_KEY from environment
-// If CLERK_SECRET_KEY is not set, the middleware may fail silently or cause 405 errors
 try {
     app.use(clerkMiddleware());
     if (process.env.CLERK_SECRET_KEY) {
@@ -105,8 +106,8 @@ try {
     throw error;
 }
 
-app.use(globalRateLimiter); // Global rate limiting
-app.use(apiLogger); // Console logging for debugging
+app.use(globalRateLimiter);
+app.use(apiLogger);
 
 // Swagger UI
 app.use(
@@ -129,6 +130,15 @@ app.get("*", (_, res) => {
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-});
+// Only start server if not in Vercel environment
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`⚠️  DEPRECATED Express server running at http://localhost:${port}`);
+        console.log(`   This is for local development only. Use /api functions for production.`);
+    });
+} else {
+    console.log("Running in Vercel - serverless functions should be used instead");
+}
+
+// Export app for potential use in other contexts (though deprecated)
+export default app;
