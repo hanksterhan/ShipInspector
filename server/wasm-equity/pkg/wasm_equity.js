@@ -72,6 +72,61 @@ function calculate_preflop_equity(player_ranks, player_suits, deck_ranks, deck_s
 }
 exports.calculate_preflop_equity = calculate_preflop_equity;
 
+/**
+ * Compute turn outs for heads-up Texas Hold'em
+ *
+ * Input format:
+ * - hero_ranks: 2 ranks for hero's hole cards
+ * - hero_suits: 2 suits for hero's hole cards
+ * - villain_ranks: 2 ranks for villain's hole cards
+ * - villain_suits: 2 suits for villain's hole cards
+ * - board_ranks: 4 ranks for turn board
+ * - board_suits: 4 suits for turn board
+ *
+ * Returns JSON with outs result or suppression:
+ * {
+ *   "suppressed": null | { "reason": "string", "baseline_win": 0.45, "baseline_tie": 0.0 },
+ *   "win_outs": [{"rank": 14, "suit": 0, "category": 5}],
+ *   "tie_outs": [{"rank": 13, "suit": 1, "category": 2}],
+ *   "baseline_win": 0.15,
+ *   "baseline_tie": 0.05,
+ *   "baseline_lose": 0.80,
+ *   "total_river_cards": 44
+ * }
+ * @param {Uint8Array} hero_ranks
+ * @param {Uint8Array} hero_suits
+ * @param {Uint8Array} villain_ranks
+ * @param {Uint8Array} villain_suits
+ * @param {Uint8Array} board_ranks
+ * @param {Uint8Array} board_suits
+ * @returns {string}
+ */
+function compute_turn_outs(hero_ranks, hero_suits, villain_ranks, villain_suits, board_ranks, board_suits) {
+    let deferred7_0;
+    let deferred7_1;
+    try {
+        const ptr0 = passArray8ToWasm0(hero_ranks, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(hero_suits, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray8ToWasm0(villain_ranks, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray8ToWasm0(villain_suits, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passArray8ToWasm0(board_ranks, wasm.__wbindgen_malloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ptr5 = passArray8ToWasm0(board_suits, wasm.__wbindgen_malloc);
+        const len5 = WASM_VECTOR_LEN;
+        const ret = wasm.compute_turn_outs(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5);
+        deferred7_0 = ret[0];
+        deferred7_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred7_0, deferred7_1, 1);
+    }
+}
+exports.compute_turn_outs = compute_turn_outs;
+
 exports.__wbindgen_init_externref_table = function() {
     const table = wasm.__wbindgen_externrefs;
     const offset = table.grow(4);

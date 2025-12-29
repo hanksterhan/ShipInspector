@@ -11,6 +11,7 @@ import authClerkUserHandler from "./auth/clerk-user";
 import evaluateHandHandler from "./poker/hand/evaluate";
 import compareHandsHandler from "./poker/hand/compare";
 import calculateEquityHandler from "./poker/equity/calculate";
+import calculateOutsHandler from "./poker/outs/calculate";
 
 /**
  * Main router for Vercel serverless functions
@@ -69,6 +70,10 @@ export default async function handler(
     
     if (normalizedPath === "/poker/equity/calculate" || normalizedPath === "/poker/equity/calculate/") {
         return calculateEquityHandler(req, res);
+    }
+    
+    if (normalizedPath === "/poker/outs/calculate" || normalizedPath === "/poker/outs/calculate/") {
+        return calculateOutsHandler(req, res);
     }
 
     // 404 for unknown routes

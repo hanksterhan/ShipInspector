@@ -8,6 +8,7 @@ import { SUITS, RANKS } from "../utilities";
 import "../HoleSelector";
 import "../BoardSelector";
 import "../EquityDisplay";
+import "../OutsDisplay";
 
 @customElement("poker-hand")
 export class PokerHand extends MobxLitElement {
@@ -68,6 +69,23 @@ export class PokerHand extends MobxLitElement {
                                 <equity-display
                                     .playerIndex=${playerIndex}
                                 ></equity-display>
+                                ${(() => {
+                                    // Show outs display only for player 0 (hero) when we have exactly 2 players and 4 board cards (turn)
+                                    if (
+                                        playerIndex === 0 &&
+                                        cardStore.holeCards.filter(
+                                            (h) => h !== undefined
+                                        ).length === 2 &&
+                                        cardStore.boardCards.length === 4
+                                    ) {
+                                        return html`
+                                            <outs-display
+                                                .playerIndex=${playerIndex}
+                                            ></outs-display>
+                                        `;
+                                    }
+                                    return html``;
+                                })()}
                             </div>
                         `
                     )}

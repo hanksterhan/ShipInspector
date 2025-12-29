@@ -6,5 +6,6 @@ export * from "./HoleSelector";
 export * from "./BoardSelector";
 export * from "./PokerOptions";
 export * from "./EquityDisplay";
+export * from "./OutsDisplay";
 export * from "./PokerHand";
 // PLOP: APPEND COMPONENT EXPORTS

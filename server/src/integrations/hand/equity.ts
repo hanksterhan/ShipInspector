@@ -9,7 +9,10 @@ import {
     HandRank,
 } from "@common/interfaces";
 import { hand } from "./hand";
-import { calculateEquityRust } from "./equityRust";
+import { calculateEquityRust, calculateTurnOuts } from "./equityRust";
+
+// Re-export for convenience
+export { calculateTurnOuts };
 
 /**
  * Create a full 52-card deck
