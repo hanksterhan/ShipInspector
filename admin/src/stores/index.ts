@@ -12,3 +12,6 @@ export const routerStore = new RouterStore();
 export * from "./InviteCodeStore";
 export const inviteCodeStore = new InviteCodeStore();
 // PLOP: APPEND STORE EXPORTS
+
+// Set up route change listener for auth checks
+authStore.setupRouteListener(routerStore);

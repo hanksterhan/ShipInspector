@@ -14,8 +14,13 @@ export interface User {
 }
 
 /**
- * AuthStore - Now uses Clerk for authentication
- * Clerk handles the authentication flow, this store manages the auth state
+ * AuthStore - Uses Clerk for authentication
+ * 
+ * Authentication is checked in these circumstances only:
+ * 1. On app startup / initial render (initializeClerk)
+ * 2. When route or view changes (via RouterStore listener)
+ * 3. When user performs auth-sensitive actions (token automatically included in HTTP requests)
+ * 4. When Clerk emits an auth change event (via clerk.addListener)
  */
 export class AuthStore {
     @observable
@@ -32,8 +37,22 @@ export class AuthStore {
 
     constructor() {
         makeObservable(this);
-        // Initialize Clerk and check auth
+        // 1. Initialize Clerk and perform initial auth check (app startup)
         this.initializeClerk();
+    }
+
+    /**
+     * Set up route change listener for auth checks
+     * Called after RouterStore is initialized
+     */
+    setupRouteListener(routerStore: any): void {
+        // 2. Check auth when route changes to a protected route
+        routerStore.setRouteChangeListener((route: string) => {
+            // Only check auth when navigating to protected routes
+            if (route !== "/" && route !== "/signin") {
+                this.checkAuth();
+            }
+        });
     }
 
     @action
@@ -44,7 +63,7 @@ export class AuthStore {
                 this.isClerkLoaded = true;
             });
 
-            // Listen to Clerk session changes
+            // 4. Listen to Clerk session changes (auth events)
             const clerk = clerkService.getClerk();
             clerk.addListener((event: any) => {
                 // Only react to actual session changes, not all client events
@@ -53,7 +72,7 @@ export class AuthStore {
                 }
             });
 
-            // Initial auth check
+            // 1. Initial auth check on startup
             await this.checkAuth();
         } catch (error: any) {
             console.error("Failed to initialize Clerk:", error);

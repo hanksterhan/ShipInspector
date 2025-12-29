@@ -15,11 +15,13 @@ export class HttpClient {
 
     /**
      * Get headers with Clerk token included
+     * This ensures all API requests are authenticated (auth check #3)
      */
     private async getHeaders(): Promise<HeadersInit> {
         const headers = { ...this.defaultHeaders };
-        
+
         // Add Clerk token if available
+        // This happens automatically on every request (no polling needed)
         try {
             const token = await clerkService.getToken();
             if (token) {
