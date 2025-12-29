@@ -5,7 +5,7 @@
     "scripts": {
         "start": "dotenv -e .env -- npm run istart",
         "istart": "npm run build && NODE_OPTIONS='--no-deprecation' ts-node dist/server/src/index.js",
-        "build": "tsc && tsc-alias -p tsconfig.json && tsc -p ../common/tsconfig.json && npm run copy-assets",
+        "build": "npm run build:wasm && tsc && tsc-alias -p tsconfig.json && tsc -p ../common/tsconfig.json && npm run copy-assets",
         "watch": "NODE_OPTIONS='--no-deprecation' nodemon --watch src --exec \"npm run start\" \"npm run copy-assets\"",
         "lint": "prettier --write \"src/**/*.ts\"",
         "test": "jest",
