@@ -1,3 +1,6 @@
+// Register path aliases first (before any @common/* imports)
+import "../_helpers";
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAuth, clerkClient, requireAuth } from "../utils/auth";
 import { handleCors } from "../utils/cors";

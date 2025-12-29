@@ -1,6 +1,9 @@
 // Vercel Serverless Function Router
 // Routes requests to individual serverless functions based on path
 
+// Register path aliases for @common/* imports (must be first)
+import "./_helpers";
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import authMeHandler from "./auth/me";
 import authClerkUserHandler from "./auth/clerk-user";

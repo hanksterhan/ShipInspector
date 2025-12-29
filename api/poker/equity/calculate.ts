@@ -1,3 +1,6 @@
+// Register path aliases first (before any @common/* imports)
+import "../../_helpers";
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
     CalculateEquityRequest,
@@ -5,8 +8,10 @@ import {
     ApiErrorResponse,
     Card,
     Hole,
-} from "@common/interfaces";
-import { parseHole, parseBoard, parseCard } from "@common/interfaces";
+    parseHole,
+    parseBoard,
+    parseCard,
+} from "../../../../common/src/interfaces";
 import { computeEquity } from "../../../server/src/integrations/hand/equity";
 import { requireAuth } from "../../utils/auth";
 import { handleCors } from "../../utils/cors";

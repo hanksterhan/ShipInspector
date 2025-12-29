@@ -1,10 +1,14 @@
+// Register path aliases first (before any @common/* imports)
+import "../../_helpers";
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
     EvaluateHandRequest,
     EvaluateHandResponse,
     ApiErrorResponse,
-} from "@common/interfaces";
-import { parseHole, parseBoard } from "@common/interfaces";
+    parseHole,
+    parseBoard,
+} from "../../../common/src/interfaces";
 import { hand } from "../../../server/src/integrations/hand";
 import { requireAuth } from "../../utils/auth";
 import { handleCors } from "../../utils/cors";
