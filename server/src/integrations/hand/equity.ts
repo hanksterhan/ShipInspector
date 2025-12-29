@@ -183,10 +183,7 @@ export async function computeEquity(
 
     // If board is complete (5 cards), deterministic showdown
     if (boardLength === 5) {
-        const { winners, ties: isTie } = evaluateBoard(
-            players,
-            board.cards
-        );
+        const { winners, ties: isTie } = evaluateBoard(players, board.cards);
 
         const result: EquityResult = {
             win: new Array(numPlayers).fill(0),

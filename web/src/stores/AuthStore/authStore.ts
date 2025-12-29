@@ -15,7 +15,7 @@ export interface User {
 
 /**
  * AuthStore - Uses Clerk for authentication
- * 
+ *
  * Authentication is checked in these circumstances only:
  * 1. On app startup / initial render (initializeClerk)
  * 2. When route or view changes (via RouterStore listener)
