@@ -134,13 +134,6 @@ class HandHandler {
                       ? "hand2_wins"
                       : "tie";
 
-            // Record metric for hand comparison
-            const boardState = getBoardState(boardCards.cards.length);
-            handComparisonCounter.add(1, {
-                board_state: boardState,
-                result: result,
-            });
-
             const response: CompareHandsResponse = {
                 hand1: {
                     hole: holeCards1.cards,
