@@ -1,0 +1,5 @@
+# Allow WASM build artifacts to be committed for faster Vercel builds
+# Only ignore temporary files
+*.tmp
+*.log
+.DS_Store

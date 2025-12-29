@@ -1,4 +1,32 @@
 #!/bin/bash
+
+# Check if WASM package already exists and is up-to-date
+PKG_DIR="pkg"
+SRC_FILE="src/lib.rs"
+CARGO_FILE="Cargo.toml"
+
+# Check if pkg directory exists and has required files
+if [ -d "$PKG_DIR" ] && [ -f "$PKG_DIR/wasm_equity.js" ] && [ -f "$PKG_DIR/wasm_equity_bg.wasm" ]; then
+    # Check if source files are newer than pkg files (only if source files exist)
+    NEEDS_REBUILD=false
+    if [ -f "$SRC_FILE" ] && [ "$SRC_FILE" -nt "$PKG_DIR/wasm_equity.js" ]; then
+        NEEDS_REBUILD=true
+    fi
+    if [ -f "$CARGO_FILE" ] && [ "$CARGO_FILE" -nt "$PKG_DIR/wasm_equity.js" ]; then
+        NEEDS_REBUILD=true
+    fi
+    
+    if [ "$NEEDS_REBUILD" = false ]; then
+        echo "✅ WASM package is up-to-date, skipping build (saves ~2-3 minutes)"
+        exit 0
+    else
+        echo "⚠️  WASM source files changed, rebuilding..."
+    fi
+else
+    echo "⚠️  WASM package not found, building..."
+fi
+
+# From here on, use set -e for strict error handling
 set -e
 
 # Ensure PATH includes cargo bin (for Vercel and other CI environments)

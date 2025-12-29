@@ -13,6 +13,7 @@ server/node_modules/
 # Keep server/dist/ - compiled server code used by API function
 # Keep server/package.json - needed for dependencies
 # Keep server/wasm-equity/ - needed for equity calculations
+# Keep server/wasm-equity/pkg/ - pre-built WASM (saves 2-3 min per build)
 
 # Development configs
 nodemon.json
@@ -37,6 +38,9 @@ node_modules/
 web/plopfile.js
 web/plop/
 
+# Rust build artifacts (cached by Vercel if present, but not needed in deployment)
+server/wasm-equity/target/
+
 # IMPORTANT: Source files and configs are NEEDED for build
 # We explicitly include them by NOT excluding them
 # - web/src/ (needed for webpack)
@@ -45,3 +49,4 @@ web/plop/
 # - tsconfig.json files (needed for TypeScript)
 # - webpack.config.cjs (needed for webpack)
 # - package.json files (needed for npm install)
+# - server/wasm-equity/pkg/ (pre-built WASM - CRITICAL for fast builds)
