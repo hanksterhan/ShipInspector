@@ -44,7 +44,7 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;
@@ -61,7 +61,7 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;
@@ -93,7 +93,7 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;
