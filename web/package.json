@@ -4,7 +4,8 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "build": "tsc && tsc -p ../common/tsconfig.json && webpack",
+        "build": "NODE_ENV=production tsc && tsc -p ../common/tsconfig.json && NODE_ENV=production webpack",
+        "build:dev": "tsc && tsc -p ../common/tsconfig.json && webpack",
         "start": "webpack serve --open",
         "generate": "plop",
         "lint": "prettier --write \"src/**/*.ts\""

@@ -32,6 +32,13 @@ module.exports = {
             "@common": path.resolve(__dirname, "../common/"),
         },
         fullySpecified: false,
+        // Configure export conditions for Spectrum Web Components and Lit
+        // In production: use 'production' condition for optimized builds
+        // In development: use 'default' to avoid issues with packages that don't support 'development' condition
+        // This still allows Spectrum/Lit to use their dev builds via their own internal logic
+        conditionNames: process.env.NODE_ENV === "production"
+            ? ["production", "default", "import", "require"]
+            : ["default", "import", "require"],
     },
     output: {
         filename: "bundle.js",
