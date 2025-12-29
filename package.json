@@ -1,0 +1,16 @@
+{
+  "name": "ship-inspector",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/prepare-vercel-config.js && cd common && npm install && npm run build && cd ../server && npm install && npm run build && cd ../web && npm install && npm run build",
+    "build:web": "node scripts/prepare-vercel-config.js && cd web && npm install && npm run build",
+    "build:common": "cd common && npm install && npm run build",
+    "build:server": "cd server && npm install && npm run build",
+    "prepare:vercel": "node scripts/prepare-vercel-config.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

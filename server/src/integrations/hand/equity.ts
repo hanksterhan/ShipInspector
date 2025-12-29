@@ -9,8 +9,6 @@ import {
     HandRank,
 } from "@common/interfaces";
 import { hand } from "./hand";
-import { trace } from "@opentelemetry/api";
-import { getBoardState } from "../../config/metrics";
 import { calculateEquityRust } from "./equityRust";
 
 /**
@@ -185,56 +183,41 @@ export async function computeEquity(
 
     // If board is complete (5 cards), deterministic showdown
     if (boardLength === 5) {
-        const tracer = trace.getTracer("equity-calculator");
-        const boardState = getBoardState(boardLength);
-        const span = tracer.startSpan("equity.calculate", {
-            attributes: {
-                "equity.method": "complete",
-                "equity.players": numPlayers,
-                "equity.board_state": boardState,
-            },
-        });
+        const { winners, ties: isTie } = evaluateBoard(
+            players,
+            board.cards
+        );
 
-        try {
-            const { winners, ties: isTie } = evaluateBoard(
-                players,
-                board.cards
-            );
+        const result: EquityResult = {
+            win: new Array(numPlayers).fill(0),
+            tie: new Array(numPlayers).fill(0),
+            lose: new Array(numPlayers).fill(0),
+            samples: 1,
+        };
 
-            const result: EquityResult = {
-                win: new Array(numPlayers).fill(0),
-                tie: new Array(numPlayers).fill(0),
-                lose: new Array(numPlayers).fill(0),
-                samples: 1,
-            };
-
-            if (isTie) {
-                const tieValue = 1 / winners.length;
-                for (const winnerIndex of winners) {
-                    result.tie[winnerIndex] = tieValue;
-                    result.lose[winnerIndex] = 1 - tieValue;
-                }
-                // Non-winners lose
-                for (let i = 0; i < numPlayers; i++) {
-                    if (!winners.includes(i)) {
-                        result.lose[i] = 1;
-                    }
-                }
-            } else {
-                result.win[winners[0]] = 1;
-                // All others lose
-                for (let i = 0; i < numPlayers; i++) {
-                    if (i !== winners[0]) {
-                        result.lose[i] = 1;
-                    }
+        if (isTie) {
+            const tieValue = 1 / winners.length;
+            for (const winnerIndex of winners) {
+                result.tie[winnerIndex] = tieValue;
+                result.lose[winnerIndex] = 1 - tieValue;
+            }
+            // Non-winners lose
+            for (let i = 0; i < numPlayers; i++) {
+                if (!winners.includes(i)) {
+                    result.lose[i] = 1;
                 }
             }
-
-            span.setAttribute("equity.samples", result.samples);
-            return result;
-        } finally {
-            span.end();
+        } else {
+            result.win[winners[0]] = 1;
+            // All others lose
+            for (let i = 0; i < numPlayers; i++) {
+                if (i !== winners[0]) {
+                    result.lose[i] = 1;
+                }
+            }
         }
+
+        return result;
     }
 
     // For incomplete boards, use Rust WASM implementation
@@ -254,22 +237,7 @@ export async function computeEquity(
         );
     }
 
-    // Create trace span for equity calculation
-    const tracer = trace.getTracer("equity-calculator");
-    const boardState = getBoardState(boardLength);
-    const span = tracer.startSpan("equity.calculate", {
-        attributes: {
-            "equity.method": "rust",
-            "equity.players": numPlayers,
-            "equity.board_state": boardState,
-        },
-    });
-
-    try {
-        const result = await calculateEquityRust(players, board, remainingDeck);
-        span.setAttribute("equity.samples", result.samples);
-        return result;
-    } finally {
-        span.end();
-    }
+    // Use Rust WASM implementation for preflop equity calculation
+    const result = await calculateEquityRust(players, board, remainingDeck);
+    return result;
 }

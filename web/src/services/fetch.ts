@@ -1,13 +1,36 @@
+import { clerkService } from "./clerkService";
+
 export class HttpClient {
     private baseUrl: string;
-    private headers: HeadersInit;
+    private defaultHeaders: HeadersInit;
 
     constructor(baseUrl: string, headers?: HeadersInit) {
         this.baseUrl = baseUrl;
-        this.headers = headers || {
+        this.defaultHeaders = headers || {
             "Content-Type": "application/json",
             Accept: "application/json",
         };
+    }
+
+    /**
+     * Get headers with Clerk token included
+     * This ensures all API requests are authenticated (auth check #3)
+     */
+    private async getHeaders(): Promise<HeadersInit> {
+        const headers = { ...this.defaultHeaders };
+
+        // Add Clerk token if available
+        // This happens automatically on every request (no polling needed)
+        try {
+            const token = await clerkService.getToken();
+            if (token) {
+                (headers as any)["Authorization"] = `Bearer ${token}`;
+            }
+        } catch (error) {
+            // Token not available - user not authenticated
+        }
+
+        return headers;
     }
 
     private async request(
@@ -16,12 +39,14 @@ export class HttpClient {
         body?: any,
         signal?: AbortSignal
     ): Promise<any> {
+        const headers = await this.getHeaders();
+
         const response = await fetch(`${this.baseUrl}${url}`, {
             method,
-            headers: this.headers,
+            headers,
             body: body ? JSON.stringify(body) : null,
             signal,
-            credentials: "include", // Include cookies in requests
+            credentials: "include", // Include cookies for backward compatibility
         });
 
         if (!response.ok) {
@@ -68,4 +93,24 @@ export class HttpClient {
     }
 }
 
-export const httpClient = new HttpClient("http://localhost:3000");
+// Get API URL from environment variable, fallback to localhost for development
+// @ts-ignore - process.env is replaced at build time by webpack
+let API_URL = process.env.API_URL || "http://localhost:3000";
+
+// If API_URL is empty or "proxy", use relative paths (will be proxied by Vercel)
+// This allows requests to go through the Vercel proxy configured in vercel.json
+if (API_URL === "" || API_URL === "proxy" || API_URL === "relative") {
+    API_URL = "";
+} else {
+    // Normalize API_URL: ensure it has a protocol to prevent relative URL issues
+    // If API_URL doesn't start with http:// or https://, add https://
+    if (API_URL && !API_URL.startsWith("http://") && !API_URL.startsWith("https://")) {
+        // Assume https for production domains
+        API_URL = `https://${API_URL}`;
+    }
+
+    // Remove trailing slash if present
+    API_URL = API_URL.replace(/\/$/, "");
+}
+
+export const httpClient = new HttpClient(API_URL);

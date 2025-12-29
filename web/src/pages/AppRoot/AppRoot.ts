@@ -6,9 +6,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 
-// Explicitly import LoginPage component to ensure it's registered
-import "../LoginPage/loginPage";
-import { LoginPage } from "../LoginPage/loginPage";
+// Explicitly import SignInPage component to ensure it's registered
+import "../SignInPage/SignInPage";
+import { SignInPage } from "../SignInPage/SignInPage";
 
 import {
     menuStore,
@@ -44,7 +44,7 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;
@@ -61,28 +61,28 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;
         }
 
-        // Show login page for root/login route if not authenticated
+        // Show sign-in page for root/signin route if not authenticated
         if (
             !isAuthenticated &&
-            (currentRoute === "/" || currentRoute === "/login")
+            (currentRoute === "/" || currentRoute === "/signin")
         ) {
             // Force component registration by referencing the class
-            if (!customElements.get("login-page")) {
-                customElements.define("login-page", LoginPage);
+            if (!customElements.get("sign-in-page")) {
+                customElements.define("sign-in-page", SignInPage);
             }
-            return html`<login-page></login-page>`;
+            return html`<sign-in-page></sign-in-page>`;
         }
 
-        // Redirect authenticated users from login to main app
+        // Redirect authenticated users from signin to main app
         if (
             isAuthenticated &&
-            (currentRoute === "/" || currentRoute === "/login")
+            (currentRoute === "/" || currentRoute === "/signin")
         ) {
             routerStore.navigate("/poker-hands");
             return html`
@@ -93,7 +93,7 @@ export class AppRoot extends MobxLitElement {
                     dir="ltr"
                 >
                     <div class="loading-container">
-                        <sp-progress-circle indeterminate></sp-progress-circle>
+                        <sp-progress-circle indeterminate aria-label="Loading"></sp-progress-circle>
                     </div>
                 </sp-theme>
             `;

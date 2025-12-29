@@ -17,6 +17,9 @@ function createRateLimiter(
             "Too many requests from this IP, please try again later.",
         standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+        // Use X-Forwarded-For header for IP identification (serverless/proxy environments)
+        // This works with 'trust proxy' setting in Express
+        validate: { xForwardedForHeader: false }, // Disable validation since we handle it with trust proxy
         handler: (req: Request, res: Response) => {
             res.status(429).json({
                 error: message || "Too many requests, please try again later.",

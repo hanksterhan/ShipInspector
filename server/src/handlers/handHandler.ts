@@ -16,11 +16,6 @@ import {
 } from "@common/interfaces";
 import { hand } from "../integrations/hand";
 import { computeEquity } from "../integrations/hand/equity";
-import {
-    equityCalculationCounter,
-    handComparisonCounter,
-    getBoardState,
-} from "../config/metrics";
 
 class HandHandler {
     /**
@@ -139,13 +134,6 @@ class HandHandler {
                       ? "hand2_wins"
                       : "tie";
 
-            // Record metric for hand comparison
-            const boardState = getBoardState(boardCards.cards.length);
-            handComparisonCounter.add(1, {
-                board_state: boardState,
-                result: result,
-            });
-
             const response: CompareHandsResponse = {
                 hand1: {
                     hole: holeCards1.cards,
@@ -205,15 +193,6 @@ class HandHandler {
                 options,
                 parsedDead
             );
-
-            // Record metric for equity calculation
-            const boardState = getBoardState(parsedBoard.cards.length);
-            const calculationMode = options.mode || "auto";
-            equityCalculationCounter.add(1, {
-                players: parsedPlayers.length.toString(),
-                board_state: boardState,
-                calculation_mode: calculationMode,
-            });
 
             const response: CalculateEquityResponse = {
                 equity: equityResult,

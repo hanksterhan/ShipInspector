@@ -1,6 +1,8 @@
 node_modules/
 dist/
 server/.env
+web/.env
+admin/.env
 server/src/data/
 .DS_Store
 otel-collector-logs/

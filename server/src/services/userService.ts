@@ -1,12 +1,16 @@
-import db from "../config/database";
+import sql from "../config/database";
 import bcrypt from "bcryptjs";
 
-export type UserRole = "user" | "admin" | "moderator";
+export type UserRole = "user";
 
+/**
+ * User interface - represents user data stored in local database
+ * Note: With Clerk, passwordHash is deprecated and not used for authentication
+ */
 export interface User {
     userId: string;
     email: string;
-    passwordHash: string;
+    passwordHash: string; // @deprecated - Not used with Clerk authentication
     role: UserRole;
     createdAt: number;
     updatedAt?: number;
@@ -14,38 +18,40 @@ export interface User {
 
 /**
  * Get a user by email
+ * @deprecated With Clerk, use Clerk's user management. Kept for backward compatibility.
  */
-export function getUserByEmail(email: string): User | null {
-    const row = db
-        .prepare(`SELECT * FROM users WHERE email = ?`)
-        .get(email.toLowerCase()) as any;
+export async function getUserByEmail(email: string): Promise<User | null> {
+    const rows =
+        await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`;
 
-    if (!row) {
+    if (!rows || rows.length === 0) {
         return null;
     }
+
+    const row = rows[0];
 
     return {
         userId: row.user_id,
         email: row.email,
         passwordHash: row.password_hash,
         role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     };
 }
 
 /**
  * Get a user by user ID
  */
-export function getUserById(userId: string): User | null {
-    const row = db
-        .prepare(`SELECT * FROM users WHERE user_id = ?`)
-        .get(userId) as any;
+export async function getUserById(userId: string): Promise<User | null> {
+    const rows = await sql`SELECT * FROM users WHERE user_id = ${userId}`;
 
-    if (!row) {
+    if (!rows || rows.length === 0) {
         console.error(`[getUserById] No user found with userId: ${userId}`);
         return null;
     }
+
+    const row = rows[0];
 
     // Handle role - check for null, undefined, or empty string
     let role = row.role;
@@ -65,21 +71,24 @@ export function getUserById(userId: string): User | null {
         email: row.email,
         passwordHash: row.password_hash,
         role: role,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
+        createdAt: Number(row.created_at),
+        updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
     };
 }
 
 /**
  * Check if a user exists by email
+ * @deprecated With Clerk, use Clerk's user management. Kept for backward compatibility.
  */
-export function userExists(email: string): boolean {
-    const user = getUserByEmail(email);
+export async function userExists(email: string): Promise<boolean> {
+    const user = await getUserByEmail(email);
     return user !== null;
 }
 
 /**
  * Create a new user
+ * @deprecated With Clerk, users are created through Clerk.
+ * For new implementations, sync Clerk user IDs with local database instead.
  */
 export async function createUser(
     email: string,
@@ -89,7 +98,7 @@ export async function createUser(
     const emailLower = email.toLowerCase();
 
     // Check if user already exists
-    if (userExists(emailLower)) {
+    if (await userExists(emailLower)) {
         throw new Error("User already exists");
     }
 
@@ -101,10 +110,10 @@ export async function createUser(
     const createdAt = Date.now();
 
     // Insert user into database
-    db.prepare(
-        `INSERT INTO users (user_id, email, password_hash, role, created_at)
-         VALUES (?, ?, ?, ?, ?)`
-    ).run(userId, emailLower, passwordHash, role, createdAt);
+    await sql`
+        INSERT INTO users (user_id, email, password_hash, role, created_at)
+        VALUES (${userId}, ${emailLower}, ${passwordHash}, ${role}, ${createdAt})
+    `;
 
     return {
         userId,
@@ -119,73 +128,76 @@ export async function createUser(
 /**
  * Get total user count
  */
-export function getUserCount(): number {
-    const result = db
-        .prepare(`SELECT COUNT(*) as count FROM users`)
-        .get() as any;
-    return result.count || 0;
+export async function getUserCount(): Promise<number> {
+    const result = await sql`SELECT COUNT(*) as count FROM users`;
+    return result[0]?.count ? Number(result[0].count) : 0;
 }
 
 /**
- * Update user role (admin only)
+ * Get total user count
  */
-export function updateUserRole(userId: string, newRole: UserRole): boolean {
+export async function getTotalUsers(): Promise<number> {
+    const rows = await sql`SELECT COUNT(*) as count FROM users`;
+    return rows[0]?.count ? Number(rows[0].count) : 0;
+}
+
+/**
+ * Create or update a user from Clerk
+ * This syncs Clerk users to the local database for role management
+ * @param clerkUserId - The Clerk user ID
+ * @param email - User's email address
+ * @param role - Optional role (defaults to "user" for new users)
+ */
+export async function syncClerkUser(
+    clerkUserId: string,
+    email: string,
+    role: UserRole = "user"
+): Promise<User> {
+    const emailLower = email.toLowerCase();
     const now = Date.now();
-    const result = db
-        .prepare(`UPDATE users SET role = ?, updated_at = ? WHERE user_id = ?`)
-        .run(newRole, now, userId);
 
-    return result.changes > 0;
-}
+    console.log(`[syncClerkUser] Syncing user ${clerkUserId} (${emailLower})`);
 
-/**
- * Get all users (admin only)
- */
-export function getAllUsers(): User[] {
-    const rows = db
-        .prepare(`SELECT * FROM users ORDER BY created_at DESC`)
-        .all() as any[];
+    // Check if user already exists
+    const existingUser = await getUserById(clerkUserId);
 
-    return rows.map((row) => ({
-        userId: row.user_id,
-        email: row.email,
-        passwordHash: row.password_hash,
-        role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
-    }));
-}
+    if (existingUser) {
+        console.log(
+            `[syncClerkUser] User already exists with role: ${existingUser.role}`
+        );
+        // Update email if it changed
+        if (existingUser.email !== emailLower) {
+            console.log(
+                `[syncClerkUser] Updating email from ${existingUser.email} to ${emailLower}`
+            );
+            await sql`
+                UPDATE users 
+                SET email = ${emailLower}, updated_at = ${now}
+                WHERE user_id = ${clerkUserId}
+            `;
+        }
+        return existingUser;
+    }
 
-/**
- * Get users by role
- */
-export function getUsersByRole(role: UserRole): User[] {
-    const rows = db
-        .prepare(`SELECT * FROM users WHERE role = ? ORDER BY created_at DESC`)
-        .all(role) as any[];
+    // Create new user
+    console.log(`[syncClerkUser] Creating new user with role: ${role}`);
 
-    return rows.map((row) => ({
-        userId: row.user_id,
-        email: row.email,
-        passwordHash: row.password_hash,
-        role: (row.role || "user") as UserRole,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at || undefined,
-    }));
-}
+    // Use empty password hash for Clerk-authenticated users
+    const passwordHash = "";
 
-/**
- * Check if user has admin role
- */
-export function isAdmin(userId: string): boolean {
-    const user = getUserById(userId);
-    return user?.role === "admin";
-}
+    await sql`
+        INSERT INTO users (user_id, email, password_hash, role, created_at)
+        VALUES (${clerkUserId}, ${emailLower}, ${passwordHash}, ${role}, ${now})
+    `;
 
-/**
- * Check if user has role
- */
-export function hasRole(userId: string, role: UserRole): boolean {
-    const user = getUserById(userId);
-    return user?.role === role;
+    console.log(`[syncClerkUser] User created successfully`);
+
+    return {
+        userId: clerkUserId,
+        email: emailLower,
+        passwordHash,
+        role,
+        createdAt: now,
+        updatedAt: undefined,
+    };
 }

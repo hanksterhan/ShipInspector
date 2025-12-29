@@ -36,6 +36,7 @@ export class EquityDisplay extends MobxLitElement {
                     <sp-progress-circle
                         indeterminate
                         size="s"
+                        aria-label="Calculating equity"
                     ></sp-progress-circle>
                     <span class="loading-text">Calculating equity...</span>
                 </div>

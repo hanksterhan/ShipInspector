@@ -1,8 +1,12 @@
 const path = require("path");
+const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+// Load .env file for local development (optional - Vercel uses environment variables directly)
+require("dotenv").config();
 
 module.exports = {
-    mode: "development",
+    mode: process.env.NODE_ENV === "production" ? "production" : "development",
     entry: "./src/index.ts",
     module: {
         rules: [
@@ -27,11 +31,42 @@ module.exports = {
         alias: {
             "@common": path.resolve(__dirname, "../common/"),
         },
+        fullySpecified: false,
+        // Configure export conditions for Spectrum Web Components and Lit
+        // In production: use 'production' condition for optimized builds
+        // In development: use 'default' to avoid issues with packages that don't support 'development' condition
+        // This still allows Spectrum/Lit to use their dev builds via their own internal logic
+        conditionNames: process.env.NODE_ENV === "production"
+            ? ["production", "default", "import", "require"]
+            : ["default", "import", "require"],
     },
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist"),
+        clean: true,
     },
+    plugins: [
+        new MiniCssExtractPlugin(),
+        new webpack.DefinePlugin({
+            "process.env.CLERK_PUBLISHABLE_KEY": JSON.stringify(
+                process.env.CLERK_PUBLISHABLE_KEY || ""
+            ),
+            "process.env.API_URL": JSON.stringify(
+                process.env.API_URL || "http://localhost:3000"
+            ),
+            "process.env.NODE_ENV": JSON.stringify(
+                process.env.NODE_ENV || "development"
+            ),
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, "public"),
+                    to: path.resolve(__dirname, "dist"),
+                },
+            ],
+        }),
+    ],
     devServer: {
         static: {
             directory: path.join(__dirname, "public"),

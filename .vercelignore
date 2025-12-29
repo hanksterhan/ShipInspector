@@ -1,0 +1,47 @@
+# Development files
+*.log
+*.md
+.git
+.gitignore
+
+# Server files that are not needed for build
+server/data/
+server/nodemon.json
+server/node_modules/
+
+# Keep server/src/ - needed for TypeScript compilation during build
+# Keep server/dist/ - compiled server code used by API function
+# Keep server/package.json - needed for dependencies
+# Keep server/wasm-equity/ - needed for equity calculations
+
+# Development configs
+nodemon.json
+
+# Docker files
+docker-compose.yml
+clickhouse-init/
+grafana/
+prometheus.yml
+otel-collector-config.yaml
+otel-collector-logs/
+
+# Environment files (will be set in Vercel dashboard)
+.env
+.env.*
+!.env.example
+
+# Node modules (will be installed during build)
+node_modules/
+
+# Development tools (not needed for build)
+web/plopfile.js
+web/plop/
+
+# IMPORTANT: Source files and configs are NEEDED for build
+# We explicitly include them by NOT excluding them
+# - web/src/ (needed for webpack)
+# - web/public/ (needed for webpack to copy index.html)
+# - common/src/ (needed for TypeScript compilation)
+# - tsconfig.json files (needed for TypeScript)
+# - webpack.config.cjs (needed for webpack)
+# - package.json files (needed for npm install)

@@ -1,23 +1,13 @@
-// OpenTelemetry must be initialized BEFORE any other imports
-import { initializeTelemetry } from "./config/telemetry";
-initializeTelemetry();
-
-// Pyroscope profiling should also be initialized early
-import { initializePyroscope, shutdownPyroscope } from "./config/pyroscope";
-initializePyroscope();
-
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
-import cookieParser from "cookie-parser";
-import session from "express-session";
 import swaggerUi from "swagger-ui-express";
+import { clerkMiddleware } from "@clerk/express";
 
 import * as routers from "./routes";
 import {
     apiLogger,
-    telemetryLogger,
     errorHandler,
     globalRateLimiter,
 } from "./middlewares";
@@ -25,19 +15,16 @@ import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
-// Initialize user metrics (admin user should be created via script)
-import { getUserCount } from "./services/userService";
-import { totalUsersGauge } from "./config/metrics";
-
-// Initialize total users gauge with current user count from database
-const userCount = getUserCount();
-totalUsersGauge.add(userCount);
-console.log(`Initialized user metrics with ${userCount} users`);
-console.log(`Note: Create admin user by running: npm run create-admin`);
+console.log(`Server starting...`);
 
 const port = process.env.PORT || 3000;
 
 const app = express();
+
+// Trust proxy - required for Vercel and other reverse proxies
+// This allows express-rate-limit to correctly identify users by IP
+// See: https://expressjs.com/en/guide/behind-proxies.html
+app.set('trust proxy', 1);
 
 // CORS configuration - allow credentials for cookies
 // Support multiple origins for development
@@ -77,28 +64,26 @@ app.use(
 );
 
 app.use(express.json());
-app.use(cookieParser());
 
-// Session configuration
-const sessionSecret =
-    process.env.SESSION_SECRET || "your-session-secret-change-in-production";
-app.use(
-    session({
-        secret: sessionSecret,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === "production", // HTTPS only in production
-            httpOnly: true, // Prevent XSS attacks
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            sameSite: "lax", // CSRF protection
-        },
-    })
-);
+// Clerk authentication middleware
+// Note: Clerk middleware automatically reads CLERK_SECRET_KEY from environment
+// If CLERK_SECRET_KEY is not set, the middleware may fail silently or cause 405 errors
+try {
+    app.use(clerkMiddleware());
+    if (process.env.CLERK_SECRET_KEY) {
+        console.log("Clerk middleware initialized successfully");
+    } else {
+        console.warn(
+            "Clerk middleware initialized but CLERK_SECRET_KEY is missing - authentication may fail"
+        );
+    }
+} catch (error) {
+    console.error("Failed to initialize Clerk middleware:", error);
+    throw error;
+}
 
 app.use(globalRateLimiter); // Global rate limiting
 app.use(apiLogger); // Console logging for debugging
-app.use(telemetryLogger); // OpenTelemetry tracing
 
 // Swagger UI
 app.use(
@@ -123,15 +108,4 @@ app.use(errorHandler);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
-});
-
-// Gracefully shutdown Pyroscope on process termination
-process.on("SIGTERM", () => {
-    shutdownPyroscope();
-    process.exit(0);
-});
-
-process.on("SIGINT", () => {
-    shutdownPyroscope();
-    process.exit(0);
 });

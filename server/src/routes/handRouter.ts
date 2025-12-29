@@ -1,6 +1,6 @@
 import { IRouter, Router as defineRouter } from "express";
 import { handHandler } from "../handlers";
-import { authenticateSession, strictRateLimiter } from "../middlewares";
+import { requireAuth, strictRateLimiter } from "../middlewares";
 
 /**
  * @swagger
@@ -80,7 +80,7 @@ function createRouter(): IRouter {
      */
     router.post(
         "/poker/hand/evaluate",
-        authenticateSession,
+        requireAuth(),
         strictRateLimiter,
         handHandler.evaluateHand
     );
@@ -153,7 +153,7 @@ function createRouter(): IRouter {
      */
     router.post(
         "/poker/hand/compare",
-        authenticateSession,
+        requireAuth(),
         strictRateLimiter,
         handHandler.compareHands
     );
@@ -239,7 +239,7 @@ function createRouter(): IRouter {
      */
     router.post(
         "/poker/equity/calculate",
-        authenticateSession,
+        requireAuth(),
         strictRateLimiter,
         handHandler.calculateEquity
     );
