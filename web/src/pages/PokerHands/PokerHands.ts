@@ -5,8 +5,10 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
-import { tableIcon, addPlayerIcon } from "../../assets";
+import { tableIcon, addPlayerIcon, plusIcon } from "../../assets";
 import { pokerBoardStore } from "../../stores/index";
+import { SUITS, RANKS } from "../../components/utilities";
+import { Card } from "@common/interfaces";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator
@@ -95,6 +97,71 @@ export class PokerHands extends MobxLitElement {
         };
     }
 
+    /**
+     * Check if a board card slot is currently in scope
+     */
+    isBoardCardInScope(boardIndex: number): boolean {
+        const scope = pokerBoardStore.scope;
+        return (
+            scope.kind === "board" &&
+            scope.boardIndex === boardIndex
+        );
+    }
+
+    /**
+     * Handle board card click
+     */
+    handleBoardCardClick(boardIndex: number) {
+        pokerBoardStore.setScope({
+            kind: "board",
+            boardIndex,
+        });
+        pokerBoardStore.openPicker();
+    }
+
+    /**
+     * Render a single board card (or placeholder)
+     */
+    renderBoardCard(card: Card | null, boardIndex: number) {
+        const isInScope = this.isBoardCardInScope(boardIndex);
+        const isEmpty = card === null;
+
+        if (isEmpty) {
+            return html`
+                <div
+                    class="board-card-placeholder ${isInScope ? "in-scope" : ""}"
+                    @click=${() => this.handleBoardCardClick(boardIndex)}
+                >
+                    <div class="board-card-placeholder-content">
+                        <span class="board-card-placeholder-icon">${plusIcon}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const suitData = SUITS.find((s) => s.suit === card.suit);
+        const rankData = RANKS.find((r) => r.rank === card.rank);
+
+        return html`
+            <div
+                class="board-card-display ${isInScope ? "in-scope" : ""}"
+                @click=${() => this.handleBoardCardClick(boardIndex)}
+            >
+                <div class="board-card-content">
+                    <span class="board-card-rank"
+                        >${rankData?.label || card.rank}</span
+                    >
+                    <span
+                        class="board-card-suit-icon"
+                        style="color: ${suitData?.color || "#000"}"
+                    >
+                        ${suitData?.icon}
+                    </span>
+                </div>
+            </div>
+        `;
+    }
+
     render() {
         return html`
             <div class="poker-hands-wrapper">
@@ -144,6 +211,12 @@ export class PokerHands extends MobxLitElement {
                                         `;
                                     }
                                 )}
+                                <!-- Board cards in the center -->
+                                <div class="board-cards-container">
+                                    ${pokerBoardStore.board.map((card, index) =>
+                                        this.renderBoardCard(card, index)
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
