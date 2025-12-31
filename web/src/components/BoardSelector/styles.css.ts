@@ -10,7 +10,10 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         width: 100%;
-        margin: var(--spectrum-global-dimension-size-200);
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: var(--spectrum-global-dimension-size-50);
+        margin-bottom: var(--spectrum-global-dimension-size-100);
         position: relative;
         z-index: 1;
     }
