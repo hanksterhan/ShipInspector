@@ -124,18 +124,11 @@ export class AppRoot extends MobxLitElement {
                                 menuStore.selectedPage !== "poker-hands"
                             ) {
                                 menuStore.setSelectedPage("poker-hands");
-                            } else if (
-                                route === "/equity-calculator" &&
-                                menuStore.selectedPage !== "equity-calculator"
-                            ) {
-                                menuStore.setSelectedPage("equity-calculator");
                             }
 
                             switch (route) {
                                 case "/poker-hands":
                                     return html`<poker-hands></poker-hands>`;
-                                case "/equity-calculator":
-                                    return html`<equity-calculator></equity-calculator>`;
                                 default:
                                     return html`<poker-hands></poker-hands>`;
                             }
