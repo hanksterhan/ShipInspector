@@ -254,10 +254,16 @@ export class PokerBoardStore {
         if (scope.kind === "player") {
             const player = this.players[scope.playerIndex];
             if (player) {
-                player[scope.cardIndex] = card;
+                // Replace the entire tuple to ensure MobX detects the change
+                const newPlayer: [Card | null, Card | null] = [...player];
+                newPlayer[scope.cardIndex] = card;
+                this.players[scope.playerIndex] = newPlayer;
             }
         } else {
-            this.board[scope.boardIndex] = card;
+            // Replace the entire board array to ensure MobX detects the change
+            const newBoard: [Card | null, Card | null, Card | null, Card | null, Card | null] = [...this.board];
+            newBoard[scope.boardIndex] = card;
+            this.board = newBoard;
         }
 
         return true;
@@ -268,9 +274,12 @@ export class PokerBoardStore {
      */
     @action
     clearBoardFrom(index: number) {
+        // Replace the entire board array to ensure MobX detects the change
+        const newBoard: [Card | null, Card | null, Card | null, Card | null, Card | null] = [...this.board];
         for (let i = index; i < 5; i++) {
-            this.board[i] = null;
+            newBoard[i] = null;
         }
+        this.board = newBoard;
     }
 
     /**
@@ -340,7 +349,10 @@ export class PokerBoardStore {
         if (scope.kind === "player") {
             const player = this.players[scope.playerIndex];
             if (player) {
-                player[scope.cardIndex] = null;
+                // Replace the entire tuple to ensure MobX detects the change
+                const newPlayer: [Card | null, Card | null] = [...player];
+                newPlayer[scope.cardIndex] = null;
+                this.players[scope.playerIndex] = newPlayer;
             }
         } else {
             // For board, clear from this index onwards
