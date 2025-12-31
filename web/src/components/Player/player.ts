@@ -109,6 +109,14 @@ export class Player extends MobxLitElement {
         // Access the array element directly - MobX tracks observable array access
         const playerCards = players[playerIndex] || [null, null];
 
+        // Get equity for this player
+        const winEquity = pokerBoardStore.getPlayerEquity(playerIndex);
+        const tieEquity = pokerBoardStore.getPlayerTieEquity(playerIndex);
+        const hasEquity = winEquity !== null;
+        const isPreflop = pokerBoardStore.isPreflop();
+        // Show tie if it's non-trivial (> 0.1%)
+        const showTie = tieEquity !== null && tieEquity > 0.1;
+
         return html`
             <div class="player-wrapper">
                 <div class="player-container">
@@ -119,6 +127,22 @@ export class Player extends MobxLitElement {
                         ${this.renderCard(playerCards[0], 0)}
                         ${this.renderCard(playerCards[1], 1)}
                     </div>
+                    ${hasEquity && isPreflop
+                        ? html`
+                              <div class="player-equity">
+                                  <div class="equity-win">
+                                      Win: ${winEquity}%
+                                  </div>
+                                  ${showTie
+                                      ? html`
+                                            <div class="equity-tie">
+                                                Tie: ${tieEquity.toFixed(1)}%
+                                            </div>
+                                        `
+                                      : null}
+                              </div>
+                          `
+                        : null}
                 </div>
             </div>
         `;

@@ -1,5 +1,7 @@
-import { action, makeObservable, observable } from "mobx";
+import { action, makeObservable, observable, reaction } from "mobx";
 import { Card } from "@common/interfaces";
+import { pokerService } from "../../services/index";
+import { holeToString } from "../../components/utilities";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -19,6 +21,10 @@ export interface EquityState {
         samples: number;
     } | null;
     error: string | null;
+    // Map from player index to win percentage (0-1)
+    playerEquity: Map<number, number>;
+    // Map from player index to tie percentage (0-1)
+    playerTieEquity: Map<number, number>;
 }
 
 /**
@@ -58,9 +64,12 @@ export class PokerBoardStore {
         status: "idle",
         data: null,
         error: null,
+        playerEquity: new Map(),
+        playerTieEquity: new Map(),
     };
 
     private currentAbortController: AbortController | null = null;
+    private reactionDisposer: (() => void) | null = null;
 
     constructor() {
         makeObservable(this);
@@ -71,6 +80,37 @@ export class PokerBoardStore {
         );
         // Initialize active players (default: players 0 and 1)
         this.activePlayers = new Set([0, 1]);
+
+        // Set up reaction to calculate equity when conditions are met
+        this.reactionDisposer = reaction(
+            () => {
+                // Track changes to players and board
+                // Access all players to ensure MobX tracks them
+                const players = this.players;
+                const activePlayers = this.activePlayers;
+                const board = this.board;
+                
+                // Create a serializable key that changes when relevant data changes
+                const playerKeys = Array.from(activePlayers)
+                    .map((idx) => {
+                        const p = players[idx];
+                        if (!p || !p[0] || !p[1]) return null;
+                        return `${idx}:${p[0].rank}${p[0].suit}-${p[1].rank}${p[1].suit}`;
+                    })
+                    .filter((k) => k !== null)
+                    .join("|");
+                
+                const boardKey = board
+                    .map((c) => (c ? `${c.rank}${c.suit}` : "null"))
+                    .join(",");
+                
+                return `${playerKeys}|${boardKey}`;
+            },
+            () => {
+                this.checkAndCalculateEquity();
+            },
+            { fireImmediately: false }
+        );
     }
 
     /**
@@ -424,59 +464,11 @@ export class PokerBoardStore {
             status: "idle",
             data: null,
             error: null,
+            playerEquity: new Map(),
+            playerTieEquity: new Map(),
         };
     }
 
-    /**
-     * Set equity loading state
-     */
-    @action
-    setEquityLoading() {
-        // Cancel any in-flight requests
-        if (this.currentAbortController) {
-            this.currentAbortController.abort();
-        }
-
-        this.currentAbortController = new AbortController();
-        this.equity = {
-            status: "loading",
-            data: null,
-            error: null,
-        };
-    }
-
-    /**
-     * Set equity success state
-     */
-    @action
-    setEquitySuccess(data: { win: number[]; tie: number[]; samples: number }) {
-        this.equity = {
-            status: "success",
-            data,
-            error: null,
-        };
-        this.currentAbortController = null;
-    }
-
-    /**
-     * Set equity error state
-     */
-    @action
-    setEquityError(error: string | null) {
-        this.equity = {
-            status: error ? "error" : "idle",
-            data: null,
-            error: error || null,
-        };
-        this.currentAbortController = null;
-    }
-
-    /**
-     * Get the current AbortController signal for equity requests
-     */
-    getEquityAbortSignal(): AbortSignal | undefined {
-        return this.currentAbortController?.signal;
-    }
 
     /**
      * Check if we have enough data to calculate equity
@@ -490,5 +482,204 @@ export class PokerBoardStore {
             }
         }
         return true;
+    }
+
+    /**
+     * Check if board is empty (preflop)
+     */
+    isPreflop(): boolean {
+        return this.board.every((card) => card === null);
+    }
+
+    /**
+     * Get active players with complete hands (both cards selected)
+     */
+    getActivePlayersWithCompleteHands(): Array<{
+        playerIndex: number;
+        cards: [Card, Card];
+    }> {
+        const result: Array<{ playerIndex: number; cards: [Card, Card] }> = [];
+        for (const playerIndex of this.activePlayers) {
+            const player = this.players[playerIndex];
+            if (player && player[0] && player[1]) {
+                result.push({
+                    playerIndex,
+                    cards: [player[0], player[1]],
+                });
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Check conditions and calculate equity if needed
+     * Only calculates for preflop (no board cards) when at least 2 players have complete hands
+     */
+    @action
+    async checkAndCalculateEquity() {
+        // Only calculate for preflop (no board cards)
+        if (!this.isPreflop()) {
+            // Clear equity if board has cards
+            this.equity = {
+                status: "idle",
+                data: null,
+                error: null,
+                playerEquity: new Map(),
+                playerTieEquity: new Map(),
+            };
+            return;
+        }
+
+        // Get active players with complete hands
+        const playersWithHands = this.getActivePlayersWithCompleteHands();
+
+        // Need at least 2 players with complete hands
+        if (playersWithHands.length < 2) {
+            // Clear equity if not enough players
+            this.equity = {
+                status: "idle",
+                data: null,
+                error: null,
+                playerEquity: new Map(),
+                playerTieEquity: new Map(),
+            };
+            return;
+        }
+
+        // Calculate equity
+        await this.calculateEquityForPlayers(playersWithHands);
+    }
+
+    /**
+     * Calculate equity for given players
+     */
+    @action
+    async calculateEquityForPlayers(
+        playersWithHands: Array<{ playerIndex: number; cards: [Card, Card] }>
+    ) {
+        // Cancel any in-flight requests
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+        }
+
+        const abortController = new AbortController();
+        this.currentAbortController = abortController;
+
+        // Set loading state
+        this.equity = {
+            status: "loading",
+            data: null,
+            error: null,
+            playerEquity: new Map(),
+            playerTieEquity: new Map(),
+        };
+
+        try {
+            // Convert players to string format
+            const playersStrings = playersWithHands.map((p) =>
+                holeToString({ cards: p.cards })
+            );
+
+            // Empty board for preflop
+            const boardString = "";
+
+            // Call the API
+            const result = await pokerService.getHandEquity(
+                playersStrings,
+                boardString,
+                { mode: "rust" },
+                [],
+                abortController.signal
+            );
+
+            // Check if request was aborted
+            if (abortController.signal.aborted) {
+                return;
+            }
+
+            // Map equity results to player indices
+            const playerEquityMap = new Map<number, number>();
+            const playerTieEquityMap = new Map<number, number>();
+            playersWithHands.forEach((player, index) => {
+                const winPercentage = result.equity.win[index] || 0;
+                const tiePercentage = result.equity.tie[index] || 0;
+                playerEquityMap.set(player.playerIndex, winPercentage);
+                playerTieEquityMap.set(player.playerIndex, tiePercentage);
+            });
+
+            // Update equity state
+            this.equity = {
+                status: "success",
+                data: {
+                    win: result.equity.win,
+                    tie: result.equity.tie,
+                    samples: result.equity.samples,
+                },
+                error: null,
+                playerEquity: playerEquityMap,
+                playerTieEquity: playerTieEquityMap,
+            };
+        } catch (err) {
+            // Don't set error for aborted requests
+            if (err instanceof Error && err.name === "AbortError") {
+                return;
+            }
+
+            // Only set error if this request wasn't aborted
+            if (!abortController.signal.aborted) {
+                const errorMessage =
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to calculate equity";
+                this.equity = {
+                    status: "error",
+                    data: null,
+                    error: errorMessage,
+                    playerEquity: new Map(),
+                    playerTieEquity: new Map(),
+                };
+            }
+        } finally {
+            // Only clear abort controller if this is still the current request
+            if (this.currentAbortController === abortController) {
+                this.currentAbortController = null;
+            }
+        }
+    }
+
+    /**
+     * Get equity percentage for a specific player (0-100)
+     */
+    getPlayerEquity(playerIndex: number): number | null {
+        const winPercentage = this.equity.playerEquity.get(playerIndex);
+        if (winPercentage === undefined) {
+            return null;
+        }
+        return Math.round(winPercentage * 100);
+    }
+
+    /**
+     * Get tie equity percentage for a specific player (0-100)
+     */
+    getPlayerTieEquity(playerIndex: number): number | null {
+        const tiePercentage = this.equity.playerTieEquity.get(playerIndex);
+        if (tiePercentage === undefined) {
+            return null;
+        }
+        return tiePercentage * 100; // Keep decimal precision for tie
+    }
+
+    /**
+     * Cleanup reaction on dispose
+     */
+    dispose() {
+        if (this.reactionDisposer) {
+            this.reactionDisposer();
+            this.reactionDisposer = null;
+        }
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+            this.currentAbortController = null;
+        }
     }
 }

@@ -155,6 +155,33 @@ export const styles = css`
         height: 100%;
     }
 
+    .player-equity {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spectrum-global-dimension-size-50);
+        margin-top: var(--spectrum-global-dimension-size-75);
+        padding: var(--spectrum-global-dimension-size-50)
+            var(--spectrum-global-dimension-size-100);
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: var(--spectrum-global-dimension-size-100);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .equity-win {
+        font-size: var(--spectrum-global-dimension-font-size-200);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        color: #00a86b; /* Money green */
+        text-align: center;
+    }
+
+    .equity-tie {
+        font-size: var(--spectrum-global-dimension-font-size-200);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        color: #ff8c00; /* Orange */
+        text-align: center;
+    }
+
     @media (max-width: 600px) {
         .card-placeholder,
         .card-display {
