@@ -10,4 +10,5 @@ export * from "./visible.svg";
 export * from "./invisible.svg";
 export * from "./boat.svg";
 export * from "./plus.svg";
+export * from "./table.svg";
 // PLOP: APPEND ICON EXPORTS

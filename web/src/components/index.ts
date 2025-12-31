@@ -8,4 +8,8 @@ export * from "./PokerOptions";
 export * from "./EquityDisplay";
 export * from "./OutsDisplay";
 export * from "./PokerHand";
+export * from "./CardPickerModal";
+export * from "./PokerBoard";
+export * from "./PlayerHands";
+export * from "./PokerEquityResults";
 // PLOP: APPEND COMPONENT EXPORTS

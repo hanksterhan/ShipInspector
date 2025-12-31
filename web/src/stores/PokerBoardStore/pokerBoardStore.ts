@@ -1,0 +1,404 @@
+import { action, makeObservable, observable } from "mobx";
+import { Card } from "@common/interfaces";
+
+/**
+ * Scope represents the currently focused slot for card selection
+ */
+export type Scope =
+    | { kind: "player"; playerIndex: number; cardIndex: 0 | 1 }
+    | { kind: "board"; boardIndex: number };
+
+/**
+ * Equity calculation state
+ */
+export interface EquityState {
+    status: "idle" | "loading" | "success" | "error";
+    data: {
+        win: number[];
+        tie: number[];
+        samples: number;
+    } | null;
+    error: string | null;
+}
+
+/**
+ * PokerBoardStore manages the poker board state with scope-based selection
+ *
+ * CONFIGURATION:
+ * - To change number of players: modify NUM_PLAYERS constant (default: 8)
+ * - To change equity endpoint: modify equityClient.ts API_URL
+ */
+export class PokerBoardStore {
+    // Number of players (configurable)
+    static readonly NUM_PLAYERS = 8;
+
+    @observable
+    players: Array<[Card | null, Card | null]> = [];
+
+    @observable
+    board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
+        null,
+        null,
+        null,
+        null,
+        null,
+    ];
+
+    @observable
+    scope: Scope = { kind: "player", playerIndex: 0, cardIndex: 0 };
+
+    @observable
+    pickerOpen: boolean = false;
+
+    @observable
+    equity: EquityState = {
+        status: "idle",
+        data: null,
+        error: null,
+    };
+
+    private currentAbortController: AbortController | null = null;
+
+    constructor() {
+        makeObservable(this);
+        // Initialize players array
+        this.players = Array.from(
+            { length: PokerBoardStore.NUM_PLAYERS },
+            () => [null, null] as [Card | null, Card | null]
+        );
+    }
+
+    /**
+     * Check if a card is already used in any player hand or board
+     */
+    @action
+    isCardUsed(card: Card): boolean {
+        // Check players
+        for (const player of this.players) {
+            if (
+                (player[0] &&
+                    player[0].rank === card.rank &&
+                    player[0].suit === card.suit) ||
+                (player[1] &&
+                    player[1].rank === card.rank &&
+                    player[1].suit === card.suit)
+            ) {
+                return true;
+            }
+        }
+
+        // Check board
+        for (const boardCard of this.board) {
+            if (
+                boardCard &&
+                boardCard.rank === card.rank &&
+                boardCard.suit === card.suit
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all used cards
+     */
+    getAllUsedCards(): Card[] {
+        const used: Card[] = [];
+        for (const player of this.players) {
+            if (player[0]) used.push(player[0]);
+            if (player[1]) used.push(player[1]);
+        }
+        for (const boardCard of this.board) {
+            if (boardCard) used.push(boardCard);
+        }
+        return used;
+    }
+
+    /**
+     * Find the next empty scope slot, starting from the given scope
+     */
+    @action
+    nextScope(fromScope: Scope): Scope {
+        // Helper to check if a slot is filled
+        const isSlotFilled = (scope: Scope): boolean => {
+            if (scope.kind === "player") {
+                return (
+                    this.players[scope.playerIndex]?.[scope.cardIndex] !== null
+                );
+            } else {
+                return this.board[scope.boardIndex] !== null;
+            }
+        };
+
+        // Start from the next position after fromScope
+        let currentScope: Scope | null = null;
+
+        // Determine starting point
+        if (fromScope.kind === "player") {
+            const { playerIndex, cardIndex } = fromScope;
+            if (cardIndex === 0) {
+                // Move to second card of same player
+                currentScope = { kind: "player", playerIndex, cardIndex: 1 };
+            } else {
+                // Move to first card of next player
+                if (playerIndex < PokerBoardStore.NUM_PLAYERS - 1) {
+                    currentScope = {
+                        kind: "player",
+                        playerIndex: playerIndex + 1,
+                        cardIndex: 0,
+                    };
+                } else {
+                    // Move to board
+                    currentScope = { kind: "board", boardIndex: 0 };
+                }
+            }
+        } else {
+            // From board, move to next board slot
+            if (fromScope.boardIndex < 4) {
+                currentScope = {
+                    kind: "board",
+                    boardIndex: fromScope.boardIndex + 1,
+                };
+            } else {
+                // Already at last board slot, stay there
+                return fromScope;
+            }
+        }
+
+        // Find next empty slot
+        let attempts = 0;
+        const maxAttempts = PokerBoardStore.NUM_PLAYERS * 2 + 5; // All possible slots
+
+        while (currentScope && attempts < maxAttempts) {
+            if (!isSlotFilled(currentScope)) {
+                return currentScope;
+            }
+
+            // Advance to next slot
+            if (currentScope.kind === "player") {
+                const currentPlayerIndex: number = currentScope.playerIndex;
+                const currentCardIndex: 0 | 1 = currentScope.cardIndex;
+                if (currentCardIndex === 0) {
+                    currentScope = {
+                        kind: "player",
+                        playerIndex: currentPlayerIndex,
+                        cardIndex: 1,
+                    };
+                } else {
+                    if (currentPlayerIndex < PokerBoardStore.NUM_PLAYERS - 1) {
+                        currentScope = {
+                            kind: "player",
+                            playerIndex: currentPlayerIndex + 1,
+                            cardIndex: 0,
+                        };
+                    } else {
+                        currentScope = { kind: "board", boardIndex: 0 };
+                    }
+                }
+            } else {
+                const currentBoardIndex: number = currentScope.boardIndex;
+                if (currentBoardIndex < 4) {
+                    currentScope = {
+                        kind: "board",
+                        boardIndex: currentBoardIndex + 1,
+                    };
+                } else {
+                    // All slots filled, return current scope
+                    return fromScope;
+                }
+            }
+            attempts++;
+        }
+
+        // If all slots are filled, return the original scope
+        return fromScope;
+    }
+
+    /**
+     * Apply a card to the current scope, enforcing uniqueness
+     */
+    @action
+    applyCardToScope(scope: Scope, card: Card): boolean {
+        // Check if card is already used
+        if (this.isCardUsed(card)) {
+            return false;
+        }
+
+        if (scope.kind === "player") {
+            const player = this.players[scope.playerIndex];
+            if (player) {
+                player[scope.cardIndex] = card;
+            }
+        } else {
+            this.board[scope.boardIndex] = card;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear board cards from a given index onwards (cascading clear)
+     */
+    @action
+    clearBoardFrom(index: number) {
+        for (let i = index; i < 5; i++) {
+            this.board[i] = null;
+        }
+    }
+
+    /**
+     * Set the current scope
+     */
+    @action
+    setScope(scope: Scope) {
+        this.scope = scope;
+    }
+
+    /**
+     * Open the card picker
+     */
+    @action
+    openPicker() {
+        this.pickerOpen = true;
+    }
+
+    /**
+     * Close the card picker
+     */
+    @action
+    closePicker() {
+        this.pickerOpen = false;
+    }
+
+    /**
+     * Set a card for the current scope and auto-advance
+     */
+    @action
+    setCard(card: Card): boolean {
+        if (!this.applyCardToScope(this.scope, card)) {
+            return false;
+        }
+
+        // Auto-advance to next empty slot
+        const next = this.nextScope(this.scope);
+        this.scope = next;
+
+        return true;
+    }
+
+    /**
+     * Clear a specific slot
+     */
+    @action
+    clearCard(scope: Scope) {
+        if (scope.kind === "player") {
+            const player = this.players[scope.playerIndex];
+            if (player) {
+                player[scope.cardIndex] = null;
+            }
+        } else {
+            // For board, clear from this index onwards
+            this.clearBoardFrom(scope.boardIndex);
+        }
+    }
+
+    /**
+     * Reset all cards and state
+     */
+    @action
+    resetAll() {
+        // Cancel any in-flight equity requests
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+            this.currentAbortController = null;
+        }
+
+        // Reset players
+        this.players = Array.from(
+            { length: PokerBoardStore.NUM_PLAYERS },
+            () => [null, null] as [Card | null, Card | null]
+        );
+
+        // Reset board
+        this.board = [null, null, null, null, null];
+
+        // Reset scope to first slot
+        this.scope = { kind: "player", playerIndex: 0, cardIndex: 0 };
+
+        // Close picker
+        this.pickerOpen = false;
+
+        // Clear equity
+        this.equity = {
+            status: "idle",
+            data: null,
+            error: null,
+        };
+    }
+
+    /**
+     * Set equity loading state
+     */
+    @action
+    setEquityLoading() {
+        // Cancel any in-flight requests
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+        }
+
+        this.currentAbortController = new AbortController();
+        this.equity = {
+            status: "loading",
+            data: null,
+            error: null,
+        };
+    }
+
+    /**
+     * Set equity success state
+     */
+    @action
+    setEquitySuccess(data: { win: number[]; tie: number[]; samples: number }) {
+        this.equity = {
+            status: "success",
+            data,
+            error: null,
+        };
+        this.currentAbortController = null;
+    }
+
+    /**
+     * Set equity error state
+     */
+    @action
+    setEquityError(error: string | null) {
+        this.equity = {
+            status: error ? "error" : "idle",
+            data: null,
+            error: error || null,
+        };
+        this.currentAbortController = null;
+    }
+
+    /**
+     * Get the current AbortController signal for equity requests
+     */
+    getEquityAbortSignal(): AbortSignal | undefined {
+        return this.currentAbortController?.signal;
+    }
+
+    /**
+     * Check if we have enough data to calculate equity
+     * Minimum: all players have 2 cards
+     */
+    canCalculateEquity(): boolean {
+        for (const player of this.players) {
+            if (!player[0] || !player[1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+}

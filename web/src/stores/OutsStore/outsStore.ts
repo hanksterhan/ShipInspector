@@ -32,7 +32,9 @@ export class OutsStore {
                 }
                 return [
                     cardStore.holeCards.length,
-                    cardStore.holeCards.map((h) => (h && 'cards' in h ? h.cards : null)),
+                    cardStore.holeCards.map((h) =>
+                        h && "cards" in h ? h.cards : null
+                    ),
                     cardStore.boardCards.length,
                     cardStore.boardCards,
                 ];
@@ -43,14 +45,12 @@ export class OutsStore {
                     return;
                 }
                 // Check if we have exactly 2 players with complete hole cards (both cards present) and exactly 4 board cards (turn)
-                const validHoles = cardStore.holeCards.filter(
-                    (hole) => {
-                        if (!hole || !('cards' in hole)) {
-                            return false;
-                        }
-                        return hole.cards[0] !== null && hole.cards[1] !== null;
+                const validHoles = cardStore.holeCards.filter((hole) => {
+                    if (!hole || !("cards" in hole)) {
+                        return false;
                     }
-                );
+                    return hole.cards[0] !== null && hole.cards[1] !== null;
+                });
 
                 if (
                     validHoles.length === 2 &&
@@ -123,7 +123,7 @@ export class OutsStore {
         // Only calculate if we have exactly 2 players with complete hole cards (both cards present) and exactly 4 board cards
         const validHoles = cardStore.holeCards
             .filter((hole) => {
-                if (!hole || !('cards' in hole)) {
+                if (!hole || !("cards" in hole)) {
                     return false;
                 }
                 // Only include holes where both cards are non-null

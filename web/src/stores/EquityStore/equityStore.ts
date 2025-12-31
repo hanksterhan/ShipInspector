@@ -49,7 +49,9 @@ export class EquityStore {
                 }
                 return [
                     cardStore.holeCards.length,
-                    cardStore.holeCards.map((h) => (h && 'cards' in h ? h.cards : null)),
+                    cardStore.holeCards.map((h) =>
+                        h && "cards" in h ? h.cards : null
+                    ),
                     cardStore.boardCards.length,
                     cardStore.boardCards,
                 ];
@@ -60,14 +62,12 @@ export class EquityStore {
                     return;
                 }
                 // Check if we have at least 2 players with complete hole cards (both cards present)
-                const validHoles = cardStore.holeCards.filter(
-                    (hole) => {
-                        if (!hole || !('cards' in hole)) {
-                            return false;
-                        }
-                        return hole.cards[0] !== null && hole.cards[1] !== null;
+                const validHoles = cardStore.holeCards.filter((hole) => {
+                    if (!hole || !("cards" in hole)) {
+                        return false;
                     }
-                );
+                    return hole.cards[0] !== null && hole.cards[1] !== null;
+                });
 
                 if (validHoles.length >= 2) {
                     // Trigger calculation - it will cancel any in-flight request
@@ -169,7 +169,7 @@ export class EquityStore {
         // Only calculate if we have at least 2 players with complete hole cards (both cards present)
         const validHoles = cardStore.holeCards
             .filter((hole) => {
-                if (!hole || !('cards' in hole)) {
+                if (!hole || !("cards" in hole)) {
                     return false;
                 }
                 // Only include holes where both cards are non-null
