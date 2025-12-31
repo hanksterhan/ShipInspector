@@ -3,7 +3,7 @@ import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { pokerBoardStore } from "../../stores/index";
+import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 import { plusIcon } from "../../assets";
 
@@ -34,12 +34,28 @@ export class Player extends MobxLitElement {
      * Handle card placeholder click
      */
     handleCardClick(cardIndex: 0 | 1) {
-        pokerBoardStore.setScope({
-            kind: "player",
+        const playerCards = pokerBoardStore.players[this.playerIndex] || [
+            null,
+            null,
+        ];
+        const currentCard = playerCards[cardIndex];
+        const scope = {
+            kind: "player" as const,
             playerIndex: this.playerIndex,
             cardIndex,
-        });
-        pokerBoardStore.openPicker();
+        };
+
+        // If card is already selected, clear it
+        if (currentCard !== null) {
+            pokerBoardStore.setScope(scope);
+            pokerBoardStore.clearCard(scope);
+            deckStore.markCardAsUnselected(currentCard);
+            pokerBoardStore.closePicker();
+        } else {
+            // If card is empty, open picker
+            pokerBoardStore.setScope(scope);
+            pokerBoardStore.openPicker();
+        }
     }
 
     /**
@@ -86,10 +102,12 @@ export class Player extends MobxLitElement {
     }
 
     render() {
-        const playerCards = pokerBoardStore.players[this.playerIndex] || [
-            null,
-            null,
-        ];
+        // Access the entire players array first to ensure MobX tracks it
+        // Then access the specific player index - MobX will track both
+        const players = pokerBoardStore.players;
+        const playerIndex = this.playerIndex;
+        // Access the array element directly - MobX tracks observable array access
+        const playerCards = players[playerIndex] || [null, null];
 
         return html`
             <div class="player-wrapper">

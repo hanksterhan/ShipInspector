@@ -257,7 +257,10 @@ export class PokerBoardStore {
                 // Replace the entire tuple to ensure MobX detects the change
                 const newPlayer: [Card | null, Card | null] = [...player];
                 newPlayer[scope.cardIndex] = card;
-                this.players[scope.playerIndex] = newPlayer;
+                // Replace the entire players array to ensure MobX detects the change
+                const newPlayers = [...this.players];
+                newPlayers[scope.playerIndex] = newPlayer;
+                this.players = newPlayers;
             }
         } else {
             // Replace the entire board array to ensure MobX detects the change
@@ -310,6 +313,18 @@ export class PokerBoardStore {
     }
 
     /**
+     * Get player cards for a specific player index
+     * This getter ensures MobX tracks the array access properly
+     * Note: This is not a computed property because it takes a parameter
+     * Instead, we rely on accessing this.players which is observable
+     */
+    getPlayerCards(playerIndex: number): [Card | null, Card | null] {
+        // Access the entire array first to ensure MobX tracks it
+        const players = this.players;
+        return players[playerIndex] || [null, null];
+    }
+
+    /**
      * Open the card picker
      */
     @action
@@ -352,7 +367,10 @@ export class PokerBoardStore {
                 // Replace the entire tuple to ensure MobX detects the change
                 const newPlayer: [Card | null, Card | null] = [...player];
                 newPlayer[scope.cardIndex] = null;
-                this.players[scope.playerIndex] = newPlayer;
+                // Replace the entire players array to ensure MobX detects the change
+                const newPlayers = [...this.players];
+                newPlayers[scope.playerIndex] = newPlayer;
+                this.players = newPlayers;
             }
         } else {
             // For board, clear from this index onwards

@@ -6,7 +6,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 import { tableIcon, addPlayerIcon, plusIcon } from "../../assets";
-import { pokerBoardStore } from "../../stores/index";
+import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../../components/utilities";
 import { Card } from "@common/interfaces";
 
@@ -112,11 +112,37 @@ export class PokerHands extends MobxLitElement {
      * Handle board card click
      */
     handleBoardCardClick(boardIndex: number) {
-        pokerBoardStore.setScope({
-            kind: "board",
+        const currentCard = pokerBoardStore.board[boardIndex];
+        const scope = {
+            kind: "board" as const,
             boardIndex,
-        });
-        pokerBoardStore.openPicker();
+        };
+
+        // If card is already selected, clear it
+        if (currentCard !== null) {
+            // Collect all cards that will be cleared (cascading clear from this index onwards)
+            const cardsToUnmark: Card[] = [];
+            for (let i = boardIndex; i < 5; i++) {
+                const card = pokerBoardStore.board[i];
+                if (card !== null) {
+                    cardsToUnmark.push(card);
+                }
+            }
+            
+            pokerBoardStore.setScope(scope);
+            pokerBoardStore.clearCard(scope);
+            
+            // Unmark all cleared cards from deckStore
+            cardsToUnmark.forEach(card => {
+                deckStore.markCardAsUnselected(card);
+            });
+            
+            pokerBoardStore.closePicker();
+        } else {
+            // If card is empty, open picker
+            pokerBoardStore.setScope(scope);
+            pokerBoardStore.openPicker();
+        }
     }
 
     /**
