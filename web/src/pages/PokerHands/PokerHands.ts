@@ -199,14 +199,15 @@ export class PokerHands extends MobxLitElement {
      * Only show when there are exactly 4 board cards (turn) and 2 active players with complete hands
      */
     shouldShowOuts(): boolean {
-        const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
+        const activePlayersWithHands =
+            pokerBoardStore.getActivePlayersWithCompleteHands();
         const boardCards = pokerBoardStore.getBoardCards();
         return activePlayersWithHands.length === 2 && boardCards.length === 4;
     }
 
     render() {
         const showOuts = this.shouldShowOuts();
-        
+
         return html`
             <div class="poker-hands-wrapper">
                 <div class="poker-hands-container">

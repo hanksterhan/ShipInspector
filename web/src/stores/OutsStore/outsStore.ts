@@ -34,11 +34,11 @@ export class OutsStore {
                 const players = pokerBoardStore.players;
                 const activePlayers = pokerBoardStore.activePlayers;
                 const board = pokerBoardStore.board;
-                
+
                 // Iterate over activePlayers Set to ensure MobX tracks it
                 // Access Set.size to ensure MobX tracks Set changes
                 const activePlayersSize = activePlayers.size;
-                
+
                 // Create a serializable key that changes when relevant data changes
                 // Iterate over the Set to ensure MobX tracks it
                 const playerKeys = Array.from(activePlayers)
@@ -64,13 +64,16 @@ export class OutsStore {
                     return;
                 }
                 // Check if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards (turn)
-                const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
+                const activePlayersWithHands =
+                    pokerBoardStore.getActivePlayersWithCompleteHands();
                 const boardCards = pokerBoardStore.getBoardCards();
 
-                console.log('[OutsStore] Reaction fired:', {
+                console.log("[OutsStore] Reaction fired:", {
                     activePlayersCount: activePlayersWithHands.length,
                     boardCardsCount: boardCards.length,
-                    shouldCalculate: activePlayersWithHands.length === 2 && boardCards.length === 4
+                    shouldCalculate:
+                        activePlayersWithHands.length === 2 &&
+                        boardCards.length === 4,
                 });
 
                 if (
@@ -78,7 +81,9 @@ export class OutsStore {
                     boardCards.length === 4
                 ) {
                     // Trigger calculation - it will cancel any in-flight request
-                    console.log('[OutsStore] Conditions met, calling calculateOuts()');
+                    console.log(
+                        "[OutsStore] Conditions met, calling calculateOuts()"
+                    );
                     this.calculateOuts();
                 } else {
                     // Clear results if conditions aren't met
@@ -143,7 +148,8 @@ export class OutsStore {
         }
 
         // Only calculate if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards
-        const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
+        const activePlayersWithHands =
+            pokerBoardStore.getActivePlayersWithCompleteHands();
 
         if (activePlayersWithHands.length !== 2) {
             this.outsResult = null;
@@ -163,7 +169,9 @@ export class OutsStore {
 
         // Convert holes to string format (first player is hero, second is villain)
         const hero = holeToString({ cards: activePlayersWithHands[0].cards });
-        const villain = holeToString({ cards: activePlayersWithHands[1].cards });
+        const villain = holeToString({
+            cards: activePlayersWithHands[1].cards,
+        });
 
         // Convert board to string format
         const board = boardToString({ cards: boardCards });
@@ -186,18 +194,22 @@ export class OutsStore {
         this.isLoading = true;
         this.error = null;
 
-        console.log('[OutsStore] calculateOuts called with:', { hero, villain, board });
+        console.log("[OutsStore] calculateOuts called with:", {
+            hero,
+            villain,
+            board,
+        });
 
         try {
             // Call the API with abort signal
-            console.log('[OutsStore] Making API call to /poker/outs/calculate');
+            console.log("[OutsStore] Making API call to /poker/outs/calculate");
             const result = await pokerService.getOuts(
                 hero,
                 villain,
                 board,
                 abortController.signal
             );
-            console.log('[OutsStore] API call successful, result:', result);
+            console.log("[OutsStore] API call successful, result:", result);
 
             // Only parse the response if this request wasn't aborted
             if (!abortController.signal.aborted) {
@@ -205,11 +217,11 @@ export class OutsStore {
                 this.cacheKey = currentCacheKey;
             }
         } catch (err) {
-            console.error('[OutsStore] API call failed:', err);
+            console.error("[OutsStore] API call failed:", err);
             // Don't set error for aborted requests
             if (err instanceof Error && err.name === "AbortError") {
                 // Request was cancelled, ignore the error
-                console.log('[OutsStore] Request was aborted');
+                console.log("[OutsStore] Request was aborted");
                 return;
             }
 
