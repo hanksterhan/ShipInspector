@@ -15,14 +15,13 @@ export const styles = css`
         background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        margin: var(--spectrum-global-dimension-size-50);
-        margin-bottom: var(--spectrum-global-dimension-size-100);
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
         position: relative;
         z-index: 1;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
 
     .selection-stage {
@@ -31,14 +30,8 @@ export const styles = css`
         align-items: center;
         gap: var(--spectrum-global-dimension-size-300);
         width: 100%;
-        max-width: 800px;
-    }
-
-    .stage-title {
-        margin: 0;
-        font-size: var(--spectrum-global-dimension-font-size-300);
-        font-weight: var(--spectrum-global-font-weight-bold);
-        color: var(--spectrum-global-color-gray-800);
+        max-width: 760px;
+        box-sizing: border-box;
     }
 
     .suit-grid {
@@ -46,7 +39,8 @@ export const styles = css`
         grid-template-columns: repeat(4, 1fr);
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
-        max-width: 600px;
+        max-width: 610px;
+        box-sizing: border-box;
         justify-items: center;
     }
 
@@ -115,7 +109,8 @@ export const styles = css`
         flex-direction: column;
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
-        max-width: 600px;
+        max-width: 760px;
+        box-sizing: border-box;
     }
 
     .rank-row {
@@ -123,7 +118,9 @@ export const styles = css`
         gap: var(--spectrum-global-dimension-size-150);
         justify-content: center;
         align-items: center;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: 100%;
     }
 
     .rank-row:last-child {
@@ -256,7 +253,8 @@ export const styles = css`
         flex-direction: column;
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
-        max-width: 1000px;
+        max-width: 890px;
+        box-sizing: border-box;
     }
 
     .suit-row {
@@ -265,6 +263,8 @@ export const styles = css`
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
+        width: 100%;
+        max-width: 100%;
     }
 
     sp-action-button.card-52-button {

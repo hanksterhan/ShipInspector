@@ -489,11 +489,14 @@ export const styles = css`
         background: white;
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        max-width: 90vw;
+        max-width: min(90vw, 1000px);
         max-height: 90vh;
-        overflow: auto;
+        width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
         position: relative;
         animation: slideUp 0.3s ease-out;
+        box-sizing: border-box;
     }
 
     .picker-modal-header {
