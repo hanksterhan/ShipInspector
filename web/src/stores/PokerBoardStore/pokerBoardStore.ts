@@ -30,10 +30,13 @@ export interface EquityState {
  */
 export class PokerBoardStore {
     // Number of players (configurable)
-    static readonly NUM_PLAYERS = 2;
+    static readonly NUM_PLAYERS = 8;
 
     @observable
     players: Array<[Card | null, Card | null]> = [];
+
+    @observable
+    activePlayers: Set<number> = new Set([0, 1]); // By default, players 1 and 2 are active
 
     @observable
     board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
@@ -66,6 +69,8 @@ export class PokerBoardStore {
             { length: PokerBoardStore.NUM_PLAYERS },
             () => [null, null] as [Card | null, Card | null]
         );
+        // Initialize active players (default: players 0 and 1)
+        this.activePlayers = new Set([0, 1]);
     }
 
     /**
@@ -167,11 +172,31 @@ export class PokerBoardStore {
             }
         }
 
-        // Find next empty slot
+        // Find next empty slot (only check active players)
         let attempts = 0;
         const maxAttempts = PokerBoardStore.NUM_PLAYERS * 2 + 5; // All possible slots
 
         while (currentScope && attempts < maxAttempts) {
+            // Skip inactive players
+            if (
+                currentScope.kind === "player" &&
+                !this.activePlayers.has(currentScope.playerIndex)
+            ) {
+                // Skip to next player
+                const currentPlayerIndex: number = currentScope.playerIndex;
+                if (currentPlayerIndex < PokerBoardStore.NUM_PLAYERS - 1) {
+                    currentScope = {
+                        kind: "player",
+                        playerIndex: currentPlayerIndex + 1,
+                        cardIndex: 0,
+                    };
+                } else {
+                    currentScope = { kind: "board", boardIndex: 0 };
+                }
+                attempts++;
+                continue;
+            }
+
             if (!isSlotFilled(currentScope)) {
                 return currentScope;
             }
@@ -257,6 +282,25 @@ export class PokerBoardStore {
     }
 
     /**
+     * Add a player (make them active)
+     */
+    @action
+    addPlayer(playerIndex: number) {
+        if (playerIndex >= 0 && playerIndex < PokerBoardStore.NUM_PLAYERS) {
+            this.activePlayers.add(playerIndex);
+            // Trigger observable update by creating new Set
+            this.activePlayers = new Set(this.activePlayers);
+        }
+    }
+
+    /**
+     * Check if a player is active
+     */
+    isPlayerActive(playerIndex: number): boolean {
+        return this.activePlayers.has(playerIndex);
+    }
+
+    /**
      * Open the card picker
      */
     @action
@@ -321,10 +365,13 @@ export class PokerBoardStore {
             () => [null, null] as [Card | null, Card | null]
         );
 
+        // Reset active players to default (players 0 and 1)
+        this.activePlayers = new Set([0, 1]);
+
         // Reset board
         this.board = [null, null, null, null, null];
 
-        // Reset scope to first slot
+        // Reset scope to first slot of first active player
         this.scope = { kind: "player", playerIndex: 0, cardIndex: 0 };
 
         // Close picker
@@ -391,11 +438,12 @@ export class PokerBoardStore {
 
     /**
      * Check if we have enough data to calculate equity
-     * Minimum: all players have 2 cards
+     * Minimum: all active players have 2 cards
      */
     canCalculateEquity(): boolean {
-        for (const player of this.players) {
-            if (!player[0] || !player[1]) {
+        for (const playerIndex of this.activePlayers) {
+            const player = this.players[playerIndex];
+            if (!player || !player[0] || !player[1]) {
                 return false;
             }
         }
