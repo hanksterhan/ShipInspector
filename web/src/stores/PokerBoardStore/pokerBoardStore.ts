@@ -1,7 +1,7 @@
 import { action, makeObservable, observable, reaction } from "mobx";
 import { Card } from "@common/interfaces";
 import { pokerService } from "../../services/index";
-import { holeToString } from "../../components/utilities";
+import { holeToString, boardToString } from "../../components/utilities";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -89,7 +89,7 @@ export class PokerBoardStore {
                 const players = this.players;
                 const activePlayers = this.activePlayers;
                 const board = this.board;
-                
+
                 // Create a serializable key that changes when relevant data changes
                 const playerKeys = Array.from(activePlayers)
                     .map((idx) => {
@@ -99,11 +99,11 @@ export class PokerBoardStore {
                     })
                     .filter((k) => k !== null)
                     .join("|");
-                
+
                 const boardKey = board
                     .map((c) => (c ? `${c.rank}${c.suit}` : "null"))
                     .join(",");
-                
+
                 return `${playerKeys}|${boardKey}`;
             },
             () => {
@@ -469,7 +469,6 @@ export class PokerBoardStore {
         };
     }
 
-
     /**
      * Check if we have enough data to calculate equity
      * Minimum: all active players have 2 cards
@@ -489,6 +488,24 @@ export class PokerBoardStore {
      */
     isPreflop(): boolean {
         return this.board.every((card) => card === null);
+    }
+
+    /**
+     * Check if board state is valid for equity calculation
+     * Valid states: preflop (0 cards), flop (3 cards), turn (4 cards), river (5 cards)
+     */
+    isValidBoardState(): boolean {
+        const boardCards = this.board.filter((card) => card !== null);
+        const count = boardCards.length;
+        // Valid poker stages: 0 (preflop), 3 (flop), 4 (turn), 5 (river)
+        return count === 0 || count === 3 || count === 4 || count === 5;
+    }
+
+    /**
+     * Get board cards as an array (excluding nulls)
+     */
+    getBoardCards(): Card[] {
+        return this.board.filter((card): card is Card => card !== null);
     }
 
     /**
@@ -513,13 +530,14 @@ export class PokerBoardStore {
 
     /**
      * Check conditions and calculate equity if needed
-     * Only calculates for preflop (no board cards) when at least 2 players have complete hands
+     * Calculates for valid poker stages: preflop (0 cards), flop (3 cards), turn (4 cards), river (5 cards)
+     * Requires at least 2 players with complete hands
      */
     @action
     async checkAndCalculateEquity() {
-        // Only calculate for preflop (no board cards)
-        if (!this.isPreflop()) {
-            // Clear equity if board has cards
+        // Only calculate for valid board states (0, 3, 4, or 5 cards)
+        if (!this.isValidBoardState()) {
+            // Clear equity if board state is invalid
             this.equity = {
                 status: "idle",
                 data: null,
@@ -580,8 +598,9 @@ export class PokerBoardStore {
                 holeToString({ cards: p.cards })
             );
 
-            // Empty board for preflop
-            const boardString = "";
+            // Get board cards and convert to string format
+            const boardCards = this.getBoardCards();
+            const boardString = boardToString({ cards: boardCards });
 
             // Call the API
             const result = await pokerService.getHandEquity(

@@ -113,7 +113,7 @@ export class Player extends MobxLitElement {
         const winEquity = pokerBoardStore.getPlayerEquity(playerIndex);
         const tieEquity = pokerBoardStore.getPlayerTieEquity(playerIndex);
         const hasEquity = winEquity !== null;
-        const isPreflop = pokerBoardStore.isPreflop();
+        const isValidBoardState = pokerBoardStore.isValidBoardState();
         // Show tie if it's non-trivial (> 0.1%)
         const showTie = tieEquity !== null && tieEquity > 0.1;
 
@@ -127,7 +127,7 @@ export class Player extends MobxLitElement {
                         ${this.renderCard(playerCards[0], 0)}
                         ${this.renderCard(playerCards[1], 1)}
                     </div>
-                    ${hasEquity && isPreflop
+                    ${hasEquity && isValidBoardState
                         ? html`
                               <div class="player-equity">
                                   <div class="equity-win">
