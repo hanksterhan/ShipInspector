@@ -30,7 +30,7 @@ export interface EquityState {
  */
 export class PokerBoardStore {
     // Number of players (configurable)
-    static readonly NUM_PLAYERS = 8;
+    static readonly NUM_PLAYERS = 2;
 
     @observable
     players: Array<[Card | null, Card | null]> = [];

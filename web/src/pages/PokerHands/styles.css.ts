@@ -28,6 +28,8 @@ export const styles = css`
         justify-content: center;
         align-items: center;
         width: 100%;
+        padding-top: 60px;
+        padding-bottom: 20px;
     }
 
     .player-hands-section {
@@ -54,7 +56,7 @@ export const styles = css`
         /* Maintain 2:1 aspect ratio based on SVG viewBox (1200x600) */
         aspect-ratio: 2 / 1;
         display: block;
-        overflow: hidden;
+        overflow: visible;
     }
 
     /* Background layer - scales with container */
@@ -88,6 +90,21 @@ export const styles = css`
     /* Allow pointer events on child components */
     .table-content-overlay > * {
         pointer-events: auto;
+    }
+
+    /* Players row at top edge - centered on black ring */
+    .players-row {
+        position: absolute;
+        top: 60px;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        gap: var(--spectrum-global-dimension-size-400);
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        width: 80%;
+        max-width: 800px;
     }
 
     /* Felt realism enhancements */
@@ -242,5 +259,66 @@ export const styles = css`
     .player-hands-section.player-in-scope player-hands {
         position: relative;
         z-index: 1;
+    }
+
+    /* Card Picker Modal */
+    .picker-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease-in;
+    }
+
+    .picker-modal-content {
+        background: white;
+        border-radius: var(--spectrum-global-dimension-size-200);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    .picker-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spectrum-global-dimension-size-300);
+        border-bottom: 1px solid var(--spectrum-global-color-gray-200);
+    }
+
+    .picker-modal-header h3 {
+        margin: 0;
+        font-size: var(--spectrum-global-dimension-font-size-400);
+        font-weight: var(--spectrum-global-font-weight-bold);
+        color: var(--spectrum-global-color-gray-800);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 `;

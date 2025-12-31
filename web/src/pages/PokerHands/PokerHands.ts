@@ -6,6 +6,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 import { tableIcon } from "../../assets";
+import { pokerBoardStore } from "../../stores/index";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator
@@ -33,11 +34,53 @@ export class PokerHands extends MobxLitElement {
                         <div class="table-svg-container">
                             <div class="table-svg-background">${tableIcon}</div>
                             <div class="table-content-overlay">
-                                <!-- Components will be placed here on top of the table -->
+                                <!-- Players at top edge -->
+                                <div class="players-row">
+                                    ${Array.from(
+                                        {
+                                            length: pokerBoardStore.players
+                                                .length,
+                                        },
+                                        (_, i) => html`
+                                            <poker-player
+                                                .playerIndex=${i}
+                                            ></poker-player>
+                                        `
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Card Picker Modal -->
+                ${pokerBoardStore.pickerOpen
+                    ? html`
+                          <div
+                              class="picker-modal-overlay"
+                              @click=${(e: Event) => {
+                                  if (e.target === e.currentTarget) {
+                                      pokerBoardStore.closePicker();
+                                  }
+                              }}
+                          >
+                              <div class="picker-modal-content">
+                                  <div class="picker-modal-header">
+                                      <h3>Select a Card</h3>
+                                      <sp-action-button
+                                          @click=${() =>
+                                              pokerBoardStore.closePicker()}
+                                          quiet
+                                          title="Close"
+                                      >
+                                          ✕
+                                      </sp-action-button>
+                                  </div>
+                                  <card-selector></card-selector>
+                              </div>
+                          </div>
+                      `
+                    : null}
             </div>
         `;
     }
