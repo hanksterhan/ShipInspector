@@ -14,9 +14,6 @@ export const styles = css`
 
     .poker-hands-container {
         width: 100%;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         padding: 40px 32px;
         display: flex;
         flex-direction: column;
@@ -110,7 +107,7 @@ export const styles = css`
     /* Board cards container - centered in the middle of the table */
     .board-cards-container {
         position: absolute;
-        top: 50%;
+        top: 48%;
         left: 50%;
         transform: translate(-50%, -50%);
         display: flex;
