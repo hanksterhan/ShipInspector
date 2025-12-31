@@ -57,7 +57,7 @@ export const tableIcon = svg`
     x="600"
     y="220"
     text-anchor="middle"
-    font-size="14"
+    font-size="24"
     fill="rgba(255,255,255,0.4)"
     letter-spacing="1"
   >
