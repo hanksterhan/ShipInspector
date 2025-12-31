@@ -37,7 +37,10 @@ export class OutsStore {
                     (hole) => hole !== undefined && hole !== null
                 );
 
-                if (validHoles.length === 2 && cardStore.boardCards.length === 4) {
+                if (
+                    validHoles.length === 2 &&
+                    cardStore.boardCards.length === 4
+                ) {
                     // Trigger calculation - it will cancel any in-flight request
                     this.calculateOuts();
                 } else {
@@ -182,4 +185,3 @@ export class OutsStore {
         }
     }
 }
-

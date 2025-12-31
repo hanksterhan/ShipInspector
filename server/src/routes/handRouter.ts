@@ -165,7 +165,7 @@ function createRouter(): IRouter {
      *     tags:
      *       - Poker Equity Calculation
      *     summary: Calculate equity for multiple players
-     *     description: Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Uses high-performance Rust WASM implementation. Currently supports preflop (empty board) and river showdown (complete 5-card board).
+     *     description: Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Supports all poker stages: preflop (0 cards), postflop (3 cards), turn (4 cards), and river (5 cards). Uses high-performance Rust WASM implementation for preflop and TypeScript enumeration for partial boards.
      *     requestBody:
      *       required: true
      *       content:
@@ -193,6 +193,20 @@ function createRouter(): IRouter {
      *                 players: ["14h 14d", "13h 13d", "12h 12d"]
      *                 board: ""
      *                 dead: ["7h", "6h"]
+     *                 options:
+     *                   mode: "rust"
+     *             postflop:
+     *               summary: Post-flop equity (3 cards on board)
+     *               value:
+     *                 players: ["14h 14d", "13h 13d"]
+     *                 board: "12h 11h 10h"
+     *                 options:
+     *                   mode: "rust"
+     *             turn:
+     *               summary: Turn equity (4 cards on board)
+     *               value:
+     *                 players: ["14h 14d", "13h 13d"]
+     *                 board: "12h 11h 10h 9h"
      *                 options:
      *                   mode: "rust"
      *     responses:

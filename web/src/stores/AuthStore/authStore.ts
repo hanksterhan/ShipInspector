@@ -56,12 +56,12 @@ export class AuthStore {
 
             // 2. Listen to Clerk session changes (auth events - login/logout only)
             const clerk = clerkService.getClerk();
-            
+
             clerk.addListener((event: any) => {
                 // Only react to actual authentication state changes (sign in/out), not periodic session updates
                 // Check if the user ID has actually changed, indicating a sign in or sign out
                 const currentUserId = clerk.user?.id || null;
-                
+
                 // Only trigger checkAuth if the user authentication state actually changed
                 // This prevents periodic session refresh events from causing page reloads
                 if (this.previousUserId !== currentUserId) {

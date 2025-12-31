@@ -159,15 +159,22 @@ export class EquityStore {
             return;
         }
 
-        // Only calculate for pre-flop (0 cards) or river (5 cards)
-        // Don't calculate during partial board selection (1-4 cards)
+        // Calculate for valid poker stages:
+        // - Pre-flop (0 cards)
+        // - Post-flop (3 cards)
+        // - Turn (4 cards)
+        // - River (5 cards)
+        // Skip invalid board sizes (1-2 cards) as these aren't valid poker stages
         const boardCardsCount = cardStore.boardCards.length;
-        if (boardCardsCount > 0 && boardCardsCount < 5) {
+        if (boardCardsCount > 5) {
+            // Invalid: board cannot have more than 5 cards
             this.equityResult = null;
             this.isLoading = false;
             this.cacheKey = null;
             return;
         }
+        // Note: We allow 0, 3, 4, and 5 cards (valid poker stages)
+        // We skip 1-2 cards as they're not valid stages, but the backend will handle validation
 
         // Convert holes to string format
         const players = validHoles.map(holeToString);
