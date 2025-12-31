@@ -58,4 +58,3 @@ function createRouter(): IRouter {
 }
 
 export const outsRouter = createRouter();
-

@@ -288,7 +288,6 @@ function enumeratePartialBoard(
     return result;
 }
 
-
 /**
  * Compute equity for given players, board, and options
  * Uses Rust WASM implementation for high-performance calculations
