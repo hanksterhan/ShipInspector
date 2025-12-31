@@ -9,7 +9,10 @@ import {
     HandRank,
 } from "@common/interfaces";
 import { hand } from "./hand";
-import { calculateEquityRust } from "./equityRust";
+import { calculateEquityRust, calculateTurnOuts } from "./equityRust";
+
+// Re-export for convenience
+export { calculateTurnOuts };
 
 /**
  * Create a full 52-card deck
@@ -166,6 +169,126 @@ function evaluateBoard(
 }
 
 /**
+ * Enumerate all combinations of cards from remaining deck to complete the board
+ * and calculate equity using exact enumeration.
+ * Works for any number of missing cards (postflop: 2 missing, turn: 1 missing)
+ */
+function enumeratePartialBoard(
+    players: readonly Hole[],
+    existingBoard: readonly Card[],
+    remainingDeck: Card[],
+    missing: number
+): EquityResult {
+    const numPlayers = players.length;
+
+    // Pre-allocate result arrays (using integer counts)
+    const wins = new Array(numPlayers).fill(0);
+    const ties = new Array(numPlayers).fill(0);
+    const loses = new Array(numPlayers).fill(0);
+    let totalCombinations = 0;
+
+    // Pre-allocate arrays for evaluation
+    const completeBoard: Card[] = new Array(5);
+    const all7Cards: Card[] = new Array(7);
+    const playerRanks: HandRank[] = new Array(numPlayers);
+
+    // Copy existing board cards
+    for (let i = 0; i < existingBoard.length; i++) {
+        completeBoard[i] = existingBoard[i];
+    }
+
+    // Recursively enumerate all combinations of missing cards
+    function enumerateCombinations(
+        deck: Card[],
+        startIndex: number,
+        depth: number,
+        indices: number[]
+    ): void {
+        if (depth === missing) {
+            // We have a complete combination, fill in the board
+            for (let i = 0; i < missing; i++) {
+                completeBoard[existingBoard.length + i] = deck[indices[i]];
+            }
+
+            // Evaluate this board completion
+            // Build 7-card hand for each player
+            for (let p = 0; p < numPlayers; p++) {
+                const hole = players[p].cards;
+                all7Cards[0] = hole[0];
+                all7Cards[1] = hole[1];
+                for (let j = 0; j < 5; j++) {
+                    all7Cards[2 + j] = completeBoard[j];
+                }
+                playerRanks[p] = hand.evaluate7(all7Cards);
+            }
+
+            // Find winners
+            let bestHand = playerRanks[0];
+            const winners: number[] = [0];
+
+            for (let i = 1; i < numPlayers; i++) {
+                const comparison = hand.compareRanks(playerRanks[i], bestHand);
+                if (comparison > 0) {
+                    bestHand = playerRanks[i];
+                    winners.length = 0;
+                    winners.push(i);
+                } else if (comparison === 0) {
+                    winners.push(i);
+                }
+            }
+
+            // Update win/ties/losses
+            if (winners.length > 1) {
+                // Tie: each winner gets 1/winners.length of the win
+                const tieValue = 1 / winners.length;
+                for (const winnerIndex of winners) {
+                    ties[winnerIndex] += tieValue;
+                    loses[winnerIndex] += 1 - tieValue;
+                }
+                // Non-winners lose
+                for (let i = 0; i < numPlayers; i++) {
+                    if (!winners.includes(i)) {
+                        loses[i] += 1;
+                    }
+                }
+            } else {
+                // Single winner
+                wins[winners[0]] += 1;
+                // All others lose
+                for (let i = 0; i < numPlayers; i++) {
+                    if (i !== winners[0]) {
+                        loses[i] += 1;
+                    }
+                }
+            }
+
+            totalCombinations += 1;
+            return;
+        }
+
+        // Continue building combination
+        for (let i = startIndex; i < deck.length; i++) {
+            indices[depth] = i;
+            enumerateCombinations(deck, i + 1, depth + 1, indices);
+        }
+    }
+
+    // Start enumeration
+    const indices = new Array(missing);
+    enumerateCombinations(remainingDeck, 0, 0, indices);
+
+    // Normalize results
+    const result: EquityResult = {
+        win: wins.map((w) => w / totalCombinations),
+        tie: ties.map((t) => t / totalCombinations),
+        lose: loses.map((l) => l / totalCombinations),
+        samples: totalCombinations,
+    };
+
+    return result;
+}
+
+/**
  * Compute equity for given players, board, and options
  * Uses Rust WASM implementation for high-performance calculations
  */
@@ -217,7 +340,7 @@ export async function computeEquity(
         return result;
     }
 
-    // For incomplete boards, use Rust WASM implementation
+    // For incomplete boards, calculate equity
     const missing = 5 - boardLength;
     const remainingDeck = getRemainingDeck(players, board, dead);
 
@@ -227,14 +350,19 @@ export async function computeEquity(
         );
     }
 
-    // Rust implementation currently only supports preflop (empty board)
-    if (boardLength !== 0) {
-        throw new Error(
-            "Equity calculation currently only supports preflop (empty board) or complete board (river showdown)"
-        );
+    // Preflop: use optimized Rust WASM implementation
+    if (boardLength === 0) {
+        const result = await calculateEquityRust(players, board, remainingDeck);
+        return result;
     }
 
-    // Use Rust WASM implementation for preflop equity calculation
-    const result = await calculateEquityRust(players, board, remainingDeck);
+    // Postflop (3 cards) or Turn (4 cards): use TypeScript enumeration
+    // This is efficient for 1-2 missing cards as the combination count is manageable
+    const result = enumeratePartialBoard(
+        players,
+        board.cards,
+        remainingDeck,
+        missing
+    );
     return result;
 }

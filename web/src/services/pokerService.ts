@@ -4,12 +4,14 @@ import {
     EquityOptions,
     EvaluateHandResponse,
     CalculateEquityResponse,
+    CalculateOutsResponse,
 } from "@common/interfaces";
 
 const POKER_ENDPOINTS = {
     getHandEquity: "/poker/equity/calculate",
     compareHands: "/poker/hand/compare",
     evaluateHand: "/poker/hand/evaluate",
+    getOuts: "/poker/outs/calculate",
 };
 
 export class PokerService {
@@ -57,5 +59,23 @@ export class PokerService {
             board,
         });
         return response as EvaluateHandResponse;
+    }
+
+    async getOuts(
+        hero: string,
+        villain: string,
+        board: string,
+        signal?: AbortSignal
+    ): Promise<CalculateOutsResponse> {
+        const response = await httpClient.post(
+            POKER_ENDPOINTS.getOuts,
+            {
+                hero,
+                villain,
+                board,
+            },
+            signal
+        );
+        return response as CalculateOutsResponse;
     }
 }

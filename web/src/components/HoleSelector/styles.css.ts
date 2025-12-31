@@ -15,9 +15,14 @@ export const styles = css`
         background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        margin: var(--spectrum-global-dimension-size-200);
+        margin: var(--spectrum-global-dimension-size-50);
+        margin-bottom: var(--spectrum-global-dimension-size-100);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         position: relative;
         z-index: 1;
+        overflow: hidden;
     }
 
     .hole-selector-title {

@@ -4,18 +4,36 @@ export const styles = css`
     :host {
         display: block;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .selected-holes-section {
         width: 100%;
-        margin-bottom: var(--spectrum-global-dimension-size-300);
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: var(--spectrum-global-dimension-size-50);
+        margin-bottom: var(--spectrum-global-dimension-size-100);
         padding: var(--spectrum-global-dimension-size-300);
         padding-bottom: var(--spectrum-global-dimension-size-300);
         border-bottom: 2px solid var(--spectrum-global-color-gray-300);
         background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        margin: var(--spectrum-global-dimension-size-200);
+        overflow: hidden;
+    }
+
+    .outs-section {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: var(--spectrum-global-dimension-size-50);
+        margin-bottom: var(--spectrum-global-dimension-size-100);
+        padding: var(--spectrum-global-dimension-size-300);
+        background: rgb(255, 255, 255);
+        border-radius: var(--spectrum-global-dimension-size-200);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
     }
 
     .selected-holes-grid {
@@ -23,6 +41,8 @@ export const styles = css`
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .player-hole-container {

@@ -5,6 +5,7 @@ import { EquityStore } from "./EquityStore";
 import { SettingsStore } from "./SettingsStore";
 import { AuthStore } from "./AuthStore";
 import { RouterStore } from "./RouterStore";
+import { OutsStore } from "./OutsStore";
 // PLOP: APPEND STORE IMPORTS
 
 export const menuStore = new MenuStore();
@@ -20,4 +21,6 @@ export * from "./AuthStore";
 export const authStore = new AuthStore();
 export * from "./RouterStore";
 export const routerStore = new RouterStore();
+export * from "./OutsStore";
+export const outsStore = new OutsStore();
 // PLOP: APPEND STORE EXPORTS

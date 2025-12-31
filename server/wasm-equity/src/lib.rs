@@ -403,3 +403,236 @@ pub fn calculate_preflop_equity(
         win_fractions, tie_fractions, lose_fractions, total_combos
     )
 }
+
+/// Analyze what kind of improvement an out provides
+/// Returns a more detailed category code:
+/// 0-9: hand rank categories (as before)
+/// 10: flush draw completion
+/// 11: straight draw completion  
+/// 12: pair improvement
+/// 13: two pair improvement
+/// 14: set/trips improvement
+/// For v1, we use simplified heuristics based on suit/rank patterns
+#[inline(always)]
+fn categorize_out_detailed(
+    hero_hole: &[Card; 2],
+    board_4: &[Card; 4],
+    river_card: Card,
+    hero_rank_after: HandRank,
+) -> u8 {
+    let category_after = (hero_rank_after >> 56) as u8;
+    
+    // For high-value hands, just return the category
+    if category_after >= 6 {
+        return category_after; // Full house or better
+    }
+    
+    // Check for flush completion (5=flush category)
+    if category_after == 5 {
+        // Count suits in board + river
+        let mut suit_counts = [0u8; 4];
+        for card in board_4 {
+            suit_counts[card.suit as usize] += 1;
+        }
+        suit_counts[river_card.suit as usize] += 1;
+        
+        // If we have 3+ of river suit on board+river, this completed a flush draw
+        if suit_counts[river_card.suit as usize] >= 3 {
+            return 10; // Flush draw completion
+        }
+        return 5; // Flush (but not a draw completion)
+    }
+    
+    // Check for straight completion (4=straight category)
+    if category_after == 4 {
+        return 11; // Straight draw completion (simplified)
+    }
+    
+    // Check for set/trips (3=three_of_a_kind category)
+    if category_after == 3 {
+        // Check if river pairs one of our hole cards
+        if river_card.rank == hero_hole[0].rank || river_card.rank == hero_hole[1].rank {
+            return 14; // Set improvement
+        }
+        return 3; // Three of a kind (trips on board)
+    }
+    
+    // Check for two pair (2=two_pair category)
+    if category_after == 2 {
+        return 13; // Two pair improvement
+    }
+    
+    // Check for pair (1=pair category)
+    if category_after == 1 {
+        return 12; // Pair improvement
+    }
+    
+    // Default: return category as-is
+    category_after
+}
+
+/// Compute turn outs for heads-up Texas Hold'em
+/// 
+/// Input format:
+/// - hero_ranks: 2 ranks for hero's hole cards
+/// - hero_suits: 2 suits for hero's hole cards
+/// - villain_ranks: 2 ranks for villain's hole cards
+/// - villain_suits: 2 suits for villain's hole cards
+/// - board_ranks: 4 ranks for turn board
+/// - board_suits: 4 suits for turn board
+/// 
+/// Returns JSON with outs result or suppression:
+/// {
+///   "suppressed": null | { "reason": "string", "baseline_win": 0.45, "baseline_tie": 0.0 },
+///   "win_outs": [{"rank": 14, "suit": 0, "category": 5}],
+///   "tie_outs": [{"rank": 13, "suit": 1, "category": 2}],
+///   "baseline_win": 0.15,
+///   "baseline_tie": 0.05,
+///   "baseline_lose": 0.80,
+///   "total_river_cards": 44
+/// }
+#[wasm_bindgen]
+pub fn compute_turn_outs(
+    hero_ranks: &[u8],
+    hero_suits: &[u8],
+    villain_ranks: &[u8],
+    villain_suits: &[u8],
+    board_ranks: &[u8],
+    board_suits: &[u8],
+) -> String {
+    // Validate inputs
+    if hero_ranks.len() != 2 || hero_suits.len() != 2 {
+        return r#"{"error":"Hero must have exactly 2 cards"}"#.to_string();
+    }
+    if villain_ranks.len() != 2 || villain_suits.len() != 2 {
+        return r#"{"error":"Villain must have exactly 2 cards"}"#.to_string();
+    }
+    if board_ranks.len() != 4 || board_suits.len() != 4 {
+        return r#"{"error":"Board must have exactly 4 cards (turn)"}"#.to_string();
+    }
+    
+    // Parse hero and villain hole cards
+    let hero_hole = [
+        Card { rank: hero_ranks[0], suit: hero_suits[0] },
+        Card { rank: hero_ranks[1], suit: hero_suits[1] },
+    ];
+    
+    let villain_hole = [
+        Card { rank: villain_ranks[0], suit: villain_suits[0] },
+        Card { rank: villain_ranks[1], suit: villain_suits[1] },
+    ];
+    
+    // Parse board (4 cards)
+    let board_4 = [
+        Card { rank: board_ranks[0], suit: board_suits[0] },
+        Card { rank: board_ranks[1], suit: board_suits[1] },
+        Card { rank: board_ranks[2], suit: board_suits[2] },
+        Card { rank: board_ranks[3], suit: board_suits[3] },
+    ];
+    
+    // Build remaining deck - all 52 cards minus known 8
+    let mut remaining_deck: Vec<Card> = Vec::with_capacity(44);
+    let mut is_known = [[false; 4]; 15]; // rank x suit matrix for fast lookup
+    
+    // Mark known cards
+    for card in &[hero_hole[0], hero_hole[1], villain_hole[0], villain_hole[1], 
+                  board_4[0], board_4[1], board_4[2], board_4[3]] {
+        is_known[card.rank as usize][card.suit as usize] = true;
+    }
+    
+    // Build remaining deck
+    for rank in 2..=14 {
+        for suit in 0..4 {
+            if !is_known[rank as usize][suit as usize] {
+                remaining_deck.push(Card { rank, suit });
+            }
+        }
+    }
+    
+    // Evaluate all possible river cards and compute baseline equity
+    let mut wins = 0u32;
+    let mut ties = 0u32;
+    let mut loses = 0u32;
+    
+    // Storage for win/tie outs
+    let mut win_outs: Vec<(Card, u8)> = Vec::with_capacity(44); // (card, category)
+    let mut tie_outs: Vec<(Card, u8)> = Vec::with_capacity(44);
+    
+    // Pre-allocate board array
+    let mut complete_board = [Card { rank: 0, suit: 0 }; 5];
+    complete_board[0] = board_4[0];
+    complete_board[1] = board_4[1];
+    complete_board[2] = board_4[2];
+    complete_board[3] = board_4[3];
+    
+    // Evaluate all possible river cards
+    for river_card in &remaining_deck {
+        complete_board[4] = *river_card;
+        
+        let hero_rank = evaluate_7_card_hand(&hero_hole, &complete_board);
+        let villain_rank = evaluate_7_card_hand(&villain_hole, &complete_board);
+        
+        if hero_rank > villain_rank {
+            wins += 1;
+            // Use detailed categorization to understand what type of out this is
+            let category = categorize_out_detailed(&hero_hole, &board_4, *river_card, hero_rank);
+            win_outs.push((*river_card, category));
+        } else if hero_rank == villain_rank {
+            ties += 1;
+            let category = categorize_out_detailed(&hero_hole, &board_4, *river_card, hero_rank);
+            tie_outs.push((*river_card, category));
+        } else {
+            loses += 1;
+        }
+    }
+    
+    let total = remaining_deck.len() as f64;
+    let p_win = wins as f64 / total;
+    let p_tie = ties as f64 / total;
+    let p_lose = loses as f64 / total;
+    
+    // Check suppression criteria: P(tie) >= 0.50 OR P(win) >= 0.45
+    if p_tie >= 0.50 || p_win >= 0.45 {
+        let reason = if p_tie >= 0.50 {
+            format!("High tie probability ({:.1}%): showing outs would be misleading in symmetric situations", p_tie * 100.0)
+        } else {
+            format!("Already winning/ahead ({:.1}% win): outs are less meaningful", p_win * 100.0)
+        };
+        
+        return format!(
+            r#"{{"suppressed":{{"reason":"{}","baseline_win":{:.4},"baseline_tie":{:.4}}},"win_outs":[],"tie_outs":[],"baseline_win":{:.4},"baseline_tie":{:.4},"baseline_lose":{:.4},"total_river_cards":{}}}"#,
+            reason, p_win, p_tie, p_win, p_tie, p_lose, remaining_deck.len()
+        );
+    }
+    
+    // Build JSON arrays for win_outs and tie_outs
+    let win_outs_json: Vec<String> = win_outs
+        .iter()
+        .map(|(card, category)| {
+            format!(
+                r#"{{"rank":{},"suit":{},"category":{}}}"#,
+                card.rank, card.suit, category
+            )
+        })
+        .collect();
+    
+    let tie_outs_json: Vec<String> = tie_outs
+        .iter()
+        .map(|(card, category)| {
+            format!(
+                r#"{{"rank":{},"suit":{},"category":{}}}"#,
+                card.rank, card.suit, category
+            )
+        })
+        .collect();
+    
+    format!(
+        r#"{{"suppressed":null,"win_outs":[{}],"tie_outs":[{}],"baseline_win":{:.4},"baseline_tie":{:.4},"baseline_lose":{:.4},"total_river_cards":{}}}"#,
+        win_outs_json.join(","),
+        tie_outs_json.join(","),
+        p_win,
+        p_tie,
+        p_lose,
+        remaining_deck.len()
+    )
+}
