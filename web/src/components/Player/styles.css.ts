@@ -8,7 +8,10 @@ export const styles = css`
     .player-wrapper {
         background: rgba(220, 220, 220, 0.95);
         border-radius: var(--spectrum-global-dimension-size-200);
-        padding: var(--spectrum-global-dimension-size-200);
+        padding: var(--spectrum-global-dimension-size-100)
+            var(--spectrum-global-dimension-size-200)
+            var(--spectrum-global-dimension-size-100)
+            var(--spectrum-global-dimension-size-200);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         backdrop-filter: blur(4px);
         border: 1px solid rgba(180, 180, 180, 0.6);
@@ -160,9 +163,8 @@ export const styles = css`
         flex-direction: column;
         align-items: center;
         gap: var(--spectrum-global-dimension-size-50);
-        margin-top: var(--spectrum-global-dimension-size-75);
-        padding: var(--spectrum-global-dimension-size-50)
-            var(--spectrum-global-dimension-size-100);
+        padding: var(--spectrum-global-dimension-size-25)
+            var(--spectrum-global-dimension-size-75);
         background: rgba(255, 255, 255, 0.8);
         border-radius: var(--spectrum-global-dimension-size-100);
         border: 1px solid rgba(0, 0, 0, 0.1);

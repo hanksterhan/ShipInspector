@@ -56,38 +56,38 @@ export class PokerHands extends MobxLitElement {
         switch (playerIndex) {
             // Top edge - two players side by side
             case 0: // Top-left
-                top = centerY - ellipseHeight;
+                top = centerY - ellipseHeight - 4;
                 left = centerX - 12; // Offset left from center
                 break;
             case 1: // Top-right
-                top = centerY - ellipseHeight;
+                top = centerY - ellipseHeight - 4;
                 left = centerX + 12; // Offset right from center
                 break;
             // Right corners
             case 2: // Top-right corner
-                top = centerY - ellipseHeight * 0.4;
+                top = centerY - ellipseHeight * 0.4 - 4;
                 left = centerX + ellipseWidth - 2; // Moved left by 2%
                 break;
             case 3: // Bottom-right corner
-                top = centerY + ellipseHeight * 0.4;
+                top = centerY + ellipseHeight * 0.4 + 4;
                 left = centerX + ellipseWidth - 2; // Moved left by 2%
                 break;
             // Bottom edge - two players side by side
             case 4: // Bottom-right
-                top = centerY + ellipseHeight;
+                top = centerY + ellipseHeight + 2;
                 left = centerX + 12; // Offset right from center
                 break;
             case 5: // Bottom-left
-                top = centerY + ellipseHeight;
+                top = centerY + ellipseHeight + 2;
                 left = centerX - 12; // Offset left from center
                 break;
             // Left corners
             case 6: // Bottom-left corner
-                top = centerY + ellipseHeight * 0.4;
+                top = centerY + ellipseHeight * 0.4 + 4;
                 left = centerX - ellipseWidth;
                 break;
             case 7: // Top-left corner
-                top = centerY - ellipseHeight * 0.4;
+                top = centerY - ellipseHeight * 0.4 - 4;
                 left = centerX - ellipseWidth;
                 break;
             default:

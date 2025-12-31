@@ -29,8 +29,8 @@ export const styles = css`
         justify-content: center;
         align-items: center;
         width: 100%;
-        padding-top: 60px;
-        padding-bottom: 20px;
+        padding-top: 10px;
+        padding-bottom: 10px;
         gap: 24px;
     }
 
