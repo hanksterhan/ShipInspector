@@ -4,6 +4,7 @@ export const tableIcon = svg`
 <svg
   class="poker-table-svg"
   viewBox="0 0 1200 600"
+  preserveAspectRatio="xMidYMid meet"
   xmlns="http://www.w3.org/2000/svg"
   role="img"
   aria-label="Poker table background"

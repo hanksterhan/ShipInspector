@@ -50,33 +50,55 @@ export const styles = css`
     .table-svg-container {
         position: relative;
         width: 100%;
-        max-width: 1000px;
-        display: inline-block;
+        max-width: 1200px;
+        /* Maintain 2:1 aspect ratio based on SVG viewBox (1200x600) */
+        aspect-ratio: 2 / 1;
+        display: block;
+        overflow: hidden;
     }
 
-    .table-svg-wrapper {
-        position: relative;
+    /* Background layer - scales with container */
+    .table-svg-background {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .table-svg-background svg.poker-table-svg {
+        width: 100%;
+        height: 100%;
         display: block;
     }
 
-    .table-svg-wrapper svg.poker-table-svg {
+    /* Content overlay layer - for components on top */
+    .table-content-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
-        height: auto;
-        display: block;
-        position: relative;
-        z-index: 1;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* Allow pointer events on child components */
+    .table-content-overlay > * {
+        pointer-events: auto;
     }
 
     /* Felt realism enhancements */
-    /* Inner felt area: x=80, y=80, w=840, h=440 in viewBox "0 0 1000 600" */
-    /* As percentages: left=8%, top=13.33%, right=8%, bottom=13.33% */
-    .table-svg-wrapper::before {
+    /* Inner felt area: x=80, y=80, w=1040, h=440 in viewBox "0 0 1200 600" */
+    /* As percentages: left=6.67%, top=13.33%, right=6.67%, bottom=13.33% */
+    .table-svg-background::before {
         content: "";
         position: absolute;
         top: 13.33%;
-        left: 8%;
-        right: 8%;
+        left: 6.67%;
+        right: 6.67%;
         bottom: 13.33%;
         border-radius: 36.67%; /* 220/600 ≈ 36.67% of height */
         pointer-events: none;
@@ -106,12 +128,12 @@ export const styles = css`
     }
 
     /* Inner felt lighting */
-    .table-svg-wrapper::after {
+    .table-svg-background::after {
         content: "";
         position: absolute;
         top: 13.33%;
-        left: 8%;
-        right: 8%;
+        left: 6.67%;
+        right: 6.67%;
         bottom: 13.33%;
         border-radius: 36.67%;
         pointer-events: none;
@@ -131,7 +153,7 @@ export const styles = css`
     }
 
     /* Board zone styling - use CSS variables with fallbacks */
-    .table-svg-wrapper svg .board-zone {
+    .table-svg-background svg .board-zone {
         stroke: var(--board-zone-stroke-inactive, rgba(255, 255, 255, 0.08));
         stroke-dasharray: 8 8;
         stroke-width: 1;
@@ -143,7 +165,7 @@ export const styles = css`
     }
 
     /* Board zone glow when board cards are in scope */
-    .table-svg-container.board-in-scope .table-svg-wrapper svg .board-zone {
+    .table-svg-container.board-in-scope .table-svg-background svg .board-zone {
         stroke: var(--board-zone-stroke, rgba(255, 255, 255, 0.25));
         stroke-width: 1.5;
         filter: drop-shadow(
@@ -173,7 +195,7 @@ export const styles = css`
 
     /* Board zone visible when board is active but not in scope */
     .table-svg-container.board-active:not(.board-in-scope)
-        .table-svg-wrapper
+        .table-svg-background
         svg
         .board-zone {
         stroke: var(--board-zone-stroke, rgba(255, 255, 255, 0.25));

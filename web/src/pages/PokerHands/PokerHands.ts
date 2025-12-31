@@ -31,7 +31,10 @@ export class PokerHands extends MobxLitElement {
                 <div class="poker-hands-container">
                     <div class="poker-hands-content">
                         <div class="table-svg-container">
-                            <div class="table-svg-wrapper">${tableIcon}</div>
+                            <div class="table-svg-background">${tableIcon}</div>
+                            <div class="table-content-overlay">
+                                <!-- Components will be placed here on top of the table -->
+                            </div>
                         </div>
                     </div>
                 </div>
