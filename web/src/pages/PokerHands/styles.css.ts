@@ -3,7 +3,7 @@ import { css } from "lit";
 export const styles = css`
     :host {
         display: block;
-        padding: 8px;
+        padding: 16px;
     }
 
     .poker-hands-wrapper {
@@ -25,11 +25,20 @@ export const styles = css`
 
     .poker-hands-content {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         width: 100%;
         padding-top: 60px;
         padding-bottom: 20px;
+        gap: 24px;
+    }
+
+    .outs-display-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 32px;
     }
 
     .player-hands-section {

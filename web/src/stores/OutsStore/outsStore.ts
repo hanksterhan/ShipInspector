@@ -1,6 +1,6 @@
 import { action, makeObservable, observable, reaction } from "mobx";
-import { CalculateOutsResponse, Card } from "@common/interfaces";
-import { cardStore } from "../index";
+import { CalculateOutsResponse } from "@common/interfaces";
+import { pokerBoardStore } from "../index";
 import { pokerService } from "../../services/index";
 import { holeToString, boardToString } from "../../components/utilities";
 
@@ -26,37 +26,59 @@ export class OutsStore {
         // Watch for card changes - only calculate when we have exactly 4 board cards (turn)
         this.reactionDisposer = reaction(
             () => {
-                // Guard against cardStore being undefined during initialization
-                if (!cardStore) {
+                // Guard against pokerBoardStore being undefined during initialization
+                if (!pokerBoardStore) {
                     return [0, [], 0, []];
                 }
-                return [
-                    cardStore.holeCards.length,
-                    cardStore.holeCards.map((h) =>
-                        h && "cards" in h ? h.cards : null
-                    ),
-                    cardStore.boardCards.length,
-                    cardStore.boardCards,
-                ];
+                // Access observable properties directly so MobX can track them
+                const players = pokerBoardStore.players;
+                const activePlayers = pokerBoardStore.activePlayers;
+                const board = pokerBoardStore.board;
+                
+                // Iterate over activePlayers Set to ensure MobX tracks it
+                // Access Set.size to ensure MobX tracks Set changes
+                const activePlayersSize = activePlayers.size;
+                
+                // Create a serializable key that changes when relevant data changes
+                // Iterate over the Set to ensure MobX tracks it
+                const playerKeys = Array.from(activePlayers)
+                    .map((idx) => {
+                        const p = players[idx];
+                        // Access both cards to ensure MobX tracks them
+                        if (!p || !p[0] || !p[1]) return null;
+                        return `${idx}:${p[0].rank}${p[0].suit}-${p[1].rank}${p[1].suit}`;
+                    })
+                    .filter((k) => k !== null)
+                    .join("|");
+
+                // Access each board card to ensure MobX tracks them
+                const boardKey = board
+                    .map((c) => (c ? `${c.rank}${c.suit}` : "null"))
+                    .join(",");
+
+                return `${activePlayersSize}|${playerKeys}|${boardKey}`;
             },
             () => {
-                // Guard against cardStore being undefined
-                if (!cardStore) {
+                // Guard against pokerBoardStore being undefined
+                if (!pokerBoardStore) {
                     return;
                 }
-                // Check if we have exactly 2 players with complete hole cards (both cards present) and exactly 4 board cards (turn)
-                const validHoles = cardStore.holeCards.filter((hole) => {
-                    if (!hole || !("cards" in hole)) {
-                        return false;
-                    }
-                    return hole.cards[0] !== null && hole.cards[1] !== null;
+                // Check if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards (turn)
+                const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
+                const boardCards = pokerBoardStore.getBoardCards();
+
+                console.log('[OutsStore] Reaction fired:', {
+                    activePlayersCount: activePlayersWithHands.length,
+                    boardCardsCount: boardCards.length,
+                    shouldCalculate: activePlayersWithHands.length === 2 && boardCards.length === 4
                 });
 
                 if (
-                    validHoles.length === 2 &&
-                    cardStore.boardCards.length === 4
+                    activePlayersWithHands.length === 2 &&
+                    boardCards.length === 4
                 ) {
                     // Trigger calculation - it will cancel any in-flight request
+                    console.log('[OutsStore] Conditions met, calling calculateOuts()');
                     this.calculateOuts();
                 } else {
                     // Clear results if conditions aren't met
@@ -109,8 +131,8 @@ export class OutsStore {
 
     @action
     async calculateOuts() {
-        // Guard against cardStore being undefined
-        if (!cardStore) {
+        // Guard against pokerBoardStore being undefined
+        if (!pokerBoardStore) {
             return;
         }
 
@@ -120,18 +142,10 @@ export class OutsStore {
             this.currentAbortController = null;
         }
 
-        // Only calculate if we have exactly 2 players with complete hole cards (both cards present) and exactly 4 board cards
-        const validHoles = cardStore.holeCards
-            .filter((hole) => {
-                if (!hole || !("cards" in hole)) {
-                    return false;
-                }
-                // Only include holes where both cards are non-null
-                return hole.cards[0] !== null && hole.cards[1] !== null;
-            })
-            .map((hole) => hole as { cards: [Card, Card] });
+        // Only calculate if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards
+        const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
 
-        if (validHoles.length !== 2) {
+        if (activePlayersWithHands.length !== 2) {
             this.outsResult = null;
             this.error = null;
             this.isLoading = false;
@@ -139,20 +153,20 @@ export class OutsStore {
             return;
         }
 
-        const boardCardsCount = cardStore.boardCards.length;
-        if (boardCardsCount !== 4) {
+        const boardCards = pokerBoardStore.getBoardCards();
+        if (boardCards.length !== 4) {
             this.outsResult = null;
             this.isLoading = false;
             this.cacheKey = null;
             return;
         }
 
-        // Convert holes to string format
-        const hero = holeToString(validHoles[0]);
-        const villain = holeToString(validHoles[1]);
+        // Convert holes to string format (first player is hero, second is villain)
+        const hero = holeToString({ cards: activePlayersWithHands[0].cards });
+        const villain = holeToString({ cards: activePlayersWithHands[1].cards });
 
         // Convert board to string format
-        const board = boardToString({ cards: cardStore.boardCards });
+        const board = boardToString({ cards: boardCards });
 
         // Generate cache key for current hand configuration
         const currentCacheKey = this.getCacheKey(hero, villain, board);
@@ -172,14 +186,18 @@ export class OutsStore {
         this.isLoading = true;
         this.error = null;
 
+        console.log('[OutsStore] calculateOuts called with:', { hero, villain, board });
+
         try {
             // Call the API with abort signal
+            console.log('[OutsStore] Making API call to /poker/outs/calculate');
             const result = await pokerService.getOuts(
                 hero,
                 villain,
                 board,
                 abortController.signal
             );
+            console.log('[OutsStore] API call successful, result:', result);
 
             // Only parse the response if this request wasn't aborted
             if (!abortController.signal.aborted) {
@@ -187,9 +205,11 @@ export class OutsStore {
                 this.cacheKey = currentCacheKey;
             }
         } catch (err) {
+            console.error('[OutsStore] API call failed:', err);
             // Don't set error for aborted requests
             if (err instanceof Error && err.name === "AbortError") {
                 // Request was cancelled, ignore the error
+                console.log('[OutsStore] Request was aborted');
                 return;
             }
 

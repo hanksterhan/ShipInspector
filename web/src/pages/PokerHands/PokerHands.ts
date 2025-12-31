@@ -9,6 +9,7 @@ import { tableIcon, addPlayerIcon, plusIcon } from "../../assets";
 import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../../components/utilities";
 import { Card } from "@common/interfaces";
+import "../../components/OutsDisplay";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator
@@ -193,7 +194,19 @@ export class PokerHands extends MobxLitElement {
         `;
     }
 
+    /**
+     * Check if outs display should be shown
+     * Only show when there are exactly 4 board cards (turn) and 2 active players with complete hands
+     */
+    shouldShowOuts(): boolean {
+        const activePlayersWithHands = pokerBoardStore.getActivePlayersWithCompleteHands();
+        const boardCards = pokerBoardStore.getBoardCards();
+        return activePlayersWithHands.length === 2 && boardCards.length === 4;
+    }
+
     render() {
+        const showOuts = this.shouldShowOuts();
+        
         return html`
             <div class="poker-hands-wrapper">
                 <div class="poker-hands-container">
@@ -256,6 +269,14 @@ export class PokerHands extends MobxLitElement {
                                 </div>
                             </div>
                         </div>
+                        <!-- Outs Display below the board - only show when necessary -->
+                        ${showOuts
+                            ? html`
+                                  <div class="outs-display-container">
+                                      <outs-display></outs-display>
+                                  </div>
+                              `
+                            : null}
                     </div>
                 </div>
 
