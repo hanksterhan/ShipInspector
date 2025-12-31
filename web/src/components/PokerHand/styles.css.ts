@@ -18,6 +18,16 @@ export const styles = css`
         margin: var(--spectrum-global-dimension-size-200);
     }
 
+    .outs-section {
+        width: 100%;
+        margin: var(--spectrum-global-dimension-size-200);
+        margin-bottom: var(--spectrum-global-dimension-size-300);
+        padding: var(--spectrum-global-dimension-size-300);
+        background: rgb(255, 255, 255);
+        border-radius: var(--spectrum-global-dimension-size-200);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
     .selected-holes-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

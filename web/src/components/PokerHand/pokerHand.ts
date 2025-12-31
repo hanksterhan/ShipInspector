@@ -69,27 +69,27 @@ export class PokerHand extends MobxLitElement {
                                 <equity-display
                                     .playerIndex=${playerIndex}
                                 ></equity-display>
-                                ${(() => {
-                                    // Show outs display only for player 0 (hero) when we have exactly 2 players and 4 board cards (turn)
-                                    if (
-                                        playerIndex === 0 &&
-                                        cardStore.holeCards.filter(
-                                            (h) => h !== undefined
-                                        ).length === 2 &&
-                                        cardStore.boardCards.length === 4
-                                    ) {
-                                        return html`
-                                            <outs-display
-                                                .playerIndex=${playerIndex}
-                                            ></outs-display>
-                                        `;
-                                    }
-                                    return html``;
-                                })()}
                             </div>
                         `
                     )}
                 </div>
+            </div>
+        `;
+    }
+
+    renderOutsSection(): TemplateResult {
+        // Show outs display only for player 0 (hero) when we have exactly 2 players and 4 board cards (turn)
+        const shouldShowOuts =
+            cardStore.holeCards.filter((h) => h !== undefined).length === 2 &&
+            cardStore.boardCards.length === 4;
+
+        if (!shouldShowOuts) {
+            return html``;
+        }
+
+        return html`
+            <div class="outs-section">
+                <outs-display .playerIndex=${0}></outs-display>
             </div>
         `;
     }
@@ -103,6 +103,7 @@ export class PokerHand extends MobxLitElement {
 
         return html`
             ${hasSelectedHoles ? this.renderSelectedHoles() : html``}
+            ${hasSelectedHoles ? this.renderOutsSection() : html``}
             ${allHolesSelected
                 ? html` <board-selector></board-selector> `
                 : html` <hole-selector></hole-selector> `}
