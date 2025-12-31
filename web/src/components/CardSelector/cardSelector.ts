@@ -3,7 +3,12 @@ import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { CardSuit, CardRank, Card } from "@common/interfaces";
-import { cardStore, deckStore, settingsStore, pokerBoardStore } from "../../stores/index";
+import {
+    cardStore,
+    deckStore,
+    settingsStore,
+    pokerBoardStore,
+} from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 
 @customElement("card-selector")
@@ -24,7 +29,7 @@ export class CardSelector extends MobxLitElement {
             if (!deckStore.isCardSelected(card)) {
                 deckStore.markCardAsSelected(card);
                 cardStore.setSelectedRank(rank);
-                
+
                 // If picker is open, apply card to poker board scope
                 if (pokerBoardStore.pickerOpen) {
                     if (pokerBoardStore.setCard(card)) {
@@ -41,7 +46,7 @@ export class CardSelector extends MobxLitElement {
         if (!deckStore.isCardSelected(card)) {
             deckStore.markCardAsSelected(card);
             cardStore.setSelectedCard(card);
-            
+
             // If picker is open, apply card to poker board scope
             if (pokerBoardStore.pickerOpen) {
                 if (pokerBoardStore.setCard(card)) {
@@ -102,7 +107,9 @@ export class CardSelector extends MobxLitElement {
                                 suit: cardStore.selectedSuit!,
                             };
                             const isSelected = deckStore.isCardSelected(card);
-                            const isUsed = pokerBoardStore.pickerOpen ? pokerBoardStore.isCardUsed(card) : false;
+                            const isUsed = pokerBoardStore.pickerOpen
+                                ? pokerBoardStore.isCardUsed(card)
+                                : false;
                             const isDisabled = isSelected || isUsed;
                             return html`
                                 <sp-action-button
@@ -136,7 +143,9 @@ export class CardSelector extends MobxLitElement {
                                 suit: cardStore.selectedSuit!,
                             };
                             const isSelected = deckStore.isCardSelected(card);
-                            const isUsed = pokerBoardStore.pickerOpen ? pokerBoardStore.isCardUsed(card) : false;
+                            const isUsed = pokerBoardStore.pickerOpen
+                                ? pokerBoardStore.isCardUsed(card)
+                                : false;
                             const isDisabled = isSelected || isUsed;
                             return html`
                                 <sp-action-button
@@ -243,7 +252,9 @@ export class CardSelector extends MobxLitElement {
                                     };
                                     const isSelected =
                                         deckStore.isCardSelected(card);
-                                    const isUsed = pokerBoardStore.pickerOpen ? pokerBoardStore.isCardUsed(card) : false;
+                                    const isUsed = pokerBoardStore.pickerOpen
+                                        ? pokerBoardStore.isCardUsed(card)
+                                        : false;
                                     const isDisabled = isSelected || isUsed;
                                     return html`
                                         <sp-action-button

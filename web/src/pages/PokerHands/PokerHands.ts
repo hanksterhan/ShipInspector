@@ -36,18 +36,22 @@ export class PokerHands extends MobxLitElement {
      * - Players 4-5: Bottom edge (side by side)
      * - Players 6-7: Left corners (bottom-left, top-left)
      */
-    getPlayerPosition(playerIndex: number): { top: string; left: string; transform: string } {
+    getPlayerPosition(playerIndex: number): {
+        top: string;
+        left: string;
+        transform: string;
+    } {
         // Center position (50%, 50%)
         const centerX = 50;
         const centerY = 50;
-        
+
         // Ellipse dimensions (percentages from center)
         const ellipseWidth = 45; // % from center horizontally
         const ellipseHeight = 35; // % from center vertically
-        
+
         let top: number;
         let left: number;
-        
+
         switch (playerIndex) {
             // Top edge - two players side by side
             case 0: // Top-left
@@ -89,11 +93,11 @@ export class PokerHands extends MobxLitElement {
                 top = centerY;
                 left = centerX;
         }
-        
+
         return {
             top: `${top}%`,
             left: `${left}%`,
-            transform: 'translate(-50%, -50%)',
+            transform: "translate(-50%, -50%)",
         };
     }
 
@@ -102,10 +106,7 @@ export class PokerHands extends MobxLitElement {
      */
     isBoardCardInScope(boardIndex: number): boolean {
         const scope = pokerBoardStore.scope;
-        return (
-            scope.kind === "board" &&
-            scope.boardIndex === boardIndex
-        );
+        return scope.kind === "board" && scope.boardIndex === boardIndex;
     }
 
     /**
@@ -128,15 +129,15 @@ export class PokerHands extends MobxLitElement {
                     cardsToUnmark.push(card);
                 }
             }
-            
+
             pokerBoardStore.setScope(scope);
             pokerBoardStore.clearCard(scope);
-            
+
             // Unmark all cleared cards from deckStore
-            cardsToUnmark.forEach(card => {
+            cardsToUnmark.forEach((card) => {
                 deckStore.markCardAsUnselected(card);
             });
-            
+
             pokerBoardStore.closePicker();
         } else {
             // If card is empty, open picker
@@ -155,11 +156,15 @@ export class PokerHands extends MobxLitElement {
         if (isEmpty) {
             return html`
                 <div
-                    class="board-card-placeholder ${isInScope ? "in-scope" : ""}"
+                    class="board-card-placeholder ${isInScope
+                        ? "in-scope"
+                        : ""}"
                     @click=${() => this.handleBoardCardClick(boardIndex)}
                 >
                     <div class="board-card-placeholder-content">
-                        <span class="board-card-placeholder-icon">${plusIcon}</span>
+                        <span class="board-card-placeholder-icon"
+                            >${plusIcon}</span
+                        >
                     </div>
                 </div>
             `;
@@ -202,9 +207,11 @@ export class PokerHands extends MobxLitElement {
                                         length: pokerBoardStore.players.length,
                                     },
                                     (_, i) => {
-                                        const position = this.getPlayerPosition(i);
-                                        const isActive = pokerBoardStore.isPlayerActive(i);
-                                        
+                                        const position =
+                                            this.getPlayerPosition(i);
+                                        const isActive =
+                                            pokerBoardStore.isPlayerActive(i);
+
                                         return html`
                                             <div
                                                 class="player-position"
@@ -223,12 +230,16 @@ export class PokerHands extends MobxLitElement {
                                                                   pokerBoardStore.addPlayer(
                                                                       i
                                                                   )}
-                                                              title="Add Player ${i + 1}"
+                                                              title="Add Player ${i +
+                                                              1}"
                                                           >
-                                                          <span class="add-player-text"
-                                                              >Add player</span
-                                                          >
-                                                              <span class="add-player-icon"
+                                                              <span
+                                                                  class="add-player-text"
+                                                                  >Add
+                                                                  player</span
+                                                              >
+                                                              <span
+                                                                  class="add-player-icon"
                                                                   >${addPlayerIcon}</span
                                                               >
                                                           </button>

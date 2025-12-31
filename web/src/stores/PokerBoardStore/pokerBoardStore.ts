@@ -264,7 +264,13 @@ export class PokerBoardStore {
             }
         } else {
             // Replace the entire board array to ensure MobX detects the change
-            const newBoard: [Card | null, Card | null, Card | null, Card | null, Card | null] = [...this.board];
+            const newBoard: [
+                Card | null,
+                Card | null,
+                Card | null,
+                Card | null,
+                Card | null,
+            ] = [...this.board];
             newBoard[scope.boardIndex] = card;
             this.board = newBoard;
         }
@@ -278,7 +284,13 @@ export class PokerBoardStore {
     @action
     clearBoardFrom(index: number) {
         // Replace the entire board array to ensure MobX detects the change
-        const newBoard: [Card | null, Card | null, Card | null, Card | null, Card | null] = [...this.board];
+        const newBoard: [
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+        ] = [...this.board];
         for (let i = index; i < 5; i++) {
             newBoard[i] = null;
         }
