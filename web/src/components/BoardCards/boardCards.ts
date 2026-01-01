@@ -77,23 +77,35 @@ export class BoardCards extends MobxLitElement {
         const hasWinner = pokerBoardStore.hasWinner();
         const boardCardsUsedInWinningHand =
             pokerBoardStore.boardCardsUsedInWinningHand;
+        const winningHandName = pokerBoardStore.getWinningHandName();
 
         return html`
-            <div class="board-cards-container ${hasWinner ? "has-winner" : ""}">
-                ${board.map(
-                    (card, index) => html`
-                        <board-card
-                            .card=${card}
-                            .boardIndex=${index}
-                            .isInScope=${this.isBoardCardInScope(index)}
-                            .onClick=${this.handleBoardCardClick.bind(this)}
-                            .hasWinner=${hasWinner}
-                            .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(
-                                index
-                            )}
-                        ></board-card>
-                    `
-                )}
+            <div class="board-cards-wrapper">
+                <div
+                    class="board-cards-container ${hasWinner
+                        ? "has-winner"
+                        : ""}"
+                >
+                    ${board.map(
+                        (card, index) => html`
+                            <board-card
+                                .card=${card}
+                                .boardIndex=${index}
+                                .isInScope=${this.isBoardCardInScope(index)}
+                                .onClick=${this.handleBoardCardClick.bind(this)}
+                                .hasWinner=${hasWinner}
+                                .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(
+                                    index
+                                )}
+                            ></board-card>
+                        `
+                    )}
+                </div>
+                ${winningHandName
+                    ? html`<div class="winning-hand-name">
+                          ${winningHandName}
+                      </div>`
+                    : null}
             </div>
         `;
     }

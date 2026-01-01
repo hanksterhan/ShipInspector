@@ -1,7 +1,11 @@
 import { action, makeObservable, observable, reaction } from "mobx";
 import { Card, HandRank, CardRank } from "@common/interfaces";
 import { pokerService } from "../../services/index";
-import { holeToString, boardToString } from "../../components/utilities";
+import {
+    holeToString,
+    boardToString,
+    formatHandRank,
+} from "../../components/utilities";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -70,6 +74,9 @@ export class PokerBoardStore {
 
     @observable
     boardCardsUsedInWinningHand: Set<number> = new Set();
+
+    @observable
+    winningHandRank: HandRank | null = null;
 
     private currentAbortController: AbortController | null = null;
     private reactionDisposer: (() => void) | null = null;
@@ -473,6 +480,7 @@ export class PokerBoardStore {
 
         // Clear board cards used in winning hand
         this.boardCardsUsedInWinningHand = new Set();
+        this.winningHandRank = null;
     }
 
     /**
@@ -551,6 +559,8 @@ export class PokerBoardStore {
                 playerEquity: new Map(),
                 playerTieEquity: new Map(),
             };
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -567,6 +577,8 @@ export class PokerBoardStore {
                 playerEquity: new Map(),
                 playerTieEquity: new Map(),
             };
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -647,9 +659,10 @@ export class PokerBoardStore {
 
             // Update board cards used in winning hand if board is complete
             if (this.isBoardComplete() && this.hasWinner()) {
-                this.updateBoardCardsUsedInWinningHand();
+                await this.updateBoardCardsUsedInWinningHand();
             } else {
                 this.boardCardsUsedInWinningHand = new Set();
+                this.winningHandRank = null;
             }
         } catch (err) {
             // Don't set error for aborted requests
@@ -750,12 +763,14 @@ export class PokerBoardStore {
     async updateBoardCardsUsedInWinningHand() {
         if (!this.isBoardComplete()) {
             this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
         const winningPlayers = this.getWinningPlayers();
         if (winningPlayers.length === 0) {
             this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -764,12 +779,14 @@ export class PokerBoardStore {
         const player = this.players[winningPlayerIndex];
         if (!player || !player[0] || !player[1]) {
             this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
         const boardCards = this.getBoardCards();
         if (boardCards.length !== 5) {
             this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -783,6 +800,7 @@ export class PokerBoardStore {
             );
 
             const bestHandRank = evaluateResult.handRank;
+            this.winningHandRank = bestHandRank;
 
             // Find which 5 cards from 7 produce this hand rank
             const all7Cards: Card[] = [player[0], player[1], ...boardCards];
@@ -806,7 +824,19 @@ export class PokerBoardStore {
                 error
             );
             this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
         }
+    }
+
+    /**
+     * Get the formatted winning hand name (e.g., "K high flush", "pair of 6s")
+     * Returns null if there's no winning hand
+     */
+    getWinningHandName(): string | null {
+        if (!this.winningHandRank) {
+            return null;
+        }
+        return formatHandRank(this.winningHandRank);
     }
 
     /**
