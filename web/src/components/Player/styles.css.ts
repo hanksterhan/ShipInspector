@@ -15,6 +15,69 @@ export const styles = css`
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         backdrop-filter: blur(4px);
         border: 1px solid rgba(180, 180, 180, 0.6);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .player-wrapper.winner {
+        background: rgba(
+            76,
+            175,
+            80,
+            1
+        ); /* Victory green - fully opaque for better contrast */
+        border: 3px solid rgba(56, 142, 60, 1);
+        box-shadow:
+            0 8px 24px rgba(0, 0, 0, 0.4),
+            0 4px 16px rgba(76, 175, 80, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        animation: winner-glow 2s ease-in-out infinite;
+        z-index: 30; /* Ensure winner appears above other players */
+    }
+
+    @keyframes winner-glow {
+        0%,
+        100% {
+            box-shadow:
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                0 4px 16px rgba(76, 175, 80, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        50% {
+            box-shadow:
+                0 10px 32px rgba(0, 0, 0, 0.5),
+                0 6px 24px rgba(76, 175, 80, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    .crown-overlay {
+        position: absolute;
+        top: -32px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 48px;
+        height: 48px;
+        color: #ffd700; /* Gold color for crown */
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+            drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+        z-index: 35;
+        animation: crown-float 2s ease-in-out infinite;
+    }
+
+    .crown-overlay svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    @keyframes crown-float {
+        0%,
+        100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        50% {
+            transform: translateX(-50%) translateY(-4px);
+        }
     }
 
     .player-container {

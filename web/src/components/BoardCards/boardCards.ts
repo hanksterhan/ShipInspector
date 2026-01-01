@@ -21,6 +21,14 @@ export class BoardCards extends MobxLitElement {
      * Check if a board card slot is currently in scope
      */
     isBoardCardInScope(boardIndex: number): boolean {
+        // No blue glow if river card is selected or board is complete
+        const board = pokerBoardStore.board;
+        const riverCardSelected = board[4] !== null;
+        const boardComplete = pokerBoardStore.isBoardComplete();
+        if (riverCardSelected || boardComplete) {
+            return false;
+        }
+
         const scope = pokerBoardStore.scope;
         return scope.kind === "board" && scope.boardIndex === boardIndex;
     }
@@ -66,19 +74,38 @@ export class BoardCards extends MobxLitElement {
         // Access store properties to ensure MobX reactivity
         const board = pokerBoardStore.board;
         // Scope is accessed in isBoardCardInScope() method for reactivity
+        const hasWinner = pokerBoardStore.hasWinner();
+        const boardCardsUsedInWinningHand =
+            pokerBoardStore.boardCardsUsedInWinningHand;
+        const winningHandName = pokerBoardStore.getWinningHandName();
 
         return html`
-            <div class="board-cards-container">
-                ${board.map(
-                    (card, index) => html`
-                        <board-card
-                            .card=${card}
-                            .boardIndex=${index}
-                            .isInScope=${this.isBoardCardInScope(index)}
-                            .onClick=${this.handleBoardCardClick.bind(this)}
-                        ></board-card>
-                    `
-                )}
+            <div class="board-cards-wrapper">
+                <div
+                    class="board-cards-container ${hasWinner
+                        ? "has-winner"
+                        : ""}"
+                >
+                    ${board.map(
+                        (card, index) => html`
+                            <board-card
+                                .card=${card}
+                                .boardIndex=${index}
+                                .isInScope=${this.isBoardCardInScope(index)}
+                                .onClick=${this.handleBoardCardClick.bind(this)}
+                                .hasWinner=${hasWinner}
+                                .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(
+                                    index
+                                )}
+                            ></board-card>
+                        `
+                    )}
+                </div>
+                ${winningHandName
+                    ? html`<div class="winning-hand-name">
+                          ${winningHandName}
+                      </div>`
+                    : null}
             </div>
         `;
     }

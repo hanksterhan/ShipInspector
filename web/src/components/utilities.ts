@@ -1,5 +1,5 @@
 import { TemplateResult } from "lit";
-import { CardRank, CardSuit } from "@common/interfaces";
+import { CardRank, CardSuit, HandRank } from "@common/interfaces";
 import { clubsIcon, diamondsIcon, heartsIcon, spadesIcon } from "../assets";
 
 /**
@@ -72,4 +72,83 @@ export function boardToString(board: {
     cards: Array<{ rank: number; suit: string }>;
 }): string {
     return board.cards.map(cardToString).join(" ");
+}
+
+/**
+ * Get the label for a card rank (e.g., 13 -> "K", 14 -> "A")
+ */
+export function getRankLabel(rank: CardRank): string {
+    const rankData = RANKS.find((r) => r.rank === rank);
+    return rankData?.label || rank.toString();
+}
+
+/**
+ * Format a HandRank into a human-readable string
+ * Examples: "K high flush", "10 high straight", "Pair of 6s", "Full house (K over 6)", etc.
+ */
+export function formatHandRank(handRank: HandRank): string {
+    const { category, tiebreak } = handRank;
+
+    switch (category) {
+        case 9: // Royal Flush
+            return "Royal flush";
+        case 8: // Straight Flush
+            if (tiebreak.length > 0) {
+                const high = getRankLabel(tiebreak[0]);
+                return `${high} high straight flush`;
+            }
+            return "Straight flush";
+        case 7: // Four of a Kind
+            if (tiebreak.length > 0) {
+                const four = getRankLabel(tiebreak[0]);
+                return `Four of a kind (${four}s)`;
+            }
+            return "Four of a kind";
+        case 6: // Full House
+            if (tiebreak.length >= 2) {
+                const three = getRankLabel(tiebreak[0]);
+                const pair = getRankLabel(tiebreak[1]);
+                return `Full house (${three}s over ${pair}s)`;
+            }
+            return "Full house";
+        case 5: // Flush
+            if (tiebreak.length > 0) {
+                const high = getRankLabel(tiebreak[0]);
+                return `${high} high flush`;
+            }
+            return "Flush";
+        case 4: // Straight
+            if (tiebreak.length > 0) {
+                const high = getRankLabel(tiebreak[0]);
+                return `${high} high straight`;
+            }
+            return "Straight";
+        case 3: // Three of a Kind
+            if (tiebreak.length > 0) {
+                const three = getRankLabel(tiebreak[0]);
+                return `Three of a kind (${three}s)`;
+            }
+            return "Three of a kind";
+        case 2: // Two Pair
+            if (tiebreak.length >= 2) {
+                const highPair = getRankLabel(tiebreak[0]);
+                const lowPair = getRankLabel(tiebreak[1]);
+                return `Two pair (${highPair}s and ${lowPair}s)`;
+            }
+            return "Two pair";
+        case 1: // Pair
+            if (tiebreak.length > 0) {
+                const pair = getRankLabel(tiebreak[0]);
+                return `Pair of ${pair}s`;
+            }
+            return "Pair";
+        case 0: // High Card
+            if (tiebreak.length > 0) {
+                const high = getRankLabel(tiebreak[0]);
+                return `${high} high`;
+            }
+            return "High card";
+        default:
+            return "Unknown hand";
+    }
 }

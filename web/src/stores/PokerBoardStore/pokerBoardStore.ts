@@ -1,7 +1,11 @@
 import { action, makeObservable, observable, reaction } from "mobx";
-import { Card } from "@common/interfaces";
+import { Card, HandRank, CardRank } from "@common/interfaces";
 import { pokerService } from "../../services/index";
-import { holeToString, boardToString } from "../../components/utilities";
+import {
+    holeToString,
+    boardToString,
+    formatHandRank,
+} from "../../components/utilities";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -67,6 +71,12 @@ export class PokerBoardStore {
         playerEquity: new Map(),
         playerTieEquity: new Map(),
     };
+
+    @observable
+    boardCardsUsedInWinningHand: Set<number> = new Set();
+
+    @observable
+    winningHandRank: HandRank | null = null;
 
     private currentAbortController: AbortController | null = null;
     private reactionDisposer: (() => void) | null = null;
@@ -467,6 +477,10 @@ export class PokerBoardStore {
             playerEquity: new Map(),
             playerTieEquity: new Map(),
         };
+
+        // Clear board cards used in winning hand
+        this.boardCardsUsedInWinningHand = new Set();
+        this.winningHandRank = null;
     }
 
     /**
@@ -545,6 +559,8 @@ export class PokerBoardStore {
                 playerEquity: new Map(),
                 playerTieEquity: new Map(),
             };
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -561,6 +577,8 @@ export class PokerBoardStore {
                 playerEquity: new Map(),
                 playerTieEquity: new Map(),
             };
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
             return;
         }
 
@@ -638,6 +656,14 @@ export class PokerBoardStore {
                 playerEquity: playerEquityMap,
                 playerTieEquity: playerTieEquityMap,
             };
+
+            // Update board cards used in winning hand if board is complete
+            if (this.isBoardComplete() && this.hasWinner()) {
+                await this.updateBoardCardsUsedInWinningHand();
+            } else {
+                this.boardCardsUsedInWinningHand = new Set();
+                this.winningHandRank = null;
+            }
         } catch (err) {
             // Don't set error for aborted requests
             if (err instanceof Error && err.name === "AbortError") {
@@ -686,6 +712,371 @@ export class PokerBoardStore {
             return null;
         }
         return tiePercentage * 100; // Keep decimal precision for tie
+    }
+
+    /**
+     * Check if the board is complete (has 5 cards - river)
+     */
+    isBoardComplete(): boolean {
+        return this.getBoardCards().length === 5;
+    }
+
+    /**
+     * Check if a player is a winner (has 100% win equity when board is complete)
+     */
+    isPlayerWinner(playerIndex: number): boolean {
+        if (!this.isBoardComplete()) {
+            return false;
+        }
+        const winEquity = this.getPlayerEquity(playerIndex);
+        // When board is complete, winner has 100% win equity (or close due to rounding)
+        return winEquity !== null && winEquity >= 99.9;
+    }
+
+    /**
+     * Get all winning player indices when board is complete
+     */
+    getWinningPlayers(): number[] {
+        if (!this.isBoardComplete()) {
+            return [];
+        }
+        const winners: number[] = [];
+        for (const playerIndex of this.activePlayers) {
+            if (this.isPlayerWinner(playerIndex)) {
+                winners.push(playerIndex);
+            }
+        }
+        return winners;
+    }
+
+    /**
+     * Check if there is at least one winner when board is complete
+     */
+    hasWinner(): boolean {
+        return this.getWinningPlayers().length > 0;
+    }
+
+    /**
+     * Update which board cards are used in the winning hand
+     */
+    @action
+    async updateBoardCardsUsedInWinningHand() {
+        if (!this.isBoardComplete()) {
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
+            return;
+        }
+
+        const winningPlayers = this.getWinningPlayers();
+        if (winningPlayers.length === 0) {
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
+            return;
+        }
+
+        // Use the first winning player to determine which board cards are used
+        const winningPlayerIndex = winningPlayers[0];
+        const player = this.players[winningPlayerIndex];
+        if (!player || !player[0] || !player[1]) {
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
+            return;
+        }
+
+        const boardCards = this.getBoardCards();
+        if (boardCards.length !== 5) {
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
+            return;
+        }
+
+        try {
+            // Get the winning player's hand rank
+            const holeString = holeToString({ cards: [player[0], player[1]] });
+            const boardString = boardToString({ cards: boardCards });
+            const evaluateResult = await pokerService.evaluateHand(
+                holeString,
+                boardString
+            );
+
+            const bestHandRank = evaluateResult.handRank;
+            this.winningHandRank = bestHandRank;
+
+            // Find which 5 cards from 7 produce this hand rank
+            const all7Cards: Card[] = [player[0], player[1], ...boardCards];
+            const best5Cards = this.findBest5CardHand(all7Cards, bestHandRank);
+
+            // Determine which board cards are in the best 5-card hand
+            const boardIndicesUsed = new Set<number>();
+            for (let i = 0; i < boardCards.length; i++) {
+                const boardCard = boardCards[i];
+                if (
+                    best5Cards.some((card) => this.cardsEqual(card, boardCard))
+                ) {
+                    boardIndicesUsed.add(i);
+                }
+            }
+
+            this.boardCardsUsedInWinningHand = boardIndicesUsed;
+        } catch (error) {
+            console.error(
+                "Error determining board cards used in winning hand:",
+                error
+            );
+            this.boardCardsUsedInWinningHand = new Set();
+            this.winningHandRank = null;
+        }
+    }
+
+    /**
+     * Get the formatted winning hand name (e.g., "K high flush", "pair of 6s")
+     * Returns null if there's no winning hand
+     */
+    getWinningHandName(): string | null {
+        if (!this.winningHandRank) {
+            return null;
+        }
+        return formatHandRank(this.winningHandRank);
+    }
+
+    /**
+     * Find the best 5-card hand from 7 cards that matches the given hand rank
+     * When multiple combinations have the same rank, prefers the one that uses
+     * the player's hole cards (indices 0 and 1) over board cards
+     */
+    private findBest5CardHand(cards7: Card[], targetRank: HandRank): Card[] {
+        let bestHand: Card[] | null = null;
+        let bestRank: HandRank | null = null;
+        let bestHoleCardCount: number = -1; // Track how many hole cards are used
+
+        // Try all C(7,5) = 21 combinations
+        for (let i = 0; i < 7; i++) {
+            for (let j = i + 1; j < 7; j++) {
+                // Build 5-card combination by excluding cards at indices i and j
+                const cards5: Card[] = [];
+                const excludedIndices = new Set([i, j]);
+                for (let k = 0; k < 7; k++) {
+                    if (!excludedIndices.has(k)) {
+                        cards5.push(cards7[k]);
+                    }
+                }
+
+                const handRank = this.evaluate5CardHand(cards5);
+
+                // Count how many hole cards (indices 0 and 1) are in this combination
+                // We exclude 2 cards (indices i and j), so:
+                // holeCardsInHand = 2 - (number of excluded cards that are hole cards)
+                // A hole card is excluded if its index is < 2
+                const excludedHoleCards = (i < 2 ? 1 : 0) + (j < 2 ? 1 : 0);
+                const holeCardsInHand = 2 - excludedHoleCards;
+
+                const comparison =
+                    bestRank === null
+                        ? 1
+                        : this.compareHandRanks(handRank, bestRank);
+
+                if (comparison > 0) {
+                    // This hand is better
+                    bestRank = handRank;
+                    bestHand = cards5;
+                    bestHoleCardCount = holeCardsInHand;
+                } else if (comparison === 0) {
+                    // Same rank - prefer the one with more hole cards
+                    if (holeCardsInHand > bestHoleCardCount) {
+                        bestRank = handRank;
+                        bestHand = cards5;
+                        bestHoleCardCount = holeCardsInHand;
+                    }
+                }
+            }
+        }
+
+        // If we found a hand that matches the target rank, return it
+        if (bestRank && this.handRanksEqual(bestRank, targetRank) && bestHand) {
+            return bestHand;
+        }
+
+        // Fallback: return the best hand we found
+        return bestHand || [];
+    }
+
+    /**
+     * Evaluate a 5-card hand and return its hand rank
+     */
+    private evaluate5CardHand(cards5: Card[]): HandRank {
+        const ranks = cards5.map((c) => c.rank).sort((a, b) => b - a);
+        const suits = cards5.map((c) => c.suit);
+
+        // Count occurrences of each rank
+        const rankCounts = new Map<CardRank, number>();
+        ranks.forEach((rank) => {
+            rankCounts.set(rank, (rankCounts.get(rank) || 0) + 1);
+        });
+
+        const counts = Array.from(rankCounts.values()).sort((a, b) => b - a);
+        const isFlush = suits.every((suit) => suit === suits[0]);
+        const isStraight = this.isStraight(ranks);
+
+        // Check for Royal Flush (A-K-Q-J-10, all same suit)
+        if (isFlush && isStraight && ranks[0] === 14 && ranks[4] === 10) {
+            return { category: 9, tiebreak: [] };
+        }
+
+        // Check for Straight Flush
+        if (isFlush && isStraight) {
+            return { category: 8, tiebreak: [this.getStraightHigh(ranks)] };
+        }
+
+        // Check for Four of a Kind
+        if (counts[0] === 4) {
+            const fourOfAKind = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 4
+            )?.[0]!;
+            const kicker = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 1
+            )?.[0]!;
+            return { category: 7, tiebreak: [fourOfAKind, kicker] };
+        }
+
+        // Check for Full House
+        if (counts[0] === 3 && counts[1] === 2) {
+            const threeOfAKind = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 3
+            )?.[0]!;
+            const pair = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 2
+            )?.[0]!;
+            return { category: 6, tiebreak: [threeOfAKind, pair] };
+        }
+
+        // Check for Flush
+        if (isFlush) {
+            return { category: 5, tiebreak: ranks };
+        }
+
+        // Check for Straight
+        if (isStraight) {
+            return { category: 4, tiebreak: [this.getStraightHigh(ranks)] };
+        }
+
+        // Check for Three of a Kind
+        if (counts[0] === 3) {
+            const threeOfAKind = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 3
+            )?.[0]!;
+            const kickers = Array.from(rankCounts.entries())
+                .filter(([_, count]) => count === 1)
+                .map(([rank]) => rank)
+                .sort((a, b) => b - a);
+            return { category: 3, tiebreak: [threeOfAKind, ...kickers] };
+        }
+
+        // Check for Two Pair
+        if (counts[0] === 2 && counts[1] === 2) {
+            const pairs = Array.from(rankCounts.entries())
+                .filter(([_, count]) => count === 2)
+                .map(([rank]) => rank)
+                .sort((a, b) => b - a);
+            const kicker = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 1
+            )?.[0]!;
+            return { category: 2, tiebreak: [...pairs, kicker] };
+        }
+
+        // Check for Pair
+        if (counts[0] === 2) {
+            const pair = Array.from(rankCounts.entries()).find(
+                ([_, count]) => count === 2
+            )?.[0]!;
+            const kickers = Array.from(rankCounts.entries())
+                .filter(([_, count]) => count === 1)
+                .map(([rank]) => rank)
+                .sort((a, b) => b - a);
+            return { category: 1, tiebreak: [pair, ...kickers] };
+        }
+
+        // High Card
+        return { category: 0, tiebreak: ranks };
+    }
+
+    /**
+     * Check if ranks form a straight
+     */
+    private isStraight(ranks: CardRank[]): boolean {
+        // Check for A-2-3-4-5 (wheel)
+        if (
+            ranks[0] === 14 &&
+            ranks[1] === 5 &&
+            ranks[2] === 4 &&
+            ranks[3] === 3 &&
+            ranks[4] === 2
+        ) {
+            return true;
+        }
+
+        // Check for regular straight
+        for (let i = 0; i < ranks.length - 1; i++) {
+            if (ranks[i] - ranks[i + 1] !== 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get the high card of a straight
+     */
+    private getStraightHigh(ranks: CardRank[]): CardRank {
+        // For wheel (A-2-3-4-5), the high card is 5
+        if (
+            ranks[0] === 14 &&
+            ranks[1] === 5 &&
+            ranks[2] === 4 &&
+            ranks[3] === 3 &&
+            ranks[4] === 2
+        ) {
+            return 5;
+        }
+        return ranks[0];
+    }
+
+    /**
+     * Compare two hand ranks
+     * Returns: > 0 if rank1 > rank2, < 0 if rank1 < rank2, 0 if equal
+     */
+    private compareHandRanks(rank1: HandRank, rank2: HandRank): number {
+        if (rank1.category !== rank2.category) {
+            return rank1.category - rank2.category;
+        }
+
+        // Compare tiebreak arrays
+        for (
+            let i = 0;
+            i < Math.max(rank1.tiebreak.length, rank2.tiebreak.length);
+            i++
+        ) {
+            const val1 = rank1.tiebreak[i] || 0;
+            const val2 = rank2.tiebreak[i] || 0;
+            if (val1 !== val2) {
+                return val1 - val2;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Check if two hand ranks are equal
+     */
+    private handRanksEqual(rank1: HandRank, rank2: HandRank): boolean {
+        return this.compareHandRanks(rank1, rank2) === 0;
+    }
+
+    /**
+     * Check if two cards are equal
+     */
+    private cardsEqual(card1: Card, card2: Card): boolean {
+        return card1.rank === card2.rank && card1.suit === card2.suit;
     }
 
     /**

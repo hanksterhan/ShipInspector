@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
-import { plusIcon } from "../../assets";
+import { plusIcon, crownIcon } from "../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {
@@ -22,6 +22,14 @@ export class Player extends MobxLitElement {
      * Check if this card slot is currently in scope
      */
     isCardInScope(cardIndex: 0 | 1): boolean {
+        // No blue glow if river card is selected or board is complete
+        const board = pokerBoardStore.board;
+        const riverCardSelected = board[4] !== null;
+        const boardComplete = pokerBoardStore.isBoardComplete();
+        if (riverCardSelected || boardComplete) {
+            return false;
+        }
+
         const scope = pokerBoardStore.scope;
         return (
             scope.kind === "player" &&
@@ -117,8 +125,14 @@ export class Player extends MobxLitElement {
         // Show tie if it's non-trivial (> 0.1%)
         const showTie = tieEquity !== null && tieEquity > 0.1;
 
+        // Check if this player is a winner
+        const isWinner = pokerBoardStore.isPlayerWinner(playerIndex);
+
         return html`
-            <div class="player-wrapper">
+            <div class="player-wrapper ${isWinner ? "winner" : ""}">
+                ${isWinner
+                    ? html` <div class="crown-overlay">${crownIcon}</div> `
+                    : null}
                 <div class="player-container">
                     <div class="player-label">
                         Player ${this.playerIndex + 1}
