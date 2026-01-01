@@ -21,6 +21,14 @@ export class BoardCards extends MobxLitElement {
      * Check if a board card slot is currently in scope
      */
     isBoardCardInScope(boardIndex: number): boolean {
+        // No blue glow if river card is selected or board is complete
+        const board = pokerBoardStore.board;
+        const riverCardSelected = board[4] !== null;
+        const boardComplete = pokerBoardStore.isBoardComplete();
+        if (riverCardSelected || boardComplete) {
+            return false;
+        }
+
         const scope = pokerBoardStore.scope;
         return scope.kind === "board" && scope.boardIndex === boardIndex;
     }
@@ -67,7 +75,8 @@ export class BoardCards extends MobxLitElement {
         const board = pokerBoardStore.board;
         // Scope is accessed in isBoardCardInScope() method for reactivity
         const hasWinner = pokerBoardStore.hasWinner();
-        const boardCardsUsedInWinningHand = pokerBoardStore.boardCardsUsedInWinningHand;
+        const boardCardsUsedInWinningHand =
+            pokerBoardStore.boardCardsUsedInWinningHand;
 
         return html`
             <div class="board-cards-container ${hasWinner ? "has-winner" : ""}">
@@ -79,7 +88,9 @@ export class BoardCards extends MobxLitElement {
                             .isInScope=${this.isBoardCardInScope(index)}
                             .onClick=${this.handleBoardCardClick.bind(this)}
                             .hasWinner=${hasWinner}
-                            .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(index)}
+                            .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(
+                                index
+                            )}
                         ></board-card>
                     `
                 )}

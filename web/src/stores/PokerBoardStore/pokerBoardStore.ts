@@ -801,7 +801,10 @@ export class PokerBoardStore {
 
             this.boardCardsUsedInWinningHand = boardIndicesUsed;
         } catch (error) {
-            console.error("Error determining board cards used in winning hand:", error);
+            console.error(
+                "Error determining board cards used in winning hand:",
+                error
+            );
             this.boardCardsUsedInWinningHand = new Set();
         }
     }
@@ -811,10 +814,7 @@ export class PokerBoardStore {
      * When multiple combinations have the same rank, prefers the one that uses
      * the player's hole cards (indices 0 and 1) over board cards
      */
-    private findBest5CardHand(
-        cards7: Card[],
-        targetRank: HandRank
-    ): Card[] {
+    private findBest5CardHand(cards7: Card[], targetRank: HandRank): Card[] {
         let bestHand: Card[] | null = null;
         let bestRank: HandRank | null = null;
         let bestHoleCardCount: number = -1; // Track how many hole cards are used
@@ -832,7 +832,7 @@ export class PokerBoardStore {
                 }
 
                 const handRank = this.evaluate5CardHand(cards5);
-                
+
                 // Count how many hole cards (indices 0 and 1) are in this combination
                 // We exclude 2 cards (indices i and j), so:
                 // holeCardsInHand = 2 - (number of excluded cards that are hole cards)
@@ -840,10 +840,11 @@ export class PokerBoardStore {
                 const excludedHoleCards = (i < 2 ? 1 : 0) + (j < 2 ? 1 : 0);
                 const holeCardsInHand = 2 - excludedHoleCards;
 
-                const comparison = bestRank === null 
-                    ? 1 
-                    : this.compareHandRanks(handRank, bestRank);
-                
+                const comparison =
+                    bestRank === null
+                        ? 1
+                        : this.compareHandRanks(handRank, bestRank);
+
                 if (comparison > 0) {
                     // This hand is better
                     bestRank = handRank;
@@ -1019,7 +1020,11 @@ export class PokerBoardStore {
         }
 
         // Compare tiebreak arrays
-        for (let i = 0; i < Math.max(rank1.tiebreak.length, rank2.tiebreak.length); i++) {
+        for (
+            let i = 0;
+            i < Math.max(rank1.tiebreak.length, rank2.tiebreak.length);
+            i++
+        ) {
             const val1 = rank1.tiebreak[i] || 0;
             const val2 = rank2.tiebreak[i] || 0;
             if (val1 !== val2) {

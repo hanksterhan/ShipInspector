@@ -68,7 +68,9 @@ export class BoardCard extends MobxLitElement {
             <div
                 class="board-card-display ${this.isInScope
                     ? "in-scope"
-                    : ""} ${this.isUsedInWinningHand ? "used-in-winning-hand" : ""}"
+                    : ""} ${this.isUsedInWinningHand
+                    ? "used-in-winning-hand"
+                    : ""}"
                 @click=${this.handleClick}
             >
                 <div class="board-card-content">

@@ -22,6 +22,14 @@ export class Player extends MobxLitElement {
      * Check if this card slot is currently in scope
      */
     isCardInScope(cardIndex: 0 | 1): boolean {
+        // No blue glow if river card is selected or board is complete
+        const board = pokerBoardStore.board;
+        const riverCardSelected = board[4] !== null;
+        const boardComplete = pokerBoardStore.isBoardComplete();
+        if (riverCardSelected || boardComplete) {
+            return false;
+        }
+
         const scope = pokerBoardStore.scope;
         return (
             scope.kind === "player" &&
