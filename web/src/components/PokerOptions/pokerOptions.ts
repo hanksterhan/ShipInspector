@@ -2,7 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { settingsStore } from "../../stores/index";
+import { settingsStore, cardStore } from "../../stores/index";
 import { closeIcon } from "../../assets/index";
 
 @customElement("poker-options")
@@ -13,9 +13,16 @@ export class PokerOptions extends MobxLitElement {
     }
 
     handleCardSelectionModeChange = (
-        mode: "Suit - Rank Selection" | "52 Cards"
+        mode: "Suit - Rank Selection" | "Rank - Suit Selection" | "52 Cards"
     ) => {
         settingsStore.setCardSelectionMode(mode);
+        // Reset card selection when mode changes
+        cardStore.resetSelection();
+        if (mode === "Rank - Suit Selection") {
+            cardStore.setSelectionStage("rank");
+        } else if (mode === "Suit - Rank Selection") {
+            cardStore.setSelectionStage("suit");
+        }
     };
 
     render() {
@@ -46,16 +53,20 @@ export class PokerOptions extends MobxLitElement {
                                 this.handleCardSelectionModeChange(
                                     selectedValue as
                                         | "Suit - Rank Selection"
+                                        | "Rank - Suit Selection"
                                         | "52 Cards"
                                 );
                             }}
                             class="selection-mode-buttons"
                         >
+                            <sp-action-button value="52 Cards">
+                                52 Cards
+                            </sp-action-button>
                             <sp-action-button value="Suit - Rank Selection">
                                 Suit - Rank Selection
                             </sp-action-button>
-                            <sp-action-button value="52 Cards">
-                                52 Cards
+                            <sp-action-button value="Rank - Suit Selection">
+                                Rank - Suit Selection
                             </sp-action-button>
                         </sp-action-group>
                     </div>

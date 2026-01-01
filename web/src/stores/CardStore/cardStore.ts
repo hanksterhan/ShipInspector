@@ -70,15 +70,26 @@ export class CardStore {
     @action
     setSelectedSuit(suit: CardSuit) {
         this.selectedSuit = suit;
-        this.selectionStage = "rank";
+        // If rank is already selected (Rank-Suit mode), complete the selection
+        if (this.selectedRank) {
+            this.selectedCard = { rank: this.selectedRank, suit };
+            this.selectionStage = "complete";
+        } else {
+            // Otherwise, move to rank selection (Suit-Rank mode)
+            this.selectionStage = "rank";
+        }
     }
 
     @action
     setSelectedRank(rank: CardRank) {
         this.selectedRank = rank;
+        // If suit is already selected (Suit-Rank mode), complete the selection
         if (this.selectedSuit) {
             this.selectedCard = { rank, suit: this.selectedSuit };
             this.selectionStage = "complete";
+        } else {
+            // Otherwise, move to suit selection (Rank-Suit mode)
+            this.selectionStage = "suit";
         }
     }
 
@@ -96,6 +107,11 @@ export class CardStore {
         this.selectedRank = null;
         this.selectedCard = null;
         this.selectionStage = "suit";
+    }
+
+    @action
+    setSelectionStage(stage: SelectionStage) {
+        this.selectionStage = stage;
     }
 
     @action

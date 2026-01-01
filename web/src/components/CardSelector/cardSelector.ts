@@ -18,26 +18,78 @@ export class CardSelector extends MobxLitElement {
         return styles;
     }
 
-    handleSuitClick(suit: CardSuit) {
-        cardStore.setSelectedSuit(suit);
+    firstUpdated() {
+        // Initialize the selection stage based on the current mode
+        this.initializeSelectionStage();
     }
 
-    handleRankClick(rank: CardRank) {
-        if (cardStore.selectedSuit) {
-            const card: Card = { rank, suit: cardStore.selectedSuit };
-            // Only allow selection if card is not already selected
-            if (!deckStore.isCardSelected(card)) {
-                deckStore.markCardAsSelected(card);
-                cardStore.setSelectedRank(rank);
+    initializeSelectionStage() {
+        // Only initialize if nothing is selected and we're at the default stage
+        if (
+            !cardStore.selectedSuit &&
+            !cardStore.selectedRank &&
+            !cardStore.selectedCard
+        ) {
+            if (settingsStore.cardSelectionMode === "Rank - Suit Selection") {
+                cardStore.setSelectionStage("rank");
+            } else if (
+                settingsStore.cardSelectionMode === "Suit - Rank Selection"
+            ) {
+                cardStore.setSelectionStage("suit");
+            }
+        }
+    }
 
-                // If picker is open, apply card to poker board scope
-                if (pokerBoardStore.pickerOpen) {
-                    if (pokerBoardStore.setCard(card)) {
-                        pokerBoardStore.closePicker();
-                        cardStore.resetSelection();
+    handleSuitClick(suit: CardSuit) {
+        // In Rank-Suit mode, rank should already be selected
+        if (settingsStore.cardSelectionMode === "Rank - Suit Selection") {
+            if (cardStore.selectedRank) {
+                const card: Card = {
+                    rank: cardStore.selectedRank,
+                    suit,
+                };
+                // Only allow selection if card is not already selected
+                if (!deckStore.isCardSelected(card)) {
+                    deckStore.markCardAsSelected(card);
+                    cardStore.setSelectedSuit(suit);
+
+                    // If picker is open, apply card to poker board scope
+                    if (pokerBoardStore.pickerOpen) {
+                        if (pokerBoardStore.setCard(card)) {
+                            pokerBoardStore.closePicker();
+                            this.handleReset();
+                        }
                     }
                 }
             }
+        } else {
+            // In Suit-Rank mode, just set the suit (rank selection comes next)
+            cardStore.setSelectedSuit(suit);
+        }
+    }
+
+    handleRankClick(rank: CardRank) {
+        // In Suit-Rank mode, suit must be selected first
+        if (settingsStore.cardSelectionMode === "Suit - Rank Selection") {
+            if (cardStore.selectedSuit) {
+                const card: Card = { rank, suit: cardStore.selectedSuit };
+                // Only allow selection if card is not already selected
+                if (!deckStore.isCardSelected(card)) {
+                    deckStore.markCardAsSelected(card);
+                    cardStore.setSelectedRank(rank);
+
+                    // If picker is open, apply card to poker board scope
+                    if (pokerBoardStore.pickerOpen) {
+                        if (pokerBoardStore.setCard(card)) {
+                            pokerBoardStore.closePicker();
+                            this.handleReset();
+                        }
+                    }
+                }
+            }
+        } else {
+            // In Rank-Suit mode, just set the rank
+            cardStore.setSelectedRank(rank);
         }
     }
 
@@ -59,6 +111,14 @@ export class CardSelector extends MobxLitElement {
 
     handleReset() {
         cardStore.resetSelection();
+        // Reset to the correct initial stage based on mode
+        if (settingsStore.cardSelectionMode === "Rank - Suit Selection") {
+            cardStore.setSelectionStage("rank");
+        } else if (
+            settingsStore.cardSelectionMode === "Suit - Rank Selection"
+        ) {
+            cardStore.setSelectionStage("suit");
+        }
     }
 
     renderSuitSelection(): TemplateResult {
@@ -90,6 +150,7 @@ export class CardSelector extends MobxLitElement {
     }
 
     renderRankSelection(): TemplateResult {
+        // This is for Suit-Rank mode: rank selection after suit is selected
         const selectedSuitData = SUITS.find(
             (s) => s.suit === cardStore.selectedSuit
         );
@@ -177,6 +238,111 @@ export class CardSelector extends MobxLitElement {
                     @click=${this.handleReset}
                 >
                     Back to Suits
+                </sp-action-button>
+            </div>
+        `;
+    }
+
+    renderRankFirstSelection(): TemplateResult {
+        // This is for Rank-Suit mode: rank selection first (no suit selected yet)
+        const numberRanks = RANKS.filter((r) => r.rank >= 2 && r.rank <= 10);
+        const faceRanks = RANKS.filter((r) => r.rank >= 11);
+        return html`
+            <div class="selection-stage">
+                <div class="rank-grid">
+                    <div class="rank-row">
+                        ${numberRanks.map((rankData) => {
+                            const isDisabled = false; // All ranks available initially
+                            return html`
+                                <sp-action-button
+                                    class="rank-button"
+                                    size="s"
+                                    ?disabled=${isDisabled}
+                                    @click=${() =>
+                                        this.handleRankClick(rankData.rank)}
+                                >
+                                    <div class="rank-button-content">
+                                        <span class="rank-label"
+                                            >${rankData.label}</span
+                                        >
+                                    </div>
+                                </sp-action-button>
+                            `;
+                        })}
+                    </div>
+                    <div class="rank-row">
+                        ${faceRanks.map((rankData) => {
+                            const isDisabled = false; // All ranks available initially
+                            return html`
+                                <sp-action-button
+                                    class="rank-button"
+                                    size="s"
+                                    ?disabled=${isDisabled}
+                                    @click=${() =>
+                                        this.handleRankClick(rankData.rank)}
+                                >
+                                    <div class="rank-button-content">
+                                        <span class="rank-label"
+                                            >${rankData.label}</span
+                                        >
+                                    </div>
+                                </sp-action-button>
+                            `;
+                        })}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderSuitAfterRankSelection(): TemplateResult {
+        // This is for Rank-Suit mode: suit selection after rank is selected
+        const selectedRankData = RANKS.find(
+            (r) => r.rank === cardStore.selectedRank
+        );
+        return html`
+            <div class="selection-stage">
+                <div class="suit-grid">
+                    ${SUITS.map((suitData) => {
+                        const card: Card = {
+                            rank: cardStore.selectedRank!,
+                            suit: suitData.suit,
+                        };
+                        const isSelected = deckStore.isCardSelected(card);
+                        const isUsed = pokerBoardStore.pickerOpen
+                            ? pokerBoardStore.isCardUsed(card)
+                            : false;
+                        const isDisabled = isSelected || isUsed;
+                        return html`
+                            <sp-action-button
+                                class="suit-button"
+                                size="xl"
+                                ?disabled=${isDisabled}
+                                ?selected=${isSelected}
+                                @click=${() =>
+                                    this.handleSuitClick(suitData.suit)}
+                            >
+                                <div class="suit-button-content">
+                                    <span class="rank-label"
+                                        >${selectedRankData?.label}</span
+                                    >
+                                    <span
+                                        class="suit-icon"
+                                        style="color: ${suitData.color}"
+                                    >
+                                        ${suitData.icon}
+                                    </span>
+                                </div>
+                            </sp-action-button>
+                        `;
+                    })}
+                </div>
+                <sp-action-button
+                    class="back-button"
+                    size="m"
+                    @click=${this.handleReset}
+                >
+                    Back to Ranks
                 </sp-action-button>
             </div>
         `;
@@ -292,6 +458,23 @@ export class CardSelector extends MobxLitElement {
                     ${cardStore.selectionStage === "complete"
                         ? this.renderCompleteSelection()
                         : this.render52CardsSelection()}
+                </div>
+            `;
+        }
+
+        // Check if we're in "Rank - Suit Selection" mode
+        if (settingsStore.cardSelectionMode === "Rank - Suit Selection") {
+            return html`
+                <div class="card-selector-container">
+                    ${cardStore.selectionStage === "rank"
+                        ? this.renderRankFirstSelection()
+                        : ""}
+                    ${cardStore.selectionStage === "suit"
+                        ? this.renderSuitAfterRankSelection()
+                        : ""}
+                    ${cardStore.selectionStage === "complete"
+                        ? this.renderCompleteSelection()
+                        : ""}
                 </div>
             `;
         }
