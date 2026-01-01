@@ -6,12 +6,12 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import {
     menuStore,
-    cardStore,
     deckStore,
     equityStore,
-    settingsStore,
     authStore,
     routerStore,
+    pokerBoardStore,
+    outsStore,
 } from "../../stores/index";
 import { pokerIcon, boatIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
@@ -57,34 +57,14 @@ export class Menu extends MobxLitElement {
     }
 
     handleNewHand() {
-        // Clear all selected cards
+        // Reset all poker board state (players, board, scope, picker, equity)
+        pokerBoardStore.resetAll();
+        // Clear all selected cards from deck
         deckStore.clearSelectedCards();
-        // Reset all hole cards and board cards
-        cardStore.resetHoleSelection();
-        cardStore.setBoardCards([]);
-        cardStore.resetBoardSelection();
-        // Reset equity calculations
+        // Reset equity store (legacy store, if still in use)
         equityStore.reset();
-    }
-
-    handleNewBoard() {
-        // Reset only board cards
-        cardStore.boardCards.forEach((card) => {
-            deckStore.markCardAsUnselected(card);
-        });
-        cardStore.setBoardCards([]);
-        cardStore.resetBoardSelection();
-    }
-
-    get isBoardSelectorVisible(): boolean {
-        // Board selector is visible when:
-        // 1. We're on the poker-hands page
-        // 2. All holes are selected
-        const selectedHolesCount = cardStore.holeCards.filter(
-            (hole) => hole !== undefined
-        ).length;
-        const allHolesSelected = selectedHolesCount === settingsStore.players;
-        return menuStore.selectedPage === "poker-hands" && allHolesSelected;
+        // Reset outs calculations
+        outsStore.reset();
     }
 
     generateMenuItem(itemDetails: MenuItemDetails): TemplateResult {
@@ -117,14 +97,6 @@ export class Menu extends MobxLitElement {
                     })}
                 </div>
                 <div class="action-buttons">
-                    <sp-action-button
-                        class="new-board-button"
-                        size="s"
-                        ?disabled=${!this.isBoardSelectorVisible}
-                        @click=${this.handleNewBoard}
-                    >
-                        New board
-                    </sp-action-button>
                     <sp-action-button
                         class="new-hand-button"
                         size="s"
