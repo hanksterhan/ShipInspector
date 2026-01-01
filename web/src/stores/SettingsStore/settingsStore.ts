@@ -4,12 +4,11 @@ export class SettingsStore {
     @observable
     trayOpen: boolean = false;
 
-    // Default number of players is 2 (heads up)
     @observable
-    players: number = 2;
-
-    @observable
-    cardSelectionMode: "Suit - Rank Selection" | "52 Cards" = "52 Cards";
+    cardSelectionMode:
+        | "Suit - Rank Selection"
+        | "Rank - Suit Selection"
+        | "52 Cards" = "52 Cards";
 
     constructor() {
         makeObservable(this);
@@ -26,18 +25,14 @@ export class SettingsStore {
     }
 
     @action
-    setPlayers(players: number) {
-        this.players = players;
-    }
-
-    @action
-    setCardSelectionMode(mode: "Suit - Rank Selection" | "52 Cards") {
+    setCardSelectionMode(
+        mode: "Suit - Rank Selection" | "Rank - Suit Selection" | "52 Cards"
+    ) {
         this.cardSelectionMode = mode;
     }
 
     @action
     resetSettings() {
-        this.setPlayers(2);
         this.setCardSelectionMode("52 Cards");
     }
 }

@@ -1,11 +1,26 @@
 import { html } from "lit";
 import { styles } from "./styles.css";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
+import { pokerBoardStore } from "../../stores/index";
+import "../../components/OutsDisplay";
+import "../../components/PokerTable";
+import "../../components/CardPickerModal";
 
+/**
+ * PokerHands page - Texas Hold'em board and equity calculator
+ *
+ * Features:
+ * - Scope-based card selection with auto-advance
+ * - Modal card picker with disabled cards
+ * - Board with Flop/Turn/River labels
+ * - Player hands with hole cards
+ * - Real-time equity calculation
+ * - Reset and clear functionality
+ */
 @customElement("poker-hands")
 export class PokerHands extends MobxLitElement {
     static readonly TAG_NAME = "poker-hands";
@@ -13,11 +28,42 @@ export class PokerHands extends MobxLitElement {
         return styles;
     }
 
-    @property({ type: String })
-    placeholderProperty: string = "";
+    /**
+     * Check if outs display should be shown
+     * Only show when there are exactly 4 board cards (turn) and 2 active players with complete hands
+     */
+    shouldShowOuts(): boolean {
+        const activePlayersWithHands =
+            pokerBoardStore.getActivePlayersWithCompleteHands();
+        const boardCards = pokerBoardStore.getBoardCards();
+        return activePlayersWithHands.length === 2 && boardCards.length === 4;
+    }
 
     render() {
-        return html` <poker-hand></poker-hand> `;
+        const showOuts = this.shouldShowOuts();
+
+        return html`
+            <div class="poker-hands-wrapper">
+                <div class="poker-hands-container">
+                    <div class="poker-hands-content">
+                        <poker-table></poker-table>
+                        <!-- Outs Display below the board - only show when necessary -->
+                        ${showOuts
+                            ? html`
+                                  <div class="outs-display-container">
+                                      <outs-display></outs-display>
+                                  </div>
+                              `
+                            : null}
+                    </div>
+                </div>
+
+                <!-- Card Picker Modal -->
+                <card-picker-modal
+                    .isOpen=${pokerBoardStore.pickerOpen}
+                ></card-picker-modal>
+            </div>
+        `;
     }
 }
 

@@ -42,17 +42,32 @@ export class EquityStore {
         // Single centralized reaction that watches for card changes
         // This ensures only one reaction triggers calculations, even if multiple EquityDisplay components exist
         this.reactionDisposer = reaction(
-            () => [
-                cardStore.holeCards.length,
-                cardStore.holeCards.map((h) => (h ? h.cards : null)),
-                cardStore.boardCards.length,
-                cardStore.boardCards,
-            ],
             () => {
-                // Check if we have at least 2 players with hole cards
-                const validHoles = cardStore.holeCards.filter(
-                    (hole) => hole !== undefined && hole !== null
-                );
+                // Guard against cardStore being undefined during initialization
+                if (!cardStore) {
+                    return [0, [], 0, []];
+                }
+                return [
+                    cardStore.holeCards.length,
+                    cardStore.holeCards.map((h) =>
+                        h && "cards" in h ? h.cards : null
+                    ),
+                    cardStore.boardCards.length,
+                    cardStore.boardCards,
+                ];
+            },
+            () => {
+                // Guard against cardStore being undefined
+                if (!cardStore) {
+                    return;
+                }
+                // Check if we have at least 2 players with complete hole cards (both cards present)
+                const validHoles = cardStore.holeCards.filter((hole) => {
+                    if (!hole || !("cards" in hole)) {
+                        return false;
+                    }
+                    return hole.cards[0] !== null && hole.cards[1] !== null;
+                });
 
                 if (validHoles.length >= 2) {
                     // Trigger calculation - it will cancel any in-flight request
@@ -140,16 +155,27 @@ export class EquityStore {
 
     @action
     async calculateEquity() {
+        // Guard against cardStore being undefined
+        if (!cardStore) {
+            return;
+        }
+
         // Cancel any in-flight requests
         if (this.currentAbortController) {
             this.currentAbortController.abort();
             this.currentAbortController = null;
         }
 
-        // Only calculate if we have at least 2 players with hole cards
-        const validHoles = cardStore.holeCards.filter(
-            (hole) => hole !== undefined && hole !== null
-        );
+        // Only calculate if we have at least 2 players with complete hole cards (both cards present)
+        const validHoles = cardStore.holeCards
+            .filter((hole) => {
+                if (!hole || !("cards" in hole)) {
+                    return false;
+                }
+                // Only include holes where both cards are non-null
+                return hole.cards[0] !== null && hole.cards[1] !== null;
+            })
+            .map((hole) => hole as { cards: [Card, Card] });
 
         if (validHoles.length < 2) {
             this.equityResult = null;

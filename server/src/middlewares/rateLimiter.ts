@@ -41,11 +41,11 @@ export const globalRateLimiter = createRateLimiter(
 
 /**
  * Strict rate limiter for expensive operations (equity calculations)
- * Default: 20 requests per 15 minutes
+ * Default: 500 requests per 15 minutes
  */
 export const strictRateLimiter = createRateLimiter(
     parseInt(process.env.RATE_LIMIT_STRICT_WINDOW_MS || "900000", 10), // 15 minutes
-    parseInt(process.env.RATE_LIMIT_STRICT_MAX || "20", 10),
+    parseInt(process.env.RATE_LIMIT_STRICT_MAX || "500", 10),
     "Rate limit exceeded for this endpoint. Please try again later."
 );
 
