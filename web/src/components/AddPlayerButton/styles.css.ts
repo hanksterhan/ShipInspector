@@ -52,4 +52,59 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-700);
         white-space: nowrap;
     }
+
+    /* Responsive scaling for smaller viewports */
+    @media (max-width: 900px) {
+        .add-player-button {
+            min-width: 100px;
+            min-height: 50px;
+            padding: var(--spectrum-global-dimension-size-125);
+            gap: var(--spectrum-global-dimension-size-75);
+        }
+
+        .add-player-text {
+            font-size: var(--spectrum-global-dimension-font-size-175);
+        }
+
+        .add-player-icon {
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .add-player-button {
+            min-width: 90px;
+            min-height: 45px;
+            padding: var(--spectrum-global-dimension-size-100);
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .add-player-text {
+            font-size: var(--spectrum-global-dimension-font-size-150);
+        }
+
+        .add-player-icon {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .add-player-button {
+            min-width: 56px;
+            min-height: 28px;
+            padding: var(--spectrum-global-dimension-size-50);
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .add-player-text {
+            font-size: var(--spectrum-global-dimension-font-size-100);
+        }
+
+        .add-player-icon {
+            width: 10px;
+            height: 10px;
+        }
+    }
 `;

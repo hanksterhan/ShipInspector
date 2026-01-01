@@ -126,6 +126,33 @@ export const styles = css`
         height: 100%;
     }
 
+    /* Responsive scaling for smaller viewports */
+    @media (max-width: 900px) {
+        .board-card-placeholder,
+        .board-card-display {
+            width: 55px;
+            height: 77px;
+            min-width: 55px;
+            max-width: 55px;
+            min-height: 77px;
+            max-height: 77px;
+        }
+
+        .board-card-rank {
+            font-size: var(--spectrum-global-dimension-font-size-350);
+        }
+
+        .board-card-suit-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .board-card-placeholder-icon {
+            width: 28px;
+            height: 28px;
+        }
+    }
+
     @media (max-width: 600px) {
         .board-card-placeholder,
         .board-card-display {
@@ -149,6 +176,32 @@ export const styles = css`
         .board-card-placeholder-icon {
             width: 24px;
             height: 24px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .board-card-placeholder,
+        .board-card-display {
+            width: 30px;
+            height: 42px;
+            min-width: 30px;
+            max-width: 30px;
+            min-height: 42px;
+            max-height: 42px;
+        }
+
+        .board-card-rank {
+            font-size: var(--spectrum-global-dimension-font-size-175);
+        }
+
+        .board-card-suit-icon {
+            width: 13px;
+            height: 13px;
+        }
+
+        .board-card-placeholder-icon {
+            width: 14px;
+            height: 14px;
         }
     }
 `;

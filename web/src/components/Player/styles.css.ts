@@ -184,7 +184,69 @@ export const styles = css`
         text-align: center;
     }
 
+    /* Responsive scaling for smaller viewports */
+    @media (max-width: 900px) {
+        .player-wrapper {
+            padding: var(--spectrum-global-dimension-size-75)
+                var(--spectrum-global-dimension-size-150)
+                var(--spectrum-global-dimension-size-75)
+                var(--spectrum-global-dimension-size-150);
+        }
+
+        .player-label {
+            font-size: var(--spectrum-global-dimension-font-size-175);
+        }
+
+        .card-placeholder,
+        .card-display {
+            width: 55px;
+            height: 77px;
+            min-width: 55px;
+            max-width: 55px;
+            min-height: 77px;
+            max-height: 77px;
+        }
+
+        .card-rank {
+            font-size: var(--spectrum-global-dimension-font-size-350);
+        }
+
+        .card-suit-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .placeholder-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .equity-win,
+        .equity-tie {
+            font-size: var(--spectrum-global-dimension-font-size-175);
+        }
+    }
+
     @media (max-width: 600px) {
+        .player-wrapper {
+            padding: var(--spectrum-global-dimension-size-50)
+                var(--spectrum-global-dimension-size-100)
+                var(--spectrum-global-dimension-size-50)
+                var(--spectrum-global-dimension-size-100);
+        }
+
+        .player-label {
+            font-size: var(--spectrum-global-dimension-font-size-150);
+        }
+
+        .player-container {
+            gap: var(--spectrum-global-dimension-size-100);
+        }
+
+        .player-cards {
+            gap: var(--spectrum-global-dimension-size-75);
+        }
+
         .card-placeholder,
         .card-display {
             width: 50px;
@@ -207,6 +269,71 @@ export const styles = css`
         .placeholder-icon {
             width: 24px;
             height: 24px;
+        }
+
+        .equity-win,
+        .equity-tie {
+            font-size: var(--spectrum-global-dimension-font-size-150);
+        }
+
+        .player-equity {
+            padding: var(--spectrum-global-dimension-size-25)
+                var(--spectrum-global-dimension-size-50);
+        }
+    }
+
+    @media (max-width: 400px) {
+        .player-wrapper {
+            padding: var(--spectrum-global-dimension-size-50)
+                var(--spectrum-global-dimension-size-50)
+                var(--spectrum-global-dimension-size-50)
+                var(--spectrum-global-dimension-size-50);
+        }
+
+        .player-label {
+            font-size: var(--spectrum-global-dimension-font-size-100);
+        }
+
+        .player-container {
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .player-cards {
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .card-placeholder,
+        .card-display {
+            width: 30px;
+            height: 42px;
+            min-width: 30px;
+            max-width: 30px;
+            min-height: 42px;
+            max-height: 42px;
+        }
+
+        .card-rank {
+            font-size: var(--spectrum-global-dimension-font-size-175);
+        }
+
+        .card-suit-icon {
+            width: 13px;
+            height: 13px;
+        }
+
+        .placeholder-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .equity-win,
+        .equity-tie {
+            font-size: var(--spectrum-global-dimension-font-size-100);
+        }
+
+        .player-equity {
+            padding: var(--spectrum-global-dimension-size-25)
+                var(--spectrum-global-dimension-size-50);
         }
     }
 `;
