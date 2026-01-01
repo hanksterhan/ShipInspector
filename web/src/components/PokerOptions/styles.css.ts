@@ -53,40 +53,6 @@ export const styles = css`
         height: 32px;
     }
 
-    .player-controls-row {
-        display: flex;
-        align-items: center;
-        gap: var(--spectrum-global-dimension-size-200);
-        width: 100%;
-    }
-
-    .player-slider {
-        flex: 1;
-        --spectrum-slider-track-color: var(--spectrum-global-color-gray-300);
-        --spectrum-slider-track-color-disabled: var(
-            --spectrum-global-color-gray-200
-        );
-        --spectrum-slider-handle-color: var(--spectrum-global-color-blue-600);
-        --spectrum-slider-handle-color-hover: var(
-            --spectrum-global-color-blue-700
-        );
-        --spectrum-slider-handle-color-key-focus: var(
-            --spectrum-global-color-blue-600
-        );
-        --spectrum-slider-track-fill-color: var(
-            --spectrum-global-color-blue-500
-        );
-    }
-
-    .reset-button {
-        flex-shrink: 0;
-    }
-
-    sp-slider::part(label) {
-        color: var(--spectrum-global-color-gray-800);
-        font-weight: var(--spectrum-global-font-weight-medium);
-    }
-
     .mode-selectors-row {
         display: flex;
         flex-direction: row;

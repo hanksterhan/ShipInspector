@@ -5,9 +5,6 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { settingsStore } from "../../stores/index";
 import { closeIcon } from "../../assets/index";
 
-const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 12;
-
 @customElement("poker-options")
 export class PokerOptions extends MobxLitElement {
     static readonly TAG_NAME = "poker-options";
@@ -15,20 +12,10 @@ export class PokerOptions extends MobxLitElement {
         return styles;
     }
 
-    handleSliderChange = (event: Event) => {
-        const target = event.target as HTMLInputElement;
-        const value = parseInt(target.value, 10);
-        settingsStore.setPlayers(value);
-    };
-
     handleCardSelectionModeChange = (
         mode: "Suit - Rank Selection" | "52 Cards"
     ) => {
         settingsStore.setCardSelectionMode(mode);
-    };
-
-    handleReset = () => {
-        settingsStore.resetSettings();
     };
 
     render() {
@@ -43,25 +30,6 @@ export class PokerOptions extends MobxLitElement {
                 >
                     <span slot="icon" class="close-icon">${closeIcon}</span>
                 </sp-action-button>
-                <div class="player-controls-row">
-                    <sp-slider
-                        id="player-slider"
-                        class="player-slider"
-                        min=${MIN_PLAYERS}
-                        max=${MAX_PLAYERS}
-                        value=${settingsStore.players}
-                        step="1"
-                        @input=${this.handleSliderChange}
-                        label="Number of players: ${settingsStore.players}"
-                    >
-                    </sp-slider>
-                    <sp-action-button
-                        class="reset-button"
-                        @click=${this.handleReset}
-                    >
-                        Reset
-                    </sp-action-button>
-                </div>
                 <div class="mode-selectors-row">
                     <div class="card-selection-mode-container">
                         <sp-field-label>Card selection mode</sp-field-label>
