@@ -66,9 +66,10 @@ export class BoardCards extends MobxLitElement {
         // Access store properties to ensure MobX reactivity
         const board = pokerBoardStore.board;
         // Scope is accessed in isBoardCardInScope() method for reactivity
+        const hasWinner = pokerBoardStore.hasWinner();
 
         return html`
-            <div class="board-cards-container">
+            <div class="board-cards-container ${hasWinner ? "has-winner" : ""}">
                 ${board.map(
                     (card, index) => html`
                         <board-card
@@ -76,6 +77,7 @@ export class BoardCards extends MobxLitElement {
                             .boardIndex=${index}
                             .isInScope=${this.isBoardCardInScope(index)}
                             .onClick=${this.handleBoardCardClick.bind(this)}
+                            .hasWinner=${hasWinner}
                         ></board-card>
                     `
                 )}

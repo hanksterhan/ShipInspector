@@ -689,6 +689,48 @@ export class PokerBoardStore {
     }
 
     /**
+     * Check if the board is complete (has 5 cards - river)
+     */
+    isBoardComplete(): boolean {
+        return this.getBoardCards().length === 5;
+    }
+
+    /**
+     * Check if a player is a winner (has 100% win equity when board is complete)
+     */
+    isPlayerWinner(playerIndex: number): boolean {
+        if (!this.isBoardComplete()) {
+            return false;
+        }
+        const winEquity = this.getPlayerEquity(playerIndex);
+        // When board is complete, winner has 100% win equity (or close due to rounding)
+        return winEquity !== null && winEquity >= 99.9;
+    }
+
+    /**
+     * Get all winning player indices when board is complete
+     */
+    getWinningPlayers(): number[] {
+        if (!this.isBoardComplete()) {
+            return [];
+        }
+        const winners: number[] = [];
+        for (const playerIndex of this.activePlayers) {
+            if (this.isPlayerWinner(playerIndex)) {
+                winners.push(playerIndex);
+            }
+        }
+        return winners;
+    }
+
+    /**
+     * Check if there is at least one winner when board is complete
+     */
+    hasWinner(): boolean {
+        return this.getWinningPlayers().length > 0;
+    }
+
+    /**
      * Cleanup reaction on dispose
      */
     dispose() {
