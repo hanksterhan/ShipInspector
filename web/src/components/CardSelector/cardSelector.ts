@@ -64,7 +64,6 @@ export class CardSelector extends MobxLitElement {
     renderSuitSelection(): TemplateResult {
         return html`
             <div class="selection-stage">
-                <h3 class="stage-title">Select a Suit</h3>
                 <div class="suit-grid">
                     ${SUITS.map(
                         (suitData) => html`

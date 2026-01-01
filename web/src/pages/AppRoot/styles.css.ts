@@ -36,10 +36,10 @@ export const styles = css`
         height: 24px;
     }
 
+    .refresh-button,
     .settings-toggle-button {
         position: fixed;
         bottom: 24px;
-        right: 24px;
         z-index: 1000;
         background: white;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -49,6 +49,15 @@ export const styles = css`
         padding: 0;
     }
 
+    .refresh-button {
+        right: 80px;
+    }
+
+    .settings-toggle-button {
+        right: 24px;
+    }
+
+    .refresh-icon,
     .settings-icon {
         display: flex;
         align-items: center;
@@ -58,6 +67,7 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-700);
     }
 
+    .refresh-button:hover .refresh-icon,
     .settings-toggle-button:hover .settings-icon {
         color: var(--spectrum-global-color-gray-900);
     }

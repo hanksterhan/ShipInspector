@@ -15,8 +15,12 @@ import {
     settingsStore,
     authStore,
     routerStore,
+    pokerBoardStore,
+    deckStore,
+    equityStore,
+    outsStore,
 } from "../../stores/index";
-import { gearIcon } from "../../assets/index";
+import { gearIcon, refreshIcon } from "../../assets/index";
 
 @customElement("app-root")
 export class AppRoot extends MobxLitElement {
@@ -27,6 +31,17 @@ export class AppRoot extends MobxLitElement {
 
     @property({ type: String })
     selectedPage: string = menuStore.selectedPage;
+
+    handleNewHand() {
+        // Reset all poker board state (players, board, scope, picker, equity)
+        pokerBoardStore.resetAll();
+        // Clear all selected cards from deck
+        deckStore.clearSelectedCards();
+        // Reset equity store (legacy store, if still in use)
+        equityStore.reset();
+        // Reset outs calculations
+        outsStore.reset();
+    }
 
     render() {
         // Access observables directly to ensure MobX tracks them
@@ -140,16 +155,28 @@ export class AppRoot extends MobxLitElement {
                           </div>`
                         : null}
                     ${!settingsStore.trayOpen
-                        ? html`<sp-action-button
-                              class="settings-toggle-button"
-                              @click=${() => settingsStore.toggleTray()}
-                              quiet
-                              title="Settings"
-                          >
-                              <span slot="icon" class="settings-icon"
-                                  >${gearIcon}</span
+                        ? html`
+                              <sp-action-button
+                                  class="refresh-button"
+                                  @click=${this.handleNewHand}
+                                  quiet
+                                  title="New hand"
                               >
-                          </sp-action-button>`
+                                  <span slot="icon" class="refresh-icon"
+                                      >${refreshIcon}</span
+                                  >
+                              </sp-action-button>
+                              <sp-action-button
+                                  class="settings-toggle-button"
+                                  @click=${() => settingsStore.toggleTray()}
+                                  quiet
+                                  title="Settings"
+                              >
+                                  <span slot="icon" class="settings-icon"
+                                      >${gearIcon}</span
+                                  >
+                              </sp-action-button>
+                          `
                         : null}
                 </div>
             </sp-theme>
