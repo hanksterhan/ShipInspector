@@ -56,15 +56,15 @@ export const styles = css`
         border-color: var(--spectrum-global-color-gray-600);
     }
 
-    .board-card-display.winning-hand {
-        transform: translateY(-8px);
+    .board-card-display.used-in-winning-hand {
+        transform: translateY(-12px);
         border-color: rgba(76, 175, 80, 0.8);
         box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
         transition: all 0.3s ease;
     }
 
-    .board-card-display.winning-hand:hover {
-        transform: translateY(-10px);
+    .board-card-display.used-in-winning-hand:hover {
+        transform: translateY(-14px);
         box-shadow: 0 8px 20px rgba(76, 175, 80, 0.5);
     }
 

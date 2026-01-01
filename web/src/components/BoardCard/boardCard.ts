@@ -32,6 +32,9 @@ export class BoardCard extends MobxLitElement {
     @property({ type: Boolean })
     hasWinner: boolean = false;
 
+    @property({ type: Boolean })
+    isUsedInWinningHand: boolean = false;
+
     handleClick() {
         if (this.onClick) {
             this.onClick(this.boardIndex);
@@ -65,7 +68,7 @@ export class BoardCard extends MobxLitElement {
             <div
                 class="board-card-display ${this.isInScope
                     ? "in-scope"
-                    : ""} ${this.hasWinner ? "winning-hand" : ""}"
+                    : ""} ${this.isUsedInWinningHand ? "used-in-winning-hand" : ""}"
                 @click=${this.handleClick}
             >
                 <div class="board-card-content">
