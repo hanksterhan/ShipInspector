@@ -6,6 +6,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 import { pokerBoardStore } from "../../stores/index";
+// Import components to ensure they're registered
+import "../../components/HandBuilderSaveButton/handBuilderSaveButton";
+import "../../components/StartHandButton/startHandButton";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator
@@ -53,6 +56,13 @@ export class PokerHands extends MobxLitElement {
                                   </div>
                               `
                             : null}
+                        <!-- Hand Builder Controls -->
+                        <div
+                            style="margin-top: 20px; text-align: center; display: flex; gap: 12px; justify-content: center;"
+                        >
+                            <start-hand-button></start-hand-button>
+                            <hand-builder-save-button></hand-builder-save-button>
+                        </div>
                     </div>
                 </div>
 

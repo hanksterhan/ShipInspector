@@ -20,6 +20,7 @@ import {
     deckStore,
     equityStore,
     outsStore,
+    handBuilderStore,
 } from "../../stores/index";
 import { gearIcon, refreshIcon } from "../../assets/index";
 import { Route } from "../../stores/RouterStore/routerStore";
@@ -194,6 +195,11 @@ export class AppRoot extends MobxLitElement {
                                 menuStore.setSelectedPage("odds-calculator");
                             }
 
+                            // Handle replay routes
+                            if (route.startsWith("/replay/")) {
+                                return html`<hand-replay></hand-replay>`;
+                            }
+
                             switch (route) {
                                 case "/poker-hands":
                                     return html`<poker-hands></poker-hands>`;
@@ -207,6 +213,11 @@ export class AppRoot extends MobxLitElement {
                     ${settingsStore.trayOpen
                         ? html`<div class="settings-card">
                               <poker-options></poker-options>
+                          </div>`
+                        : null}
+                    ${handBuilderStore.handBuilderTrayOpen
+                        ? html`<div class="settings-card">
+                              <hand-builder-tray></hand-builder-tray>
                           </div>`
                         : null}
                     ${!settingsStore.trayOpen

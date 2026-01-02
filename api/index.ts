@@ -12,6 +12,9 @@ import evaluateHandHandler from "./poker/hand/evaluate";
 import compareHandsHandler from "./poker/hand/compare";
 import calculateEquityHandler from "./poker/equity/calculate";
 import calculateOutsHandler from "./poker/outs/calculate";
+import saveHandHandler from "./hands/save";
+// Note: [id].ts file needs to be imported dynamically due to bracket syntax
+// Vercel handles this file automatically for /hands/:id routes
 
 /**
  * Main router for Vercel serverless functions
@@ -74,6 +77,20 @@ export default async function handler(
     
     if (normalizedPath === "/poker/outs/calculate" || normalizedPath === "/poker/outs/calculate/") {
         return calculateOutsHandler(req, res);
+    }
+
+    // Hand replayer routes
+    if (normalizedPath === "/hands/save" || normalizedPath === "/hands/save/") {
+        return saveHandHandler(req, res);
+    }
+
+    // Dynamic route for /hands/:id
+    const handIdMatch = normalizedPath.match(/^\/hands\/([^\/]+)\/?$/);
+    if (handIdMatch) {
+        // Use dynamic import for file with brackets in name
+        const getHandHandlerModule = await import("./hands/[id]");
+        req.query.id = handIdMatch[1];
+        return getHandHandlerModule.default(req, res);
     }
 
     // 404 for unknown routes

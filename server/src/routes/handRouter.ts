@@ -6,9 +6,9 @@ import { requireAuth, strictRateLimiter } from "../middlewares";
  * @swagger
  * tags:
  *   - name: Poker Hand Evaluation
- *     description: Endpoints for evaluating and comparing poker hands
+ *     description: "Endpoints for evaluating and comparing poker hands"
  *   - name: Poker Equity Calculation
- *     description: Endpoints for calculating poker hand equity (win/tie/lose percentages)
+ *     description: "Endpoints for calculating poker hand equity (win/tie/lose percentages)"
  */
 
 function createRouter(): IRouter {
@@ -165,7 +165,7 @@ function createRouter(): IRouter {
      *     tags:
      *       - Poker Equity Calculation
      *     summary: Calculate equity for multiple players
-     *     description: Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Supports all poker stages: preflop (0 cards), postflop (3 cards), turn (4 cards), and river (5 cards). Uses high-performance Rust WASM implementation for preflop and TypeScript enumeration for partial boards.
+     *     description: "Calculates win/tie/lose percentages (equity) for multiple players given their hole cards and a board state. Supports all poker stages: preflop (0 cards), postflop (3 cards), turn (4 cards), and river (5 cards). Uses high-performance Rust WASM implementation for preflop and TypeScript enumeration for partial boards."
      *     requestBody:
      *       required: true
      *       content:

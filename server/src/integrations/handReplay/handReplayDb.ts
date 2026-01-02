@@ -401,5 +401,10 @@ export async function getActionTags(): Promise<
         ORDER BY key
     `;
 
-    return result;
+    return result.map((row: any) => ({
+        id: Number(row.id),
+        key: row.key,
+        description: row.description,
+        category: row.category,
+    }));
 }

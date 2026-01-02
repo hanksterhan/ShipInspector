@@ -1,6 +1,11 @@
 import { makeObservable, observable, action } from "mobx";
 
-export type Route = "/" | "/signin" | "/poker-hands" | "/odds-calculator";
+export type Route =
+    | "/"
+    | "/signin"
+    | "/poker-hands"
+    | "/odds-calculator"
+    | string; // string allows dynamic routes like /replay/:id
 
 export class RouterStore {
     @observable
@@ -41,7 +46,7 @@ export class RouterStore {
 
             // Notify listener of route change (for auth checks)
             if (this.onRouteChange && oldRoute !== route) {
-                this.onRouteChange(route);
+                this.onRouteChange(route as any);
             }
         }
     }
@@ -57,6 +62,8 @@ export class RouterStore {
             this.currentRoute = "/poker-hands";
         } else if (path === "/odds-calculator") {
             this.currentRoute = "/odds-calculator";
+        } else if (path.startsWith("/replay/")) {
+            this.currentRoute = path; // Allow dynamic replay routes
         } else {
             // Default to root
             this.currentRoute = "/";
