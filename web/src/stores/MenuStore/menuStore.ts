@@ -1,6 +1,6 @@
 import { action, makeObservable, observable } from "mobx";
 
-export type AppPages = "poker-hands";
+export type AppPages = "poker-hands" | "odds-calculator";
 export class MenuStore {
     constructor() {
         makeObservable(this);

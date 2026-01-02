@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { tableIcon } from "../../assets";
 import { pokerBoardStore } from "../../stores/index";
 import "../../components/Player";
-import "../../components/BoardCards";
+import "../../components/BoardCardContainer";
 import "../../components/AddPlayerButton";
 
 /**
@@ -138,7 +138,7 @@ export class PokerTable extends MobxLitElement {
                     )}
                     <!-- Board cards in the center -->
                     <div class="board-cards-wrapper">
-                        <board-cards></board-cards>
+                        <board-card-container></board-card-container>
                     </div>
                 </div>
             </div>

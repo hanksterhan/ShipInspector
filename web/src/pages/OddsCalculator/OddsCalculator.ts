@@ -8,7 +8,7 @@ import "../../components/index";
 import { pokerBoardStore } from "../../stores/index";
 
 /**
- * PokerHands page - Texas Hold'em board and equity calculator
+ * Odds Calculator page - Texas Hold'em board and equity calculator
  *
  * Features:
  * - Scope-based card selection with auto-advance
@@ -18,9 +18,9 @@ import { pokerBoardStore } from "../../stores/index";
  * - Real-time equity calculation
  * - Reset and clear functionality
  */
-@customElement("poker-hands")
-export class PokerHands extends MobxLitElement {
-    static readonly TAG_NAME = "poker-hands";
+@customElement("odds-calculator")
+export class OddsCalculator extends MobxLitElement {
+    static readonly TAG_NAME = "odds-calculator";
     static get styles() {
         return styles;
     }
@@ -40,9 +40,9 @@ export class PokerHands extends MobxLitElement {
         const showOuts = this.shouldShowOuts();
 
         return html`
-            <div class="poker-hands-wrapper">
-                <div class="poker-hands-container">
-                    <div class="poker-hands-content">
+            <div class="odds-calculator-wrapper">
+                <div class="odds-calculator-container">
+                    <div class="odds-calculator-content">
                         <poker-table></poker-table>
                         <!-- Outs Display below the board - only show when necessary -->
                         ${showOuts
@@ -66,6 +66,6 @@ export class PokerHands extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [PokerHands.TAG_NAME]: PokerHands;
+        [OddsCalculator.TAG_NAME]: OddsCalculator;
     }
 }

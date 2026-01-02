@@ -7,12 +7,12 @@ import { plusIcon } from "../../assets";
 import { SUITS, RANKS } from "../utilities";
 
 /**
- * BoardCard component - Displays a single board card or placeholder
+ * BoardCardSlot component - Displays a single board card or placeholder
  * Can be clicked to select/clear the card
  */
-@customElement("board-card")
-export class BoardCard extends MobxLitElement {
-    static readonly TAG_NAME = "board-card";
+@customElement("board-card-slot")
+export class BoardCardSlot extends MobxLitElement {
+    static readonly TAG_NAME = "board-card-slot";
     static get styles() {
         return styles;
     }
@@ -91,6 +91,6 @@ export class BoardCard extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [BoardCard.TAG_NAME]: BoardCard;
+        [BoardCardSlot.TAG_NAME]: BoardCardSlot;
     }
 }

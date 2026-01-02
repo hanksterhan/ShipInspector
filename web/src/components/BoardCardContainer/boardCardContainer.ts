@@ -4,15 +4,15 @@ import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../stores/index";
-import "../../components/BoardCard";
+import "../../components/BoardCardSlot";
 
 /**
- * BoardCards component - Container for all board cards
+ * BoardCardContainer component - Container for all board cards
  * Handles board card clicks and scope management
  */
-@customElement("board-cards")
-export class BoardCards extends MobxLitElement {
-    static readonly TAG_NAME = "board-cards";
+@customElement("board-card-container")
+export class BoardCardContainer extends MobxLitElement {
+    static readonly TAG_NAME = "board-card-container";
     static get styles() {
         return styles;
     }
@@ -88,7 +88,7 @@ export class BoardCards extends MobxLitElement {
                 >
                     ${board.map(
                         (card, index) => html`
-                            <board-card
+                            <board-card-slot
                                 .card=${card}
                                 .boardIndex=${index}
                                 .isInScope=${this.isBoardCardInScope(index)}
@@ -97,7 +97,7 @@ export class BoardCards extends MobxLitElement {
                                 .isUsedInWinningHand=${boardCardsUsedInWinningHand.has(
                                     index
                                 )}
-                            ></board-card>
+                            ></board-card-slot>
                         `
                     )}
                 </div>
@@ -113,6 +113,6 @@ export class BoardCards extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [BoardCards.TAG_NAME]: BoardCards;
+        [BoardCardContainer.TAG_NAME]: BoardCardContainer;
     }
 }
