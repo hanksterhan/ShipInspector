@@ -12,7 +12,7 @@ export * from "./AddPlayerButton";
 export * from "./CardPickerModal";
 export * from "./PlayerNameEditModal";
 export * from "./PokerTable";
-export * from "./HandBuilderSaveButton";
-export * from "./HandBuilderTray";
+export * from "./SaveHandButton";
+export * from "./ActionOptionsTray";
 export * from "./StartHandButton";
 // PLOP: APPEND COMPONENT EXPORTS

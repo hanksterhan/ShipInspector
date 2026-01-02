@@ -87,7 +87,7 @@ export const styles = css`
     }
 
     .settings-card poker-options,
-    .settings-card hand-builder-tray {
+    .settings-card action-options-tray {
         pointer-events: all;
         width: 100%;
         max-width: 600px;

@@ -5,9 +5,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { handBuilderStore, ActionType } from "../../stores/index";
 import { closeIcon } from "../../assets/index";
 
-@customElement("hand-builder-tray")
-export class HandBuilderTray extends MobxLitElement {
-    static readonly TAG_NAME = "hand-builder-tray";
+@customElement("action-options-tray")
+export class ActionOptionsTray extends MobxLitElement {
+    static readonly TAG_NAME = "action-options-tray";
 
     static get styles() {
         return styles;
@@ -326,6 +326,6 @@ export class HandBuilderTray extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [HandBuilderTray.TAG_NAME]: HandBuilderTray;
+        [ActionOptionsTray.TAG_NAME]: ActionOptionsTray;
     }
 }

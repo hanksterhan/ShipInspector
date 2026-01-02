@@ -5,9 +5,9 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { handBuilderStore } from "../../stores/index";
 import { routerStore } from "../../stores/index";
 
-@customElement("hand-builder-save-button")
-export class HandBuilderSaveButton extends MobxLitElement {
-    static readonly TAG_NAME = "hand-builder-save-button";
+@customElement("save-hand-button")
+export class SaveHandButton extends MobxLitElement {
+    static readonly TAG_NAME = "save-hand-button";
 
     static get styles() {
         return styles;
@@ -54,6 +54,6 @@ export class HandBuilderSaveButton extends MobxLitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        [HandBuilderSaveButton.TAG_NAME]: HandBuilderSaveButton;
+        [SaveHandButton.TAG_NAME]: SaveHandButton;
     }
 }

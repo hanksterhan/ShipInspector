@@ -217,7 +217,7 @@ export class AppRoot extends MobxLitElement {
                         : null}
                     ${handBuilderStore.handBuilderTrayOpen
                         ? html`<div class="settings-card">
-                              <hand-builder-tray></hand-builder-tray>
+                              <action-options-tray></action-options-tray>
                           </div>`
                         : null}
                     ${!settingsStore.trayOpen

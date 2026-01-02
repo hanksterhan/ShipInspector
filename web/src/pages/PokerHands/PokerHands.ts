@@ -7,7 +7,7 @@ import "../index";
 import "../../components/index";
 import { pokerBoardStore } from "../../stores/index";
 // Import components to ensure they're registered
-import "../../components/HandBuilderSaveButton/handBuilderSaveButton";
+import "../../components/SaveHandButton/saveHandButton";
 import "../../components/StartHandButton/startHandButton";
 
 /**
@@ -61,7 +61,7 @@ export class PokerHands extends MobxLitElement {
                             style="margin-top: 20px; text-align: center; display: flex; gap: 12px; justify-content: center;"
                         >
                             <start-hand-button></start-hand-button>
-                            <hand-builder-save-button></hand-builder-save-button>
+                            <save-hand-button></save-hand-button>
                         </div>
                     </div>
                 </div>
