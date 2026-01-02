@@ -38,6 +38,7 @@ export class PokerHands extends MobxLitElement {
 
     render() {
         const showOuts = this.shouldShowOuts();
+        const dealerSelectionMode = pokerBoardStore.dealerSelectionMode;
 
         return html`
             <div class="poker-hands-wrapper">
@@ -54,6 +55,11 @@ export class PokerHands extends MobxLitElement {
                             : null}
                     </div>
                 </div>
+
+                <!-- Dealer Selection Overlay -->
+                ${dealerSelectionMode
+                    ? html`<div class="dealer-selection-overlay"></div>`
+                    : null}
 
                 <!-- Card Picker Modal -->
                 <card-picker-modal
