@@ -6,9 +6,6 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "../index";
 import "../../components/index";
 import { pokerBoardStore } from "../../stores/index";
-import "../../components/OutsDisplay";
-import "../../components/PokerTable";
-import "../../components/CardPickerModal";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator

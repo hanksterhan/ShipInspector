@@ -30,4 +30,27 @@ export const styles = css`
         padding-bottom: 10px;
         gap: 24px;
     }
+
+    .outs-display-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 32px;
+    }
+
+    .player-hands-section {
+        display: flex;
+        justify-content: center;
+    }
+
+    .board-section {
+        display: flex;
+        justify-content: center;
+        position: relative;
+    }
+
+    .equity-section {
+        display: flex;
+        justify-content: center;
+    }
 `;
