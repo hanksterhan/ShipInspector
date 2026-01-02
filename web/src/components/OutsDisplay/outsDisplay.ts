@@ -120,24 +120,9 @@ export class OutsDisplay extends MobxLitElement {
             `;
         }
 
-        // Check if outs are suppressed
+        // Check if outs are suppressed - don't display anything
         if (result.suppressed) {
-            return html`
-                <div class="outs-display suppressed">
-                    <div class="suppressed-header">⚠️ Outs Suppressed</div>
-                    <div class="suppressed-reason">
-                        ${result.suppressed.reason}
-                    </div>
-                    <div class="baseline-stats">
-                        <div class="stat-item">
-                            Win: ${(result.baseline_win * 100).toFixed(1)}%
-                        </div>
-                        <div class="stat-item">
-                            Tie: ${(result.baseline_tie * 100).toFixed(1)}%
-                        </div>
-                    </div>
-                </div>
-            `;
+            return html``;
         }
 
         // Display outs for the player
