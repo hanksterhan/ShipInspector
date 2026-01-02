@@ -4,25 +4,31 @@ export const styles = css`
     :host {
         display: block;
         width: 100%;
+        max-width: 100%;
         height: 100%;
         overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
     }
 
     .tray-container {
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
         padding: var(--spectrum-global-dimension-size-300);
         padding-top: calc(var(--spectrum-global-dimension-size-300));
         gap: var(--spectrum-global-dimension-size-200);
         width: 100%;
-        max-width: 600px;
+        max-width: 100%;
         margin: 0 auto;
         background: rgb(255, 255, 255);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         position: relative;
         z-index: 1;
+        box-sizing: border-box;
+        min-width: 0;
     }
 
     .close-button {
@@ -56,11 +62,14 @@ export const styles = css`
     }
 
     .section {
-        margin-bottom: var(--spectrum-global-dimension-size-300);
+        flex: 1 1 200px;
+        min-width: 0;
+        max-width: 100%;
         padding: var(--spectrum-global-dimension-size-200);
         background-color: var(--spectrum-global-color-gray-50);
         border-radius: var(--spectrum-global-dimension-size-100);
         border: 1px solid var(--spectrum-global-color-gray-200);
+        box-sizing: border-box;
     }
 
     .section-title {
@@ -71,20 +80,20 @@ export const styles = css`
     }
 
     .street-info {
+        flex: 1 1 100%;
         background: #e7f3ff;
         padding: var(--spectrum-global-dimension-size-150);
         border-radius: var(--spectrum-global-dimension-size-100);
-        margin-bottom: var(--spectrum-global-dimension-size-200);
         font-size: 14px;
         font-weight: 500;
         color: #0056b3;
     }
 
     .current-player {
+        flex: 1 1 100%;
         background: var(--spectrum-global-color-gray-100);
         padding: var(--spectrum-global-dimension-size-200);
         border-radius: var(--spectrum-global-dimension-size-100);
-        margin-bottom: var(--spectrum-global-dimension-size-200);
     }
 
     .current-player-label {
@@ -106,10 +115,12 @@ export const styles = css`
     }
 
     .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
         gap: var(--spectrum-global-dimension-size-100);
-        margin-bottom: var(--spectrum-global-dimension-size-150);
+        width: 100%;
+        max-width: 100%;
     }
 
     .action-button {
@@ -122,6 +133,8 @@ export const styles = css`
         font-size: 14px;
         font-weight: 500;
         transition: all 0.2s;
+        min-width: 80px;
+        white-space: nowrap;
     }
 
     .action-button:hover {
@@ -141,14 +154,19 @@ export const styles = css`
 
     .bet-inputs {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         gap: var(--spectrum-global-dimension-size-150);
+        align-items: flex-end;
+        width: 100%;
+        max-width: 100%;
     }
 
     .input-group {
         display: flex;
         flex-direction: column;
         gap: 4px;
+        flex: 1 1 auto;
     }
 
     .input-group label {
@@ -174,6 +192,8 @@ export const styles = css`
         display: flex;
         flex-wrap: wrap;
         gap: var(--spectrum-global-dimension-size-100);
+        width: 100%;
+        max-width: 100%;
     }
 
     .tag-button {
@@ -197,7 +217,7 @@ export const styles = css`
     }
 
     .submit-section {
-        margin-top: var(--spectrum-global-dimension-size-300);
+        flex: 1 1 100%;
         padding-top: var(--spectrum-global-dimension-size-300);
         border-top: 1px solid var(--spectrum-global-color-gray-200);
     }
@@ -238,8 +258,18 @@ export const styles = css`
     }
 
     @media (max-width: 768px) {
-        .action-buttons {
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        .tray-container {
+            flex-direction: column;
+        }
+        
+        .section {
+            min-width: 100%;
+        }
+        
+        .street-info,
+        .current-player,
+        .submit-section {
+            flex: 1 1 100%;
         }
     }
 `;

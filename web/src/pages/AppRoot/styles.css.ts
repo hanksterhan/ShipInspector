@@ -91,6 +91,8 @@ export const styles = css`
         pointer-events: all;
         width: 100%;
         max-width: 600px;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
     .loading-container {
