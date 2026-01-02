@@ -139,11 +139,18 @@ export class AppRoot extends MobxLitElement {
                                 menuStore.selectedPage !== "poker-hands"
                             ) {
                                 menuStore.setSelectedPage("poker-hands");
+                            } else if (
+                                route === "/odds-calculator" &&
+                                menuStore.selectedPage !== "odds-calculator"
+                            ) {
+                                menuStore.setSelectedPage("odds-calculator");
                             }
 
                             switch (route) {
                                 case "/poker-hands":
                                     return html`<poker-hands></poker-hands>`;
+                                case "/odds-calculator":
+                                    return html`<odds-calculator></odds-calculator>`;
                                 default:
                                     return html`<poker-hands></poker-hands>`;
                             }
