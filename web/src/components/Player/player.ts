@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
-import { plusIcon, crownIcon, dealerIcon } from "../../assets";
+import { plusIcon, crownIcon, dealerIcon, pencilIcon } from "../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {
@@ -36,6 +36,22 @@ export class Player extends MobxLitElement {
             scope.playerIndex === this.playerIndex &&
             scope.cardIndex === cardIndex
         );
+    }
+
+    /**
+     * Handle edit button click
+     */
+    handleEditClick(e: Event) {
+        e.stopPropagation();
+        const currentName =
+            pokerBoardStore.playerNames.get(this.playerIndex) || "";
+        const newName = prompt(
+            "Enter player name:",
+            currentName || `Player ${this.playerIndex + 1}`
+        );
+        if (newName !== null) {
+            pokerBoardStore.setPlayerName(this.playerIndex, newName);
+        }
     }
 
     /**
@@ -132,6 +148,12 @@ export class Player extends MobxLitElement {
         const isDealer = pokerBoardStore.dealerIndex === playerIndex;
         const dealerSelectionMode = pokerBoardStore.dealerSelectionMode;
 
+        // Check if this player is active
+        const isActive = pokerBoardStore.isPlayerActive(playerIndex);
+
+        // Get player name
+        const playerName = pokerBoardStore.getPlayerName(playerIndex);
+
         return html`
             <div class="player-wrapper ${isWinner ? "winner" : ""}">
                 ${isWinner
@@ -164,8 +186,19 @@ export class Player extends MobxLitElement {
                       `
                     : null}
                 <div class="player-container">
-                    <div class="player-label">
-                        Player ${this.playerIndex + 1}
+                    <div class="player-label-container">
+                        <div class="player-label">${playerName}</div>
+                        ${isActive
+                            ? html`
+                                  <button
+                                      class="edit-button"
+                                      @click=${this.handleEditClick}
+                                      title="Edit player name"
+                                  >
+                                      ${pencilIcon}
+                                  </button>
+                              `
+                            : null}
                     </div>
                     <div class="player-cards">
                         ${this.renderCard(playerCards[0], 0)}

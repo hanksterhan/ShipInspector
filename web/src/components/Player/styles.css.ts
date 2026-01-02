@@ -141,11 +141,20 @@ export const styles = css`
         gap: var(--spectrum-global-dimension-size-150);
     }
 
+    .player-label-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spectrum-global-dimension-size-75);
+        width: 100%;
+    }
+
     .player-label {
         font-size: var(--spectrum-global-dimension-font-size-200);
         font-weight: var(--spectrum-global-font-weight-bold);
         color: var(--spectrum-global-color-gray-800);
         text-align: center;
+        flex: 1;
     }
 
     .player-cards {
@@ -153,6 +162,40 @@ export const styles = css`
         gap: var(--spectrum-global-dimension-size-100);
         align-items: center;
         justify-content: center;
+    }
+
+    .edit-button {
+        width: 20px;
+        height: 20px;
+        padding: 2px;
+        background: white;
+        border: 1px solid var(--spectrum-global-color-gray-400);
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .edit-button:hover {
+        background: var(--spectrum-global-color-gray-100);
+        border-color: var(--spectrum-global-color-gray-600);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        transform: scale(1.05);
+    }
+
+    .edit-button:active {
+        transform: scale(0.95);
+    }
+
+    .edit-button svg {
+        width: 14px;
+        height: 14px;
+        color: var(--spectrum-global-color-gray-600);
     }
 
     .card-placeholder,
@@ -338,6 +381,16 @@ export const styles = css`
             height: 28px;
         }
 
+        .edit-button {
+            width: 18px;
+            height: 18px;
+        }
+
+        .edit-button svg {
+            width: 12px;
+            height: 12px;
+        }
+
         .equity-win,
         .equity-tie {
             font-size: var(--spectrum-global-dimension-font-size-175);
@@ -386,6 +439,17 @@ export const styles = css`
         .placeholder-icon {
             width: 24px;
             height: 24px;
+        }
+
+        .edit-button {
+            width: 18px;
+            height: 18px;
+            padding: 2px;
+        }
+
+        .edit-button svg {
+            width: 12px;
+            height: 12px;
         }
 
         .equity-win,
@@ -441,6 +505,17 @@ export const styles = css`
         .placeholder-icon {
             width: 14px;
             height: 14px;
+        }
+
+        .edit-button {
+            width: 16px;
+            height: 16px;
+            padding: 2px;
+        }
+
+        .edit-button svg {
+            width: 10px;
+            height: 10px;
         }
 
         .equity-win,

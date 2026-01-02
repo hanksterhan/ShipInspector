@@ -49,6 +49,9 @@ export class PokerBoardStore {
     activePlayers: Set<number> = new Set([0, 1]); // By default, players 1 and 2 are active
 
     @observable
+    playerNames: Map<number, string> = new Map(); // Custom player names
+
+    @observable
     dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
 
     @observable
@@ -378,6 +381,29 @@ export class PokerBoardStore {
      */
     isPlayerActive(playerIndex: number): boolean {
         return this.activePlayers.has(playerIndex);
+    }
+
+    /**
+     * Get player name (custom name if set, otherwise default "Player N")
+     */
+    getPlayerName(playerIndex: number): string {
+        const customName = this.playerNames.get(playerIndex);
+        return customName || `Player ${playerIndex + 1}`;
+    }
+
+    /**
+     * Set player name
+     */
+    @action
+    setPlayerName(playerIndex: number, name: string | null) {
+        if (name === null || name.trim() === "") {
+            // Remove custom name to use default
+            this.playerNames.delete(playerIndex);
+        } else {
+            this.playerNames.set(playerIndex, name.trim());
+        }
+        // Trigger observable update by creating new Map
+        this.playerNames = new Map(this.playerNames);
     }
 
     /**
