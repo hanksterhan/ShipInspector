@@ -65,6 +65,12 @@ export class PokerHands extends MobxLitElement {
                 <card-picker-modal
                     .isOpen=${pokerBoardStore.pickerOpen}
                 ></card-picker-modal>
+
+                <!-- Player Name Edit Modal -->
+                <player-name-edit-modal
+                    .isOpen=${pokerBoardStore.playerNameEditOpen}
+                    .playerIndex=${pokerBoardStore.playerNameEditIndex}
+                ></player-name-edit-modal>
             </div>
         `;
     }

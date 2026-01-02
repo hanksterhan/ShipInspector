@@ -43,15 +43,7 @@ export class Player extends MobxLitElement {
      */
     handleEditClick(e: Event) {
         e.stopPropagation();
-        const currentName =
-            pokerBoardStore.playerNames.get(this.playerIndex) || "";
-        const newName = prompt(
-            "Enter player name:",
-            currentName || `Player ${this.playerIndex + 1}`
-        );
-        if (newName !== null) {
-            pokerBoardStore.setPlayerName(this.playerIndex, newName);
-        }
+        pokerBoardStore.openPlayerNameEdit(this.playerIndex);
     }
 
     /**

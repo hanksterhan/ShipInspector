@@ -70,6 +70,12 @@ export class PokerBoardStore {
     pickerOpen: boolean = false;
 
     @observable
+    playerNameEditOpen: boolean = false;
+
+    @observable
+    playerNameEditIndex: number | null = null;
+
+    @observable
     dealerSelectionMode: boolean = false;
 
     @observable
@@ -432,6 +438,24 @@ export class PokerBoardStore {
     @action
     closePicker() {
         this.pickerOpen = false;
+    }
+
+    /**
+     * Open the player name edit modal
+     */
+    @action
+    openPlayerNameEdit(playerIndex: number) {
+        this.playerNameEditIndex = playerIndex;
+        this.playerNameEditOpen = true;
+    }
+
+    /**
+     * Close the player name edit modal
+     */
+    @action
+    closePlayerNameEdit() {
+        this.playerNameEditOpen = false;
+        this.playerNameEditIndex = null;
     }
 
     /**

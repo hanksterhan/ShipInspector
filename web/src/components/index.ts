@@ -10,5 +10,6 @@ export * from "./BoardCardSlot";
 export * from "./BoardCardContainer";
 export * from "./AddPlayerButton";
 export * from "./CardPickerModal";
+export * from "./PlayerNameEditModal";
 export * from "./PokerTable";
 // PLOP: APPEND COMPONENT EXPORTS
