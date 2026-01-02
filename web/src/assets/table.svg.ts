@@ -55,7 +55,7 @@ export const tableIcon = svg`
   <text
     class="board-label"
     x="600"
-    y="200"
+    y="400"
     text-anchor="middle"
     font-size="24"
     fill="rgba(255,255,255,0.4)"
