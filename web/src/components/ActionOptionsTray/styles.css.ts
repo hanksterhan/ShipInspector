@@ -261,11 +261,11 @@ export const styles = css`
         .tray-container {
             flex-direction: column;
         }
-        
+
         .section {
             min-width: 100%;
         }
-        
+
         .street-info,
         .current-player,
         .submit-section {

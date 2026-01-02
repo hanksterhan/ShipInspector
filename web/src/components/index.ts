@@ -9,6 +9,7 @@ export * from "./Player";
 export * from "./BoardCardSlot";
 export * from "./BoardCardContainer";
 export * from "./AddPlayerButton";
+export * from "./AlertModal";
 export * from "./CardPickerModal";
 export * from "./PlayerNameEditModal";
 export * from "./PokerTable";

@@ -1,4 +1,4 @@
-import { TemplateResult, nothing } from "lit-html";
+import { TemplateResult, nothing } from "lit";
 
 export {};
 
