@@ -49,7 +49,10 @@ export class AppRoot extends MobxLitElement {
                 this.previousRoute = currentRoute;
 
                 // Reset hand stores when switching between "/poker-hands" and "/odds-calculator"
-                const pokerRoutes: Route[] = ["/poker-hands", "/odds-calculator"];
+                const pokerRoutes: Route[] = [
+                    "/poker-hands",
+                    "/odds-calculator",
+                ];
                 if (
                     prevRoute &&
                     pokerRoutes.includes(prevRoute) &&

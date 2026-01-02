@@ -67,6 +67,35 @@ export const styles = css`
         z-index: 15;
     }
 
+    /* Dealer selection help text */
+    .dealer-selection-help {
+        position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 40;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: fade-in 0.2s ease-in;
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -60%);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+    }
+
     /* Felt realism enhancements */
     /* Inner felt area: x=80, y=80, w=1040, h=440 in viewBox "0 0 1200 600" */
     /* As percentages: left=6.67%, top=13.33%, right=6.67%, bottom=13.33% */

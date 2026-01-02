@@ -80,6 +80,60 @@ export const styles = css`
         }
     }
 
+    .dealer-overlay {
+        position: absolute;
+        bottom: -48px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+    }
+
+    .dealer-overlay.selectable {
+        cursor: pointer;
+    }
+
+    .dealer-overlay.selectable:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        transform: translateX(-50%) scale(1.05);
+    }
+
+    .dealer-overlay svg {
+        width: 28px;
+        height: 28px;
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .dealer-selection-circle {
+        position: absolute;
+        bottom: -56px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 56px;
+        height: 56px;
+        border: 2px dotted var(--spectrum-global-color-gray-500);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        z-index: 25;
+        transition: all 0.2s ease;
+    }
+
+    .dealer-selection-circle:hover {
+        border-color: var(--spectrum-global-color-blue-500);
+        background: rgba(59, 130, 246, 0.1);
+        border-width: 3px;
+        transform: translateX(-50%) scale(1.1);
+    }
+
     .player-container {
         display: flex;
         flex-direction: column;

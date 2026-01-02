@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
-import { plusIcon, crownIcon } from "../../assets";
+import { plusIcon, crownIcon, dealerIcon } from "../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {
@@ -128,10 +128,40 @@ export class Player extends MobxLitElement {
         // Check if this player is a winner
         const isWinner = pokerBoardStore.isPlayerWinner(playerIndex);
 
+        // Check if this player is the dealer
+        const isDealer = pokerBoardStore.dealerIndex === playerIndex;
+        const dealerSelectionMode = pokerBoardStore.dealerSelectionMode;
+
         return html`
             <div class="player-wrapper ${isWinner ? "winner" : ""}">
                 ${isWinner
                     ? html` <div class="crown-overlay">${crownIcon}</div> `
+                    : null}
+                ${isDealer
+                    ? html`
+                          <div
+                              class="dealer-overlay ${dealerSelectionMode
+                                  ? "selectable"
+                                  : ""}"
+                              @click=${(e: Event) => {
+                                  e.stopPropagation();
+                                  pokerBoardStore.toggleDealerSelectionMode();
+                              }}
+                          >
+                              ${dealerIcon}
+                          </div>
+                      `
+                    : null}
+                ${dealerSelectionMode
+                    ? html`
+                          <div
+                              class="dealer-selection-circle"
+                              @click=${(e: Event) => {
+                                  e.stopPropagation();
+                                  pokerBoardStore.setDealer(playerIndex);
+                              }}
+                          ></div>
+                      `
                     : null}
                 <div class="player-container">
                     <div class="player-label">

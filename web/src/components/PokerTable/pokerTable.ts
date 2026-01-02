@@ -100,6 +100,7 @@ export class PokerTable extends MobxLitElement {
         // Access store properties to ensure MobX reactivity
         const players = pokerBoardStore.players;
         const playersLength = players.length;
+        const dealerSelectionMode = pokerBoardStore.dealerSelectionMode;
 
         return html`
             <div class="table-svg-container">
@@ -140,6 +141,14 @@ export class PokerTable extends MobxLitElement {
                     <div class="board-cards-wrapper">
                         <board-card-container></board-card-container>
                     </div>
+                    <!-- Dealer selection help text -->
+                    ${dealerSelectionMode
+                        ? html`
+                              <div class="dealer-selection-help">
+                                  Choose dealer position
+                              </div>
+                          `
+                        : null}
                 </div>
             </div>
         `;

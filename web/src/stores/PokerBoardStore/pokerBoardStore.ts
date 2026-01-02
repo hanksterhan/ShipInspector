@@ -49,6 +49,9 @@ export class PokerBoardStore {
     activePlayers: Set<number> = new Set([0, 1]); // By default, players 1 and 2 are active
 
     @observable
+    dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
+
+    @observable
     board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
         null,
         null,
@@ -62,6 +65,9 @@ export class PokerBoardStore {
 
     @observable
     pickerOpen: boolean = false;
+
+    @observable
+    dealerSelectionMode: boolean = false;
 
     @observable
     equity: EquityState = {
@@ -400,6 +406,23 @@ export class PokerBoardStore {
     @action
     closePicker() {
         this.pickerOpen = false;
+    }
+
+    /**
+     * Toggle dealer selection mode
+     */
+    @action
+    toggleDealerSelectionMode() {
+        this.dealerSelectionMode = !this.dealerSelectionMode;
+    }
+
+    /**
+     * Set the dealer position
+     */
+    @action
+    setDealer(playerIndex: number) {
+        this.dealerIndex = playerIndex;
+        this.dealerSelectionMode = false;
     }
 
     /**
