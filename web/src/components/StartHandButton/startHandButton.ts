@@ -82,10 +82,10 @@ export class StartHandButton extends MobxLitElement {
                 </button>
                 <alert-modal
                     .isOpen=${isDialogOpen}
-                    title="Validation Error"
+                    title="Error"
                     .message=${this.validationError || ""}
                     variant="error"
-                    buttonText="OK"
+                    buttonText="ok"
                     @close=${this.handleCloseDialog}
                 ></alert-modal>
             </div>

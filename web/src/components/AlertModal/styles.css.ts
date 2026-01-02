@@ -24,7 +24,7 @@ export const styles = css`
         background: var(--spectrum-global-color-gray-50, white);
         border-radius: var(--spectrum-global-dimension-size-200);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        max-width: min(90vw, 400px);
+        max-width: min(90vw, 500px);
         width: 100%;
         position: relative;
         animation: slideUp 0.3s ease-out;
