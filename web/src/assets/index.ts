@@ -17,4 +17,6 @@ export * from "./crown.svg";
 export * from "./dealer.svg";
 export * from "./pencil.svg";
 export * from "./coins.svg";
+export * from "./oneCoin.svg";
+export * from "./twoCoin.svg";
 // PLOP: APPEND ICON EXPORTS
