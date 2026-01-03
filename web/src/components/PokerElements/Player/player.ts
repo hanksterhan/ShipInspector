@@ -160,7 +160,7 @@ export class Player extends MobxLitElement {
                           <div
                               class="dealer-overlay ${dealerSelectionMode && isDealer
                                   ? "selectable"
-                                  : ""} ${isSmallBlind || isBigBlind ? "has-blinds" : ""}"
+                                  : ""} ${isSmallBlind || isBigBlind ? "has-blinds" : ""} position-${playerIndex}"
                               @click=${isDealer
                                   ? (e: Event) => {
                                         e.stopPropagation();
@@ -177,7 +177,7 @@ export class Player extends MobxLitElement {
                 ${dealerSelectionMode
                     ? html`
                           <div
-                              class="dealer-selection-circle"
+                              class="dealer-selection-circle position-${playerIndex}"
                               @click=${(e: Event) => {
                                   e.stopPropagation();
                                   pokerBoardStore.setDealer(playerIndex);

@@ -98,6 +98,32 @@ export const styles = css`
         z-index: 30;
     }
 
+    /* Players 3 and 4 (indices 2 and 3): icons on the left */
+    .dealer-overlay.position-2,
+    .dealer-overlay.position-3 {
+        bottom: 40%;
+        left: -48px;
+        transform: translateY(50%);
+    }
+
+    /* Players 5 and 6 (indices 4 and 5): icons above */
+    .dealer-overlay.position-4,
+    .dealer-overlay.position-5 {
+        bottom: auto;
+        top: -48px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Players 7 and 8 (indices 6 and 7): icons on the right */
+    .dealer-overlay.position-6,
+    .dealer-overlay.position-7 {
+        bottom: 40%;
+        left: auto;
+        right: -48px;
+        transform: translateY(50%);
+    }
+
     .dealer-overlay.has-blinds {
         width: 40px;
         height: 40px;
@@ -110,6 +136,21 @@ export const styles = css`
     .dealer-overlay.selectable:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         transform: translateX(-50%) scale(1.05);
+    }
+
+    .dealer-overlay.position-2.selectable:hover,
+    .dealer-overlay.position-3.selectable:hover {
+        transform: translateY(50%) scale(1.05);
+    }
+
+    .dealer-overlay.position-4.selectable:hover,
+    .dealer-overlay.position-5.selectable:hover {
+        transform: translateX(-50%) scale(1.05);
+    }
+
+    .dealer-overlay.position-6.selectable:hover,
+    .dealer-overlay.position-7.selectable:hover {
+        transform: translateY(50%) scale(1.05);
     }
 
     .dealer-overlay svg {
@@ -156,6 +197,47 @@ export const styles = css`
         background: rgba(59, 130, 246, 0.1);
         border-width: 3px;
         transform: translate(-50%, 50%) scale(1.1);
+    }
+
+    /* Players 3 and 4 (indices 2 and 3): selection circle on the left */
+    .dealer-selection-circle.position-2,
+    .dealer-selection-circle.position-3 {
+        bottom: 40%;
+        left: -28px;
+        transform: translate(-50%, 50%);
+    }
+
+    .dealer-selection-circle.position-2:hover,
+    .dealer-selection-circle.position-3:hover {
+        transform: translate(-50%, 50%) scale(1.1);
+    }
+
+    /* Players 5 and 6 (indices 4 and 5): selection circle above */
+    .dealer-selection-circle.position-4,
+    .dealer-selection-circle.position-5 {
+        bottom: auto;
+        top: -28px;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .dealer-selection-circle.position-4:hover,
+    .dealer-selection-circle.position-5:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    /* Players 7 and 8 (indices 6 and 7): selection circle on the right */
+    .dealer-selection-circle.position-6,
+    .dealer-selection-circle.position-7 {
+        bottom: 40%;
+        left: auto;
+        right: -28px;
+        transform: translate(50%, 50%);
+    }
+
+    .dealer-selection-circle.position-6:hover,
+    .dealer-selection-circle.position-7:hover {
+        transform: translate(50%, 50%) scale(1.1);
     }
 
     .player-container {
