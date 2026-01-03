@@ -18,6 +18,14 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         gap: 24px;
+        position: relative;
+    }
+
+    .blind-controls-wrapper {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 10;
     }
 
     .poker-hands-content {

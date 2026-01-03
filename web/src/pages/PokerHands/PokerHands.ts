@@ -44,6 +44,10 @@ export class PokerHands extends MobxLitElement {
         return html`
             <div class="poker-hands-wrapper">
                 <div class="poker-hands-container">
+                    <!-- Blind Controls in upper right corner -->
+                    <div class="blind-controls-wrapper">
+                        <blind-controls></blind-controls>
+                    </div>
                     <div class="poker-hands-content">
                         <poker-table></poker-table>
                         <!-- Outs Display below the board - only show when necessary -->

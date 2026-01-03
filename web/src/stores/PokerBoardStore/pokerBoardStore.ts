@@ -55,6 +55,12 @@ export class PokerBoardStore {
     dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
 
     @observable
+    smallBlind: number = 25;
+
+    @observable
+    bigBlind: number = 50;
+
+    @observable
     board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
         null,
         null,
@@ -522,6 +528,22 @@ export class PokerBoardStore {
     setDealer(playerIndex: number) {
         this.dealerIndex = playerIndex;
         this.dealerSelectionMode = false;
+    }
+
+    /**
+     * Set the small blind amount
+     */
+    @action
+    setSmallBlind(value: number) {
+        this.smallBlind = value;
+    }
+
+    /**
+     * Set the big blind amount
+     */
+    @action
+    setBigBlind(value: number) {
+        this.bigBlind = value;
     }
 
     /**
