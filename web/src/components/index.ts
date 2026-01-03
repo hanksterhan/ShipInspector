@@ -1,6 +1,5 @@
+export * from "./PlatformComponents/index";
 export * from "./Menu";
-export * from "./PlatformTableCell";
-export * from "./PlatformTable";
 export * from "./CardSelector";
 export * from "./PokerOptions";
 export * from "./EquityDisplay";
@@ -9,7 +8,6 @@ export * from "./Player";
 export * from "./BoardCardSlot";
 export * from "./BoardCardContainer";
 export * from "./AddPlayerButton";
-export * from "./AlertModal";
 export * from "./CardPickerModal";
 export * from "./PlayerNameEditModal";
 export * from "./PokerTable";

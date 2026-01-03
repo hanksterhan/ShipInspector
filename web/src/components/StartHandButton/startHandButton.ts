@@ -8,7 +8,7 @@ import {
     PokerBoardStore,
 } from "../../stores/index";
 import { observable, makeObservable } from "mobx";
-import "../../components/AlertModal";
+import "../PlatformComponents/AlertModal";
 
 @customElement("start-hand-button")
 export class StartHandButton extends MobxLitElement {
