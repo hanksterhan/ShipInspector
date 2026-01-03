@@ -20,10 +20,10 @@ export const styles = css`
     }
 
     .player-wrapper.in-scope {
-        border: 2px solid var(--spectrum-global-color-blue-500);
+        border: 2px solid #DAA520;
         box-shadow:
-            0 4px 16px rgba(59, 130, 246, 0.4),
-            0 0 0 4px rgba(59, 130, 246, 0.1);
+            0 2px 8px rgba(255, 215, 0, 0.3),
+            0 0 0 2px rgba(255, 215, 0, 0.15);
         animation: scope-highlight 2s ease-in-out infinite;
         z-index: 20;
     }
@@ -32,13 +32,13 @@ export const styles = css`
         0%,
         100% {
             box-shadow:
-                0 4px 16px rgba(59, 130, 246, 0.4),
-                0 0 0 4px rgba(59, 130, 246, 0.1);
+                0 2px 8px rgba(255, 215, 0, 0.3),
+                0 0 0 2px rgba(255, 215, 0, 0.15);
         }
         50% {
             box-shadow:
-                0 6px 24px rgba(59, 130, 246, 0.6),
-                0 0 0 6px rgba(59, 130, 246, 0.2);
+                0 4px 12px rgba(255, 215, 0, 0.4),
+                0 0 0 3px rgba(255, 215, 0, 0.2);
         }
     }
 
@@ -398,10 +398,9 @@ export const styles = css`
     }
 
     .card-placeholder.in-scope {
-        background: var(--spectrum-global-color-blue-100);
-        border-color: var(--spectrum-global-color-blue-500);
+        border: 2px solid #DAA520;
         border-style: solid;
-        box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: scope-pulse 2s ease-in-out infinite;
     }
 
@@ -418,18 +417,18 @@ export const styles = css`
     }
 
     .card-display.in-scope {
-        border-color: var(--spectrum-global-color-blue-500);
-        box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+        border: 2px solid #DAA520;
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: scope-pulse 2s ease-in-out infinite;
     }
 
     @keyframes scope-pulse {
         0%,
         100% {
-            box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
         50% {
-            box-shadow: 0 0 20px var(--spectrum-global-color-blue-500);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
         }
     }
 

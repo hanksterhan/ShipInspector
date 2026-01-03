@@ -37,10 +37,9 @@ export const styles = css`
     }
 
     .board-card-placeholder.in-scope {
-        background: var(--spectrum-global-color-blue-100);
-        border-color: var(--spectrum-global-color-blue-500);
+        border: 2px solid #DAA520;
         border-style: solid;
-        box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: board-scope-pulse 2s ease-in-out infinite;
     }
 
@@ -69,18 +68,18 @@ export const styles = css`
     }
 
     .board-card-display.in-scope {
-        border-color: var(--spectrum-global-color-blue-500);
-        box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+        border: 2px solid #DAA520;
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: board-scope-pulse 2s ease-in-out infinite;
     }
 
     @keyframes board-scope-pulse {
         0%,
         100% {
-            box-shadow: 0 0 12px var(--spectrum-global-color-blue-400);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
         50% {
-            box-shadow: 0 0 20px var(--spectrum-global-color-blue-500);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
         }
     }
 
