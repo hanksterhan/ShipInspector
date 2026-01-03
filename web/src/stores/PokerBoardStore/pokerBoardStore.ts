@@ -383,6 +383,55 @@ export class PokerBoardStore {
     }
 
     /**
+     * Remove a player (make them inactive)
+     */
+    @action
+    removePlayer(playerIndex: number) {
+        if (this.activePlayers.size <= 2) {
+            // Don't allow removing players if we'd have less than 2
+            return;
+        }
+        if (playerIndex >= 0 && playerIndex < PokerBoardStore.NUM_PLAYERS) {
+            this.activePlayers.delete(playerIndex);
+            // Trigger observable update by creating new Set
+            this.activePlayers = new Set(this.activePlayers);
+            // Clear player cards when removing
+            if (this.players[playerIndex]) {
+                this.players[playerIndex] = [null, null];
+            }
+            // If this was the dealer, reset dealer to first active player
+            if (this.dealerIndex === playerIndex) {
+                const activePlayersArray = Array.from(this.activePlayers).sort(
+                    (a, b) => a - b
+                );
+                if (activePlayersArray.length > 0) {
+                    this.dealerIndex = activePlayersArray[0];
+                } else {
+                    this.dealerIndex = 0; // Fallback
+                }
+            }
+            // If scope is on this player, clear scope and close picker
+            if (
+                this.scope.kind === "player" &&
+                this.scope.playerIndex === playerIndex
+            ) {
+                this.closePicker();
+                // Reset scope to first active player's first card
+                const activePlayersArray = Array.from(this.activePlayers).sort(
+                    (a, b) => a - b
+                );
+                if (activePlayersArray.length > 0) {
+                    this.scope = {
+                        kind: "player",
+                        playerIndex: activePlayersArray[0],
+                        cardIndex: 0,
+                    };
+                }
+            }
+        }
+    }
+
+    /**
      * Check if a player is active
      */
     isPlayerActive(playerIndex: number): boolean {
@@ -479,7 +528,9 @@ export class PokerBoardStore {
      * Find the next active player clockwise from a given position
      */
     private getNextActivePlayerClockwise(fromPosition: number): number | null {
-        const activePlayersArray = Array.from(this.activePlayers).sort((a, b) => a - b);
+        const activePlayersArray = Array.from(this.activePlayers).sort(
+            (a, b) => a - b
+        );
         if (activePlayersArray.length === 0) return null;
 
         // Find the next active player after fromPosition
@@ -490,7 +541,9 @@ export class PokerBoardStore {
         }
 
         // Wrap around: return the first active player
-        return activePlayersArray[0] !== fromPosition ? activePlayersArray[0] : null;
+        return activePlayersArray[0] !== fromPosition
+            ? activePlayersArray[0]
+            : null;
     }
 
     /**
@@ -499,12 +552,14 @@ export class PokerBoardStore {
      */
     getSmallBlindPosition(): number | null {
         if (this.activePlayers.size <= 1) return null;
-        
+
         // For heads-up (2 players), there's no small blind
         if (this.activePlayers.size === 2) return null;
 
         const sbPosition = this.getNextActivePlayerClockwise(this.dealerIndex);
-        return sbPosition !== null && sbPosition !== this.dealerIndex ? sbPosition : null;
+        return sbPosition !== null && sbPosition !== this.dealerIndex
+            ? sbPosition
+            : null;
     }
 
     /**
@@ -513,11 +568,15 @@ export class PokerBoardStore {
     getBigBlindPosition(): number | null {
         if (this.activePlayers.size < 2) return null;
 
-        const activePlayersArray = Array.from(this.activePlayers).sort((a, b) => a - b);
-        
+        const activePlayersArray = Array.from(this.activePlayers).sort(
+            (a, b) => a - b
+        );
+
         // For heads-up (2 players), BB is the non-dealer
         if (activePlayersArray.length === 2) {
-            return activePlayersArray.find(p => p !== this.dealerIndex) ?? null;
+            return (
+                activePlayersArray.find((p) => p !== this.dealerIndex) ?? null
+            );
         }
 
         // For 3+ players, BB is next after SB

@@ -19,6 +19,46 @@ export const styles = css`
         position: relative;
     }
 
+    .remove-button {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 24px;
+        height: 24px;
+        padding: 4px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--spectrum-global-color-gray-400);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: all 0.2s ease;
+        z-index: 40;
+    }
+
+    .remove-button:hover {
+        background: var(--spectrum-global-color-gray-400);
+        border-color: var(--spectrum-global-color-gray-500);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        transform: scale(1.1);
+    }
+
+    .remove-button:active {
+        transform: scale(0.95);
+    }
+
+    .remove-button svg {
+        width: 14px;
+        height: 14px;
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .remove-button:hover svg {
+        color: var(--spectrum-global-color-gray-900);
+    }
+
     .player-wrapper.winner {
         background: rgba(
             76,
@@ -497,6 +537,18 @@ export const styles = css`
             height: 12px;
         }
 
+        .remove-button {
+            width: 20px;
+            height: 20px;
+            top: -10px;
+            right: -10px;
+        }
+
+        .remove-button svg {
+            width: 12px;
+            height: 12px;
+        }
+
         .equity-win,
         .equity-tie {
             font-size: var(--spectrum-global-dimension-font-size-175);
@@ -554,6 +606,18 @@ export const styles = css`
         }
 
         .edit-button svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .remove-button {
+            width: 20px;
+            height: 20px;
+            top: -10px;
+            right: -10px;
+        }
+
+        .remove-button svg {
             width: 12px;
             height: 12px;
         }
@@ -620,6 +684,18 @@ export const styles = css`
         }
 
         .edit-button svg {
+            width: 10px;
+            height: 10px;
+        }
+
+        .remove-button {
+            width: 18px;
+            height: 18px;
+            top: -9px;
+            right: -9px;
+        }
+
+        .remove-button svg {
             width: 10px;
             height: 10px;
         }

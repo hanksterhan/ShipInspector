@@ -5,7 +5,15 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../../stores/index";
 import { SUITS, RANKS } from "../../utilities";
-import { plusIcon, crownIcon, dealerIcon, pencilIcon, oneCoinIcon, twoCoinIcon } from "../../../assets";
+import {
+    plusIcon,
+    crownIcon,
+    dealerIcon,
+    pencilIcon,
+    oneCoinIcon,
+    twoCoinIcon,
+    closeIcon,
+} from "../../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {
@@ -44,6 +52,14 @@ export class Player extends MobxLitElement {
     handleEditClick(e: Event) {
         e.stopPropagation();
         pokerBoardStore.openPlayerNameEdit(this.playerIndex);
+    }
+
+    /**
+     * Handle remove button click
+     */
+    handleRemoveClick(e: Event) {
+        e.stopPropagation();
+        pokerBoardStore.removePlayer(this.playerIndex);
     }
 
     /**
@@ -144,23 +160,45 @@ export class Player extends MobxLitElement {
         const isActive = pokerBoardStore.isPlayerActive(playerIndex);
 
         // Get blind positions (only if not in dealer selection mode)
-        const isSmallBlind = !dealerSelectionMode && pokerBoardStore.getSmallBlindPosition() === playerIndex;
-        const isBigBlind = !dealerSelectionMode && pokerBoardStore.getBigBlindPosition() === playerIndex;
+        const isSmallBlind =
+            !dealerSelectionMode &&
+            pokerBoardStore.getSmallBlindPosition() === playerIndex;
+        const isBigBlind =
+            !dealerSelectionMode &&
+            pokerBoardStore.getBigBlindPosition() === playerIndex;
 
         // Get player name
         const playerName = pokerBoardStore.getPlayerName(playerIndex);
 
+        // Check if we should show remove button (only when 3+ active players)
+        const activePlayersCount = pokerBoardStore.activePlayers.size;
+        const showRemoveButton = isActive && activePlayersCount >= 3;
+
         return html`
             <div class="player-wrapper ${isWinner ? "winner" : ""}">
+                ${showRemoveButton
+                    ? html`
+                          <button
+                              class="remove-button"
+                              @click=${this.handleRemoveClick}
+                              title="Remove player"
+                          >
+                              ${closeIcon}
+                          </button>
+                      `
+                    : null}
                 ${isWinner
                     ? html` <div class="crown-overlay">${crownIcon}</div> `
                     : null}
                 ${isDealer || isSmallBlind || isBigBlind
                     ? html`
                           <div
-                              class="dealer-overlay ${dealerSelectionMode && isDealer
+                              class="dealer-overlay ${dealerSelectionMode &&
+                              isDealer
                                   ? "selectable"
-                                  : ""} ${isSmallBlind || isBigBlind ? "has-blinds" : ""} position-${playerIndex}"
+                                  : ""} ${isSmallBlind || isBigBlind
+                                  ? "has-blinds"
+                                  : ""} position-${playerIndex}"
                               @click=${isDealer
                                   ? (e: Event) => {
                                         e.stopPropagation();
@@ -168,9 +206,17 @@ export class Player extends MobxLitElement {
                                     }
                                   : undefined}
                           >
-                              ${isSmallBlind ? html`<div class="blind-icon sb-icon">${oneCoinIcon}</div>` : null}
+                              ${isSmallBlind
+                                  ? html`<div class="blind-icon sb-icon">
+                                        ${oneCoinIcon}
+                                    </div>`
+                                  : null}
                               ${isDealer ? dealerIcon : null}
-                              ${isBigBlind ? html`<div class="blind-icon bb-icon">${twoCoinIcon}</div>` : null}
+                              ${isBigBlind
+                                  ? html`<div class="blind-icon bb-icon">
+                                        ${twoCoinIcon}
+                                    </div>`
+                                  : null}
                           </div>
                       `
                     : null}
