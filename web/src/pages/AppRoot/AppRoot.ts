@@ -22,7 +22,7 @@ import {
     outsStore,
     handBuilderStore,
 } from "../../stores/index";
-import { gearIcon, refreshIcon } from "../../assets";
+import { gearIcon, refreshIcon, saveIcon } from "../../assets";
 import { Route } from "../../stores/RouterStore/routerStore";
 
 @customElement("app-root")
@@ -92,6 +92,17 @@ export class AppRoot extends MobxLitElement {
 
     handleNewHand() {
         this.resetHandStores();
+    }
+
+    async handleSave() {
+        try {
+            const handId = await handBuilderStore.saveHand();
+            // Navigate to replay page
+            routerStore.navigate(`/replay/${handId}`);
+        } catch (error: any) {
+            console.error("Failed to save hand:", error);
+            // Error is already set in store
+        }
     }
 
     render() {
@@ -224,6 +235,22 @@ export class AppRoot extends MobxLitElement {
                         : null}
                     ${!settingsStore.trayOpen
                         ? html`
+                              ${handBuilderStore.handStarted
+                                  ? html`
+                                        <sp-action-button
+                                            class="save-button"
+                                            @click=${this.handleSave}
+                                            quiet
+                                            title="Save hand"
+                                            ?disabled=${handBuilderStore.isSaving ||
+                                            !handBuilderStore.canSave}
+                                        >
+                                            <span slot="icon" class="save-icon"
+                                                >${saveIcon}</span
+                                            >
+                                        </sp-action-button>
+                                    `
+                                  : null}
                               <sp-action-button
                                   class="refresh-button"
                                   @click=${this.handleNewHand}

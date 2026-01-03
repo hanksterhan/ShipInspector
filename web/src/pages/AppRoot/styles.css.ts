@@ -37,6 +37,7 @@ export const styles = css`
     }
 
     .refresh-button,
+    .save-button,
     .settings-toggle-button {
         position: fixed;
         bottom: 24px;
@@ -53,11 +54,16 @@ export const styles = css`
         right: 80px;
     }
 
+    .save-button {
+        right: 136px;
+    }
+
     .settings-toggle-button {
         right: 24px;
     }
 
     .refresh-icon,
+    .save-icon,
     .settings-icon {
         display: flex;
         align-items: center;
@@ -68,6 +74,7 @@ export const styles = css`
     }
 
     .refresh-button:hover .refresh-icon,
+    .save-button:hover .save-icon,
     .settings-toggle-button:hover .settings-icon {
         color: var(--spectrum-global-color-gray-900);
     }

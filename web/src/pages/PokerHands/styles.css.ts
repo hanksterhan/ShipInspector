@@ -38,6 +38,14 @@ export const styles = css`
         padding: 0 32px;
     }
 
+    .hand-builder-controls {
+        margin-top: 20px;
+        text-align: center;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
     .player-hands-section {
         display: flex;
         justify-content: center;

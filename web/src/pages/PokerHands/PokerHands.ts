@@ -55,11 +55,8 @@ export class PokerHands extends MobxLitElement {
                               `
                             : null}
                         <!-- Hand Builder Controls -->
-                        <div
-                            style="margin-top: 20px; text-align: center; display: flex; gap: 12px; justify-content: center;"
-                        >
+                        <div class="hand-builder-controls">
                             <start-hand-button></start-hand-button>
-                            <save-hand-button></save-hand-button>
                         </div>
                     </div>
                 </div>
