@@ -2,7 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { pokerBoardStore } from "../../stores/index";
+import { pokerBoardStore } from "../../../stores/index";
 
 /**
  * PlayerNameEditModal component - Modal dialog for editing player names

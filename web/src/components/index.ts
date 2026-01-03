@@ -1,17 +1,6 @@
 export * from "./PlatformComponents/index";
+export * from "./HandReplayer/index";
+export * from "./PokerElements/index";
 export * from "./Menu";
-export * from "./CardSelector";
-export * from "./PokerOptions";
-export * from "./EquityDisplay";
-export * from "./OutsDisplay";
-export * from "./Player";
-export * from "./BoardCardSlot";
-export * from "./BoardCardContainer";
-export * from "./AddPlayerButton";
-export * from "./CardPickerModal";
-export * from "./PlayerNameEditModal";
-export * from "./PokerTable";
-export * from "./SaveHandButton";
-export * from "./ActionOptionsTray";
-export * from "./StartHandButton";
+
 // PLOP: APPEND COMPONENT EXPORTS

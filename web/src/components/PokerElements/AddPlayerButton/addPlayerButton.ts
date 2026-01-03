@@ -2,7 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { addPlayerIcon } from "../../assets";
+import { addPlayerIcon } from "../../../assets";
 
 /**
  * AddPlayerButton component - Button to add a player at a specific position

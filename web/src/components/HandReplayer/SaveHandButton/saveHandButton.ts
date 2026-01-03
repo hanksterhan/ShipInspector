@@ -2,8 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { handBuilderStore } from "../../stores/index";
-import { routerStore } from "../../stores/index";
+import { handBuilderStore, routerStore } from "../../../stores/index";
 
 @customElement("save-hand-button")
 export class SaveHandButton extends MobxLitElement {

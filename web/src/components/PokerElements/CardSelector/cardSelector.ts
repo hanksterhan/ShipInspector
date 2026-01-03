@@ -8,8 +8,8 @@ import {
     deckStore,
     settingsStore,
     pokerBoardStore,
-} from "../../stores/index";
-import { SUITS, RANKS } from "../utilities";
+} from "../../../stores/index";
+import { SUITS, RANKS } from "../../utilities";
 
 @customElement("card-selector")
 export class CardSelector extends MobxLitElement {

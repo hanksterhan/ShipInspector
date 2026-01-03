@@ -2,11 +2,8 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { tableIcon } from "../../assets";
-import { pokerBoardStore } from "../../stores/index";
-import "../../components/Player";
-import "../../components/BoardCardContainer";
-import "../../components/AddPlayerButton";
+import { tableIcon } from "../../../assets";
+import { pokerBoardStore } from "../../../stores/index";
 
 /**
  * PokerTable component - Displays the poker table with players and board cards

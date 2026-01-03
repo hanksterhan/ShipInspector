@@ -22,7 +22,7 @@ import {
     outsStore,
     handBuilderStore,
 } from "../../stores/index";
-import { gearIcon, refreshIcon } from "../../assets/index";
+import { gearIcon, refreshIcon } from "../../assets";
 import { Route } from "../../stores/RouterStore/routerStore";
 
 @customElement("app-root")

@@ -1,9 +1,9 @@
 import { html, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { outsStore } from "../../stores";
+import { outsStore } from "../../../stores";
 import { styles } from "./styles.css";
-import { SUITS, RANKS } from "../utilities";
+import { SUITS, RANKS } from "../../utilities";
 
 @customElement("outs-display")
 export class OutsDisplay extends MobxLitElement {

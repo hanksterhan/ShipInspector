@@ -3,8 +3,7 @@ import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { pokerBoardStore, deckStore } from "../../stores/index";
-import "../../components/BoardCardSlot";
+import { pokerBoardStore, deckStore } from "../../../stores/index";
 
 /**
  * BoardCardContainer component - Container for all board cards

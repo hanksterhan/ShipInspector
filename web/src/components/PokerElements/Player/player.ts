@@ -3,9 +3,9 @@ import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { pokerBoardStore, deckStore } from "../../stores/index";
-import { SUITS, RANKS } from "../utilities";
-import { plusIcon, crownIcon, dealerIcon, pencilIcon } from "../../assets";
+import { pokerBoardStore, deckStore } from "../../../stores/index";
+import { SUITS, RANKS } from "../../utilities";
+import { plusIcon, crownIcon, dealerIcon, pencilIcon } from "../../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {

@@ -3,8 +3,8 @@ import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { plusIcon } from "../../assets";
-import { SUITS, RANKS } from "../utilities";
+import { plusIcon } from "../../../assets";
+import { SUITS, RANKS } from "../../utilities";
 
 /**
  * BoardCardSlot component - Displays a single board card or placeholder

@@ -2,8 +2,8 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { handBuilderStore, ActionType } from "../../stores/index";
-import { closeIcon } from "../../assets/index";
+import { handBuilderStore, ActionType } from "../../../stores/index";
+import { closeIcon } from "../../../assets/index";
 
 @customElement("action-options-tray")
 export class ActionOptionsTray extends MobxLitElement {

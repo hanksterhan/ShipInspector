@@ -6,9 +6,9 @@ import {
     handBuilderStore,
     pokerBoardStore,
     PokerBoardStore,
-} from "../../stores/index";
+} from "../../../stores/index";
 import { observable, makeObservable } from "mobx";
-import "../PlatformComponents/AlertModal";
+import "../../PlatformComponents/AlertModal";
 
 @customElement("start-hand-button")
 export class StartHandButton extends MobxLitElement {

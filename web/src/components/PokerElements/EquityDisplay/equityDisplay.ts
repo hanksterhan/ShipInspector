@@ -2,7 +2,7 @@ import { html, TemplateResult } from "lit";
 import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { equityStore, cardStore } from "../../stores/index";
+import { equityStore, cardStore } from "../../../stores/index";
 
 @customElement("equity-display")
 export class EquityDisplay extends MobxLitElement {

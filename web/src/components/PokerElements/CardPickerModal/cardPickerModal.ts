@@ -2,8 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { pokerBoardStore } from "../../stores/index";
-import "../../components/CardSelector";
+import { pokerBoardStore } from "../../../stores/index";
 
 /**
  * CardPickerModal component - Modal dialog for card selection

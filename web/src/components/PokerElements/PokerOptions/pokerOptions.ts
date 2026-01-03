@@ -2,8 +2,8 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { settingsStore, cardStore } from "../../stores/index";
-import { closeIcon } from "../../assets/index";
+import { settingsStore, cardStore } from "../../../stores/index";
+import { closeIcon } from "../../../assets";
 
 @customElement("poker-options")
 export class PokerOptions extends MobxLitElement {

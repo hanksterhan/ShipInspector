@@ -7,8 +7,6 @@ import "../index";
 import "../../components/index";
 import { pokerBoardStore } from "../../stores/index";
 // Import components to ensure they're registered
-import "../../components/SaveHandButton/saveHandButton";
-import "../../components/StartHandButton/startHandButton";
 
 /**
  * PokerHands page - Texas Hold'em board and equity calculator
