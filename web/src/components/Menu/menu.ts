@@ -12,6 +12,7 @@ import {
     routerStore,
     pokerBoardStore,
     outsStore,
+    handBuilderStore,
 } from "../../stores/index";
 import { pokerIcon, boatIcon, percentageIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
@@ -70,6 +71,8 @@ export class Menu extends MobxLitElement {
         equityStore.reset();
         // Reset outs calculations
         outsStore.reset();
+        // Reset hand builder store
+        handBuilderStore.reset();
     }
 
     generateMenuItem(itemDetails: MenuItemDetails): TemplateResult {

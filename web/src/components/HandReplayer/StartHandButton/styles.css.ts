@@ -6,6 +6,10 @@ export const styles = css`
         position: relative;
     }
 
+    :host:empty {
+        display: none;
+    }
+
     .start-button {
         padding: 12px 24px;
         background-color: #28a745;

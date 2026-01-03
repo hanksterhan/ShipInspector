@@ -86,6 +86,8 @@ export class AppRoot extends MobxLitElement {
         equityStore.reset();
         // Reset outs calculations
         outsStore.reset();
+        // Reset hand builder store
+        handBuilderStore.reset();
     }
 
     handleNewHand() {

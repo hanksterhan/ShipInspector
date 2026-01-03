@@ -1,4 +1,5 @@
-import { html, TemplateResult } from "lit";
+import { html, nothing, TemplateResult } from "lit";
+import { when } from "lit/directives/when.js";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
@@ -8,7 +9,6 @@ import {
     PokerBoardStore,
 } from "../../../stores/index";
 import { observable, makeObservable } from "mobx";
-import "../../PlatformComponents/AlertModal";
 
 @customElement("start-hand-button")
 export class StartHandButton extends MobxLitElement {
@@ -62,6 +62,7 @@ export class StartHandButton extends MobxLitElement {
 
         // Validation passed, open the tray
         handBuilderStore.toggleHandBuilderTray();
+        handBuilderStore.setHandStarted(true);
     }
 
     handleCloseDialog() {
@@ -74,12 +75,20 @@ export class StartHandButton extends MobxLitElement {
 
         return html`
             <div>
-                <button
-                    class="start-button ${handBuilderTrayOpen ? "active" : ""}"
-                    @click=${this.handleClick}
-                >
-                    ${handBuilderTrayOpen ? "Close Hand Builder" : "Start Hand"}
-                </button>
+                ${when(
+                    handBuilderStore.GetHandStarted,
+                    () => nothing,
+                    () =>
+                        html`<button
+                            class="start-button ${handBuilderTrayOpen
+                                ? "active"
+                                : ""}"
+                            @click=${this.handleClick}
+                        >
+                            Start Hand
+                        </button>`
+                )}
+
                 <alert-modal
                     .isOpen=${isDialogOpen}
                     title="Error"

@@ -131,6 +131,9 @@ export class HandBuilderStore {
     @observable
     lastSavedHandId: string | null = null;
 
+    @observable
+    handStarted: boolean = false;
+
     constructor() {
         makeObservable(this);
         this.initializeDefaultPlayers();
@@ -655,6 +658,15 @@ export class HandBuilderStore {
     }
 
     @action
+    setHandStarted(started: boolean) {
+        this.handStarted = started;
+    }
+
+    get GetHandStarted(): boolean {
+        return this.handStarted;
+    }
+
+    @action
     reset() {
         this.small_blind = 25;
         this.big_blind = 50;
@@ -673,6 +685,7 @@ export class HandBuilderStore {
         this.lastSavedHandId = null;
         this.handBuilderTrayOpen = false;
         this.clearCurrentAction();
+        this.handStarted = false;
         this.initializeDefaultPlayers();
     }
 }
