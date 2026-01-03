@@ -19,4 +19,6 @@ export * from "./pencil.svg";
 export * from "./coins.svg";
 export * from "./oneCoin.svg";
 export * from "./twoCoin.svg";
+export * from "./arrowRight.svg";
+export * from "./minimize.svg";
 // PLOP: APPEND ICON EXPORTS
