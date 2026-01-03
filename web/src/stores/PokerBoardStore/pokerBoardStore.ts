@@ -476,6 +476,58 @@ export class PokerBoardStore {
     }
 
     /**
+     * Find the next active player clockwise from a given position
+     */
+    private getNextActivePlayerClockwise(fromPosition: number): number | null {
+        const activePlayersArray = Array.from(this.activePlayers).sort((a, b) => a - b);
+        if (activePlayersArray.length === 0) return null;
+
+        // Find the next active player after fromPosition
+        for (const playerIndex of activePlayersArray) {
+            if (playerIndex > fromPosition) {
+                return playerIndex;
+            }
+        }
+
+        // Wrap around: return the first active player
+        return activePlayersArray[0] !== fromPosition ? activePlayersArray[0] : null;
+    }
+
+    /**
+     * Get the small blind position (next active player clockwise from dealer)
+     * Returns null if not applicable (heads-up) or no active players
+     */
+    getSmallBlindPosition(): number | null {
+        if (this.activePlayers.size <= 1) return null;
+        
+        // For heads-up (2 players), there's no small blind
+        if (this.activePlayers.size === 2) return null;
+
+        const sbPosition = this.getNextActivePlayerClockwise(this.dealerIndex);
+        return sbPosition !== null && sbPosition !== this.dealerIndex ? sbPosition : null;
+    }
+
+    /**
+     * Get the big blind position (next active player clockwise from small blind, or next from dealer in heads-up)
+     */
+    getBigBlindPosition(): number | null {
+        if (this.activePlayers.size < 2) return null;
+
+        const activePlayersArray = Array.from(this.activePlayers).sort((a, b) => a - b);
+        
+        // For heads-up (2 players), BB is the non-dealer
+        if (activePlayersArray.length === 2) {
+            return activePlayersArray.find(p => p !== this.dealerIndex) ?? null;
+        }
+
+        // For 3+ players, BB is next after SB
+        const sbPosition = this.getSmallBlindPosition();
+        if (sbPosition === null) return null;
+
+        return this.getNextActivePlayerClockwise(sbPosition);
+    }
+
+    /**
      * Set a card for the current scope and auto-advance
      */
     @action

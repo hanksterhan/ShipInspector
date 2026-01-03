@@ -94,7 +94,13 @@ export const styles = css`
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 2px;
         z-index: 30;
+    }
+
+    .dealer-overlay.has-blinds {
+        width: 40px;
+        height: 40px;
     }
 
     .dealer-overlay.selectable {
@@ -107,6 +113,24 @@ export const styles = css`
     }
 
     .dealer-overlay svg {
+        width: 32px;
+        height: 32px;
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .dealer-overlay.has-blinds svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .blind-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .blind-icon svg {
         width: 28px;
         height: 28px;
         color: var(--spectrum-global-color-gray-700);

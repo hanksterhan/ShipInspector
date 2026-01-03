@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
 import { pokerBoardStore, deckStore } from "../../../stores/index";
 import { SUITS, RANKS } from "../../utilities";
-import { plusIcon, crownIcon, dealerIcon, pencilIcon } from "../../../assets";
+import { plusIcon, crownIcon, dealerIcon, pencilIcon, oneCoinIcon, twoCoinIcon } from "../../../assets";
 
 @customElement("poker-player")
 export class Player extends MobxLitElement {
@@ -143,6 +143,10 @@ export class Player extends MobxLitElement {
         // Check if this player is active
         const isActive = pokerBoardStore.isPlayerActive(playerIndex);
 
+        // Get blind positions (only if not in dealer selection mode)
+        const isSmallBlind = !dealerSelectionMode && pokerBoardStore.getSmallBlindPosition() === playerIndex;
+        const isBigBlind = !dealerSelectionMode && pokerBoardStore.getBigBlindPosition() === playerIndex;
+
         // Get player name
         const playerName = pokerBoardStore.getPlayerName(playerIndex);
 
@@ -151,18 +155,22 @@ export class Player extends MobxLitElement {
                 ${isWinner
                     ? html` <div class="crown-overlay">${crownIcon}</div> `
                     : null}
-                ${isDealer
+                ${isDealer || isSmallBlind || isBigBlind
                     ? html`
                           <div
-                              class="dealer-overlay ${dealerSelectionMode
+                              class="dealer-overlay ${dealerSelectionMode && isDealer
                                   ? "selectable"
-                                  : ""}"
-                              @click=${(e: Event) => {
-                                  e.stopPropagation();
-                                  pokerBoardStore.toggleDealerSelectionMode();
-                              }}
+                                  : ""} ${isSmallBlind || isBigBlind ? "has-blinds" : ""}"
+                              @click=${isDealer
+                                  ? (e: Event) => {
+                                        e.stopPropagation();
+                                        pokerBoardStore.toggleDealerSelectionMode();
+                                    }
+                                  : undefined}
                           >
-                              ${dealerIcon}
+                              ${isSmallBlind ? html`<div class="blind-icon sb-icon">${oneCoinIcon}</div>` : null}
+                              ${isDealer ? dealerIcon : null}
+                              ${isBigBlind ? html`<div class="blind-icon bb-icon">${twoCoinIcon}</div>` : null}
                           </div>
                       `
                     : null}
