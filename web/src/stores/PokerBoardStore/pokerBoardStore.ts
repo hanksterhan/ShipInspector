@@ -1,4 +1,4 @@
-import { action, makeObservable, observable, reaction } from "mobx";
+import { action, makeObservable, observable, reaction, computed } from "mobx";
 import { Card, HandRank, CardRank } from "@common/interfaces";
 import { pokerService } from "../../services/index";
 import {
@@ -6,6 +6,7 @@ import {
     boardToString,
     formatHandRank,
 } from "../../components/utilities";
+import { handBuilderStore } from "../index";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -477,6 +478,44 @@ export class PokerBoardStore {
         // Access the entire array first to ensure MobX tracks it
         const players = this.players;
         return players[playerIndex] || [null, null];
+    }
+
+    /**
+     * Get the player index that is currently in scope for the hand builder
+     * Defaults to player 1 (index 0) on page load
+     * When hand starts, defaults to the player who is next to take action
+     */
+    @computed
+    get playerInScope(): number | null {
+        // If hand hasn't started, default to player 1 (index 0)
+        if (!handBuilderStore.handStarted) {
+            return 0;
+        }
+
+        // When hand has started, get the current acting player from HandBuilderStore
+        const currentActingPlayer = handBuilderStore.currentActingPlayer;
+        if (!currentActingPlayer) {
+            return 0; // Fallback to player 1
+        }
+
+        // Map seat number (1-based) to player index (0-based)
+        // Seat 1 = index 0, Seat 2 = index 1, etc.
+        const playerIndex = currentActingPlayer.seat - 1;
+
+        // Validate that the player index is within bounds
+        if (playerIndex >= 0 && playerIndex < PokerBoardStore.NUM_PLAYERS) {
+            return playerIndex;
+        }
+
+        return 0; // Fallback to player 1
+    }
+
+    /**
+     * Check if a player is currently in scope
+     */
+    isPlayerInScope(playerIndex: number): boolean {
+        const inScope = this.playerInScope;
+        return inScope !== null && inScope === playerIndex;
     }
 
     /**

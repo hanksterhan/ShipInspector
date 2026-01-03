@@ -19,6 +19,29 @@ export const styles = css`
         position: relative;
     }
 
+    .player-wrapper.in-scope {
+        border: 2px solid var(--spectrum-global-color-blue-500);
+        box-shadow:
+            0 4px 16px rgba(59, 130, 246, 0.4),
+            0 0 0 4px rgba(59, 130, 246, 0.1);
+        animation: scope-highlight 2s ease-in-out infinite;
+        z-index: 20;
+    }
+
+    @keyframes scope-highlight {
+        0%,
+        100% {
+            box-shadow:
+                0 4px 16px rgba(59, 130, 246, 0.4),
+                0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        50% {
+            box-shadow:
+                0 6px 24px rgba(59, 130, 246, 0.6),
+                0 0 0 6px rgba(59, 130, 246, 0.2);
+        }
+    }
+
     .remove-button {
         position: absolute;
         top: -12px;

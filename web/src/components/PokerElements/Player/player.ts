@@ -174,6 +174,9 @@ export class Player extends MobxLitElement {
         // Get player name
         const playerName = pokerBoardStore.getPlayerName(playerIndex);
 
+        // Check if this player is in scope
+        const isInScope = pokerBoardStore.isPlayerInScope(playerIndex);
+
         // Check if we should show remove button (only when 3+ active players and hand builder tray is not open)
         const activePlayersCount = pokerBoardStore.activePlayers.size;
         const showRemoveButton =
@@ -182,7 +185,7 @@ export class Player extends MobxLitElement {
             !handBuilderStore.handBuilderTrayOpen;
 
         return html`
-            <div class="player-wrapper ${isWinner ? "winner" : ""}">
+            <div class="player-wrapper ${isWinner ? "winner" : ""} ${isInScope ? "in-scope" : ""}">
                 ${showRemoveButton
                     ? html`
                           <button
