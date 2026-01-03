@@ -16,9 +16,9 @@ export const styles = css`
         flex-direction: row;
         flex-wrap: wrap;
         align-items: flex-start;
-        padding: var(--spectrum-global-dimension-size-300);
+        padding: var(--spectrum-global-dimension-size-200);
         padding-top: calc(var(--spectrum-global-dimension-size-300));
-        gap: var(--spectrum-global-dimension-size-200);
+        gap: var(--spectrum-global-dimension-size-100);
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
@@ -31,7 +31,7 @@ export const styles = css`
         min-width: 0;
     }
 
-    .close-button {
+    .minimize-button {
         position: absolute;
         top: var(--spectrum-global-dimension-size-50);
         right: var(--spectrum-global-dimension-size-50);
@@ -48,7 +48,7 @@ export const styles = css`
         margin: 0;
     }
 
-    .close-icon {
+    .minimize-icon {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -56,16 +56,78 @@ export const styles = css`
         height: 100%;
     }
 
-    .close-icon svg {
+    .minimize-icon svg {
         width: 32px;
         height: 32px;
+    }
+
+    .tray-container.minimized {
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        justify-content: center;
+        align-items: flex-end;
+        min-height: auto;
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .expand-tab {
+        width: 100%;
+        max-width: 600px;
+        height: 48px;
+        padding: 0 var(--spectrum-global-dimension-size-200);
+        background: white;
+        color: var(--spectrum-global-color-gray-700);
+        border: none;
+        border-radius: var(--spectrum-global-dimension-size-200);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spectrum-global-dimension-size-100);
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+        box-sizing: border-box;
+    }
+
+    .expand-tab:hover {
+        background: var(--spectrum-global-color-gray-50);
+        color: var(--spectrum-global-color-gray-900);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .expand-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .expand-tab:hover .expand-text {
+        color: var(--spectrum-global-color-gray-900);
+    }
+
+    .expand-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .expand-icon svg {
+        width: 24px;
+        height: 24px;
     }
 
     .section {
         flex: 1 1 200px;
         min-width: 0;
         max-width: 100%;
-        padding: var(--spectrum-global-dimension-size-200);
+        padding: var(--spectrum-global-dimension-size-150);
         background-color: var(--spectrum-global-color-gray-50);
         border-radius: var(--spectrum-global-dimension-size-100);
         border: 1px solid var(--spectrum-global-color-gray-200);
@@ -75,43 +137,46 @@ export const styles = css`
     .section-title {
         font-size: 14px;
         font-weight: 600;
-        margin-bottom: var(--spectrum-global-dimension-size-150);
+        margin-bottom: var(--spectrum-global-dimension-size-100);
         color: var(--spectrum-global-color-gray-800);
     }
 
     .street-info {
         flex: 1 1 100%;
         background: #e7f3ff;
-        padding: var(--spectrum-global-dimension-size-150);
+        padding: var(--spectrum-global-dimension-size-100);
         border-radius: var(--spectrum-global-dimension-size-100);
         font-size: 14px;
         font-weight: 500;
         color: #0056b3;
+        margin-bottom: var(--spectrum-global-dimension-size-50);
     }
 
     .current-player {
-        flex: 1 1 100%;
+        flex: 1 1 auto;
         background: var(--spectrum-global-color-gray-100);
-        padding: var(--spectrum-global-dimension-size-200);
+        padding: var(--spectrum-global-dimension-size-100);
         border-radius: var(--spectrum-global-dimension-size-100);
+        margin-right: var(--spectrum-global-dimension-size-150);
+        min-width: 0;
     }
 
     .current-player-label {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--spectrum-global-color-gray-600);
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .current-player-name {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--spectrum-global-color-gray-900);
     }
 
     .current-player-stats {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--spectrum-global-color-gray-600);
-        margin-top: 4px;
+        margin-top: 2px;
     }
 
     .action-buttons {
@@ -156,7 +221,7 @@ export const styles = css`
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        gap: var(--spectrum-global-dimension-size-150);
+        gap: var(--spectrum-global-dimension-size-100);
         align-items: flex-end;
         width: 100%;
         max-width: 100%;
@@ -218,21 +283,41 @@ export const styles = css`
 
     .submit-section {
         flex: 1 1 100%;
-        padding-top: var(--spectrum-global-dimension-size-300);
+        padding-top: var(--spectrum-global-dimension-size-100);
         border-top: 1px solid var(--spectrum-global-color-gray-200);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spectrum-global-dimension-size-150);
     }
 
     .submit-button {
-        width: 100%;
-        padding: var(--spectrum-global-dimension-size-200);
+        width: 48px;
+        height: 48px;
+        padding: 0;
         background: #28a745;
         color: white;
         border: none;
-        border-radius: var(--spectrum-global-dimension-size-100);
-        font-size: 16px;
-        font-weight: 500;
+        border-radius: 50%;
         cursor: pointer;
         transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .submit-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+    }
+
+    .submit-icon svg {
+        width: 24px;
+        height: 24px;
     }
 
     .submit-button:hover:not(:disabled) {
@@ -267,9 +352,18 @@ export const styles = css`
         }
 
         .street-info,
-        .current-player,
         .submit-section {
             flex: 1 1 100%;
+        }
+
+        .submit-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .current-player {
+            margin-right: 0;
+            margin-bottom: var(--spectrum-global-dimension-size-100);
         }
     }
 `;

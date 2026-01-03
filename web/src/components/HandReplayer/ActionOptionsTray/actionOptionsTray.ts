@@ -3,7 +3,11 @@ import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { handBuilderStore, ActionType } from "../../../stores/index";
-import { closeIcon } from "../../../assets/index";
+import {
+    minimizeIcon,
+    arrowRightIcon,
+    arrowUpIcon,
+} from "../../../assets/index";
 
 @customElement("action-options-tray")
 export class ActionOptionsTray extends MobxLitElement {
@@ -108,45 +112,48 @@ export class ActionOptionsTray extends MobxLitElement {
             currentActingPlayer,
             current_street,
             current_bet,
+            handBuilderTrayMinimized,
         } = handBuilderStore;
 
         const player = currentActingPlayer;
         const needsAmount =
             currentActionType === "BET" || currentActionType === "RAISE";
 
+        // Show minimized view
+        if (handBuilderTrayMinimized) {
+            return html`
+                <div class="tray-container minimized">
+                    <button
+                        class="expand-tab"
+                        @click=${() =>
+                            handBuilderStore.setHandBuilderTrayMinimized(false)}
+                        title="Expand hand builder"
+                    >
+                        <span class="expand-text">Betting Options</span>
+                        <span class="expand-icon">${arrowUpIcon}</span>
+                    </button>
+                </div>
+            `;
+        }
+
         return html`
             <div class="tray-container">
                 <sp-action-button
-                    class="close-button"
+                    class="minimize-button"
                     @click=${() =>
-                        handBuilderStore.setHandBuilderTrayOpen(false)}
+                        handBuilderStore.setHandBuilderTrayMinimized(true)}
                     quiet
-                    title="Close hand builder"
+                    title="Minimize hand builder"
                     size="s"
                 >
-                    <span slot="icon" class="close-icon">${closeIcon}</span>
+                    <span slot="icon" class="minimize-icon"
+                        >${minimizeIcon}</span
+                    >
                 </sp-action-button>
 
                 <div class="street-info">
                     Street: ${current_street} | Current Bet: ${current_bet}
                 </div>
-
-                ${player
-                    ? html`
-                          <div class="current-player">
-                              <div class="current-player-label">
-                                  Current Player
-                              </div>
-                              <div class="current-player-name">
-                                  ${player.player_label} (Seat ${player.seat})
-                              </div>
-                              <div class="current-player-stats">
-                                  Stack: ${player.starting_stack} | Contributed:
-                                  ${player.contributed_this_street}
-                              </div>
-                          </div>
-                      `
-                    : html`<div>No active players</div>`}
 
                 <div class="section">
                     <div class="section-title">Select Action</div>
@@ -162,6 +169,26 @@ export class ActionOptionsTray extends MobxLitElement {
                                         this.handleActionSelect(action.type)}
                                 >
                                     ${action.label}
+                                </button>
+                            `
+                        )}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Tags (Optional)</div>
+                    <div class="tags-section">
+                        ${this.availableTags.map(
+                            (tag) => html`
+                                <button
+                                    class="tag-button ${currentActionTags.includes(
+                                        tag
+                                    )
+                                        ? "selected"
+                                        : ""}"
+                                    @click=${() => this.handleTagToggle(tag)}
+                                >
+                                    ${tag}
                                 </button>
                             `
                         )}
@@ -211,70 +238,27 @@ export class ActionOptionsTray extends MobxLitElement {
                       `
                     : null}
 
-                <div class="section">
-                    <div class="section-title">Tags (Optional)</div>
-                    <div class="tags-section">
-                        ${this.availableTags.map(
-                            (tag) => html`
-                                <button
-                                    class="tag-button ${currentActionTags.includes(
-                                        tag
-                                    )
-                                        ? "selected"
-                                        : ""}"
-                                    @click=${() => this.handleTagToggle(tag)}
-                                >
-                                    ${tag}
-                                </button>
-                            `
-                        )}
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">Street Actions</div>
-                    <div class="action-buttons">
-                        ${current_street === "PREFLOP"
-                            ? html`
-                                  <button
-                                      class="action-button"
-                                      @click=${() => {
-                                          handBuilderStore.advanceStreet();
-                                          handBuilderStore.insertDealAction();
-                                      }}
-                                  >
-                                      Deal Flop
-                                  </button>
-                              `
-                            : current_street === "FLOP"
-                              ? html`
-                                    <button
-                                        class="action-button"
-                                        @click=${() => {
-                                            handBuilderStore.advanceStreet();
-                                            handBuilderStore.insertDealAction();
-                                        }}
-                                    >
-                                        Deal Turn
-                                    </button>
-                                `
-                              : current_street === "TURN"
-                                ? html`
-                                      <button
-                                          class="action-button"
-                                          @click=${() => {
-                                              handBuilderStore.advanceStreet();
-                                              handBuilderStore.insertDealAction();
-                                          }}
-                                      >
-                                          Deal River
-                                      </button>
-                                  `
-                                : null}
-                    </div>
-                </div>
-
                 <div class="submit-section">
+                    ${player
+                        ? html`
+                              <div class="current-player">
+                                  <div class="current-player-label">
+                                      Current Player
+                                  </div>
+                                  <div class="current-player-name">
+                                      ${player.player_label} (Seat
+                                      ${player.seat})
+                                  </div>
+                                  <div class="current-player-stats">
+                                      Stack: ${player.starting_stack} |
+                                      Contributed:
+                                      ${player.contributed_this_street}
+                                  </div>
+                              </div>
+                          `
+                        : html`<div class="current-player">
+                              No active players
+                          </div>`}
                     <button
                         class="submit-button"
                         ?disabled=${!currentActionType ||
@@ -282,8 +266,9 @@ export class ActionOptionsTray extends MobxLitElement {
                             !currentActionAmount &&
                             !currentActionRaiseTo)}
                         @click=${this.handleSubmit}
+                        title="Add Action & Next Player"
                     >
-                        Add Action & Next Player
+                        <span class="submit-icon">${arrowRightIcon}</span>
                     </button>
                 </div>
 

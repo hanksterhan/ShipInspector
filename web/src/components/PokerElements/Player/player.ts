@@ -3,7 +3,11 @@ import { styles } from "./styles.css";
 import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { pokerBoardStore, deckStore, handBuilderStore } from "../../../stores/index";
+import {
+    pokerBoardStore,
+    deckStore,
+    handBuilderStore,
+} from "../../../stores/index";
 import { SUITS, RANKS } from "../../utilities";
 import {
     plusIcon,
@@ -172,7 +176,10 @@ export class Player extends MobxLitElement {
 
         // Check if we should show remove button (only when 3+ active players and hand builder tray is not open)
         const activePlayersCount = pokerBoardStore.activePlayers.size;
-        const showRemoveButton = isActive && activePlayersCount >= 3 && !handBuilderStore.handBuilderTrayOpen;
+        const showRemoveButton =
+            isActive &&
+            activePlayersCount >= 3 &&
+            !handBuilderStore.handBuilderTrayOpen;
 
         return html`
             <div class="player-wrapper ${isWinner ? "winner" : ""}">

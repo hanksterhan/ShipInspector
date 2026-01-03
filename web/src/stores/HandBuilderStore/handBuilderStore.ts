@@ -105,6 +105,9 @@ export class HandBuilderStore {
     @observable
     handBuilderTrayOpen: boolean = false;
 
+    @observable
+    handBuilderTrayMinimized: boolean = false;
+
     // Current action being built
     @observable
     currentActionType: ActionType | null = null;
@@ -505,11 +508,29 @@ export class HandBuilderStore {
     @action
     toggleHandBuilderTray() {
         this.handBuilderTrayOpen = !this.handBuilderTrayOpen;
+        // Reset minimized state when closing
+        if (!this.handBuilderTrayOpen) {
+            this.handBuilderTrayMinimized = false;
+        }
     }
 
     @action
     setHandBuilderTrayOpen(open: boolean) {
         this.handBuilderTrayOpen = open;
+        // Reset minimized state when closing
+        if (!open) {
+            this.handBuilderTrayMinimized = false;
+        }
+    }
+
+    @action
+    toggleHandBuilderTrayMinimized() {
+        this.handBuilderTrayMinimized = !this.handBuilderTrayMinimized;
+    }
+
+    @action
+    setHandBuilderTrayMinimized(minimized: boolean) {
+        this.handBuilderTrayMinimized = minimized;
     }
 
     // Current action management
