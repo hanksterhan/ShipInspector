@@ -114,9 +114,9 @@ export const styles = css`
 
     .dealer-selection-circle {
         position: absolute;
-        bottom: -56px;
+        bottom: -28px;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, 50%);
         width: 56px;
         height: 56px;
         border: 2px dotted var(--spectrum-global-color-gray-500);
@@ -131,7 +131,7 @@ export const styles = css`
         border-color: var(--spectrum-global-color-blue-500);
         background: rgba(59, 130, 246, 0.1);
         border-width: 3px;
-        transform: translateX(-50%) scale(1.1);
+        transform: translate(-50%, 50%) scale(1.1);
     }
 
     .player-container {
