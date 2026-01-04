@@ -228,11 +228,13 @@ export class AppRoot extends MobxLitElement {
                               <poker-options></poker-options>
                           </div>`
                         : null}
-                    ${handBuilderStore.handBuilderTrayOpen
-                        ? html`<div class="settings-card">
-                              <action-options-tray></action-options-tray>
-                          </div>`
-                        : null}
+                    <div
+                        class="settings-card ${handBuilderStore.handBuilderTrayOpen
+                            ? "tray-open"
+                            : "tray-closed"}"
+                    >
+                        <action-options-tray></action-options-tray>
+                    </div>
                     ${!settingsStore.trayOpen
                         ? html`
                               ${handBuilderStore.handStarted

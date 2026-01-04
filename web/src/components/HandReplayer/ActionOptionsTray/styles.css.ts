@@ -13,22 +13,74 @@ export const styles = css`
 
     .tray-container {
         display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        padding: var(--spectrum-global-dimension-size-200);
-        padding-top: calc(var(--spectrum-global-dimension-size-300));
-        gap: var(--spectrum-global-dimension-size-100);
+        flex-direction: column;
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
-        background: rgb(255, 255, 255);
-        border-radius: var(--spectrum-global-dimension-size-200);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         position: relative;
         z-index: 1;
         box-sizing: border-box;
         min-width: 0;
+        transition:
+            padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: var(--spectrum-global-dimension-size-200);
+        padding-top: calc(var(--spectrum-global-dimension-size-300));
+        background: rgb(255, 255, 255);
+        border-radius: var(--spectrum-global-dimension-size-200);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        overflow: visible;
+    }
+
+    .tray-container.minimized {
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        justify-content: flex-end;
+        align-items: center;
+        min-height: 0;
+        height: auto;
+        align-self: flex-end;
+    }
+
+    .tray-content {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: var(--spectrum-global-dimension-size-100);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        min-height: 0;
+        overflow: hidden;
+        opacity: 1;
+        transition:
+            max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.25s ease-in-out 0.1s,
+            margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 2000px;
+        margin: 0;
+    }
+
+    .tray-content.hidden {
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        transition:
+            max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.2s ease-in-out,
+            margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
+
+    .tray-content.visible {
+        max-height: 2000px;
+        opacity: 1;
+        pointer-events: all;
     }
 
     .minimize-button {
@@ -61,19 +113,6 @@ export const styles = css`
         height: 32px;
     }
 
-    .tray-container.minimized {
-        padding: 0;
-        background: transparent;
-        box-shadow: none;
-        border-radius: 0;
-        justify-content: center;
-        align-items: flex-end;
-        min-height: auto;
-        height: auto;
-        width: 100%;
-        max-width: 100%;
-    }
-
     .expand-tab {
         width: 100%;
         max-width: 600px;
@@ -84,13 +123,37 @@ export const styles = css`
         border: none;
         border-radius: var(--spectrum-global-dimension-size-200);
         cursor: pointer;
-        transition: all 0.2s;
+        transition:
+            max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.3s ease-in-out,
+            margin 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+            padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: var(--spectrum-global-dimension-size-100);
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
         box-sizing: border-box;
+        max-height: 48px;
+        opacity: 1;
+        overflow: hidden;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .expand-tab.hidden {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin: 0;
+        pointer-events: none;
+    }
+
+    .expand-tab.visible {
+        max-height: 48px;
+        opacity: 1;
+        pointer-events: all;
     }
 
     .expand-tab:hover {

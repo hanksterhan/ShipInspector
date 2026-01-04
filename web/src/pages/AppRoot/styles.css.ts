@@ -102,6 +102,28 @@ export const styles = css`
         overflow-x: hidden;
     }
 
+    /* Slide animation for action tray */
+    .settings-card.tray-closed {
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .settings-card.tray-closed action-options-tray {
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .settings-card.tray-open {
+        transform: translateY(0);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .settings-card.tray-open action-options-tray {
+        pointer-events: all;
+        opacity: 1;
+        transition: opacity 0.2s ease-in-out 0.1s;
+    }
+
     .loading-container {
         display: flex;
         align-items: center;

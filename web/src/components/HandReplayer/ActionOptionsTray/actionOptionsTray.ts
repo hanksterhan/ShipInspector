@@ -121,194 +121,203 @@ export class ActionOptionsTray extends MobxLitElement {
         const needsAmount =
             currentActionType === "BET" || currentActionType === "RAISE";
 
-        // Show minimized view
-        if (handBuilderTrayMinimized) {
-            return html`
-                <div class="tray-container minimized">
-                    <button
-                        class="expand-tab"
-                        @click=${() =>
-                            handBuilderStore.setHandBuilderTrayMinimized(false)}
-                        title="Expand hand builder"
-                    >
-                        <span class="expand-text">Betting Options</span>
-                        <span class="expand-icon">${arrowUpIcon}</span>
-                    </button>
-                </div>
-            `;
-        }
-
         return html`
-            <div class="tray-container">
-                <sp-action-button
-                    class="minimize-button"
+            <div
+                class="tray-container ${handBuilderTrayMinimized
+                    ? "minimized"
+                    : ""}"
+            >
+                <button
+                    class="expand-tab ${handBuilderTrayMinimized
+                        ? "visible"
+                        : "hidden"}"
                     @click=${() =>
-                        handBuilderStore.setHandBuilderTrayMinimized(true)}
-                    quiet
-                    title="Minimize hand builder"
-                    size="s"
+                        handBuilderStore.setHandBuilderTrayMinimized(false)}
+                    title="Expand hand builder"
                 >
-                    <span slot="icon" class="minimize-icon"
-                        >${minimizeIcon}</span
+                    <span class="expand-text">Betting Options</span>
+                    <span class="expand-icon">${arrowUpIcon}</span>
+                </button>
+
+                <div
+                    class="tray-content ${handBuilderTrayMinimized
+                        ? "hidden"
+                        : "visible"}"
+                >
+                    <sp-action-button
+                        class="minimize-button"
+                        @click=${() =>
+                            handBuilderStore.setHandBuilderTrayMinimized(true)}
+                        quiet
+                        title="Minimize hand builder"
+                        size="s"
                     >
-                </sp-action-button>
+                        <span slot="icon" class="minimize-icon"
+                            >${minimizeIcon}</span
+                        >
+                    </sp-action-button>
 
-                <div class="street-info">
-                    Street: ${current_street} | Current Bet: ${current_bet}
-                    ${handBuilderStore.isBettingRoundComplete
-                        ? " | Betting Round Complete"
-                        : ""}
-                </div>
-
-                <div class="section">
-                    <div class="section-title">Select Action</div>
-                    <div class="action-buttons">
-                        ${this.availableActions.map(
-                            (action) => html`
-                                <button
-                                    class="action-button ${currentActionType ===
-                                    action.type
-                                        ? "selected"
-                                        : ""}"
-                                    @click=${() =>
-                                        this.handleActionSelect(action.type)}
-                                >
-                                    ${action.label}
-                                </button>
-                            `
-                        )}
+                    <div class="street-info">
+                        Street: ${current_street} | Current Bet: ${current_bet}
+                        ${handBuilderStore.isBettingRoundComplete
+                            ? " | Betting Round Complete"
+                            : ""}
                     </div>
-                </div>
 
-                <div class="section">
-                    <div class="section-title">Tags (Optional)</div>
-                    <div class="tags-section">
-                        ${this.availableTags.map(
-                            (tag) => html`
-                                <button
-                                    class="tag-button ${currentActionTags.includes(
-                                        tag
-                                    )
-                                        ? "selected"
-                                        : ""}"
-                                    @click=${() => this.handleTagToggle(tag)}
-                                >
-                                    ${tag}
-                                </button>
-                            `
-                        )}
+                    <div class="section">
+                        <div class="section-title">Select Action</div>
+                        <div class="action-buttons">
+                            ${this.availableActions.map(
+                                (action) => html`
+                                    <button
+                                        class="action-button ${currentActionType ===
+                                        action.type
+                                            ? "selected"
+                                            : ""}"
+                                        @click=${() =>
+                                            this.handleActionSelect(
+                                                action.type
+                                            )}
+                                    >
+                                        ${action.label}
+                                    </button>
+                                `
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                ${needsAmount && currentActionType
-                    ? html`
-                          <div class="section">
-                              <div class="section-title">Bet Size</div>
-                              <div class="bet-inputs">
-                                  ${currentActionType === "BET"
-                                      ? html`
-                                            <div class="input-group">
-                                                <label>Bet Amount</label>
-                                                <input
-                                                    type="number"
-                                                    .value=${currentActionAmount?.toString() ??
-                                                    ""}
-                                                    @input=${this
-                                                        .handleAmountChange}
-                                                    placeholder="Enter bet size"
-                                                    min="0"
-                                                />
-                                            </div>
-                                        `
-                                      : currentActionType === "RAISE"
-                                        ? html`
-                                              <div class="input-group">
-                                                  <label
-                                                      >Raise To (Total)</label
-                                                  >
-                                                  <input
-                                                      type="number"
-                                                      .value=${currentActionRaiseTo?.toString() ??
-                                                      ""}
-                                                      @input=${this
-                                                          .handleRaiseToChange}
-                                                      placeholder="Enter total raise size"
-                                                      min=${current_bet + 1}
-                                                  />
-                                              </div>
-                                          `
-                                        : null}
-                              </div>
-                          </div>
-                      `
-                    : null}
+                    <div class="section">
+                        <div class="section-title">Tags (Optional)</div>
+                        <div class="tags-section">
+                            ${this.availableTags.map(
+                                (tag) => html`
+                                    <button
+                                        class="tag-button ${currentActionTags.includes(
+                                            tag
+                                        )
+                                            ? "selected"
+                                            : ""}"
+                                        @click=${() =>
+                                            this.handleTagToggle(tag)}
+                                    >
+                                        ${tag}
+                                    </button>
+                                `
+                            )}
+                        </div>
+                    </div>
 
-                <div class="submit-section">
-                    ${player
+                    ${needsAmount && currentActionType
                         ? html`
-                              <div class="current-player">
-                                  <div class="current-player-label">
-                                      Current Player
-                                  </div>
-                                  <div class="current-player-name">
-                                      ${player.player_label} (Seat
-                                      ${player.seat})
-                                  </div>
-                                  <div class="current-player-stats">
-                                      Stack: ${player.starting_stack} |
-                                      Contributed:
-                                      ${player.contributed_this_street}
+                              <div class="section">
+                                  <div class="section-title">Bet Size</div>
+                                  <div class="bet-inputs">
+                                      ${currentActionType === "BET"
+                                          ? html`
+                                                <div class="input-group">
+                                                    <label>Bet Amount</label>
+                                                    <input
+                                                        type="number"
+                                                        .value=${currentActionAmount?.toString() ??
+                                                        ""}
+                                                        @input=${this
+                                                            .handleAmountChange}
+                                                        placeholder="Enter bet size"
+                                                        min="0"
+                                                    />
+                                                </div>
+                                            `
+                                          : currentActionType === "RAISE"
+                                            ? html`
+                                                  <div class="input-group">
+                                                      <label
+                                                          >Raise To
+                                                          (Total)</label
+                                                      >
+                                                      <input
+                                                          type="number"
+                                                          .value=${currentActionRaiseTo?.toString() ??
+                                                          ""}
+                                                          @input=${this
+                                                              .handleRaiseToChange}
+                                                          placeholder="Enter total raise size"
+                                                          min=${current_bet + 1}
+                                                      />
+                                                  </div>
+                                              `
+                                            : null}
                                   </div>
                               </div>
                           `
-                        : html`<div class="current-player">
-                              No active players
-                          </div>`}
-                    <button
-                        class="submit-button"
-                        ?disabled=${!currentActionType ||
-                        (needsAmount &&
-                            !currentActionAmount &&
-                            !currentActionRaiseTo)}
-                        @click=${this.handleSubmit}
-                        title="Add Action & Next Player"
-                    >
-                        <span class="submit-icon">${arrowRightIcon}</span>
-                    </button>
-                </div>
+                        : null}
 
-                ${handBuilderStore.actionDrafts.length > 0
-                    ? html`
-                          <div class="section">
-                              <div class="section-title">
-                                  Action Timeline
-                                  (${handBuilderStore.actionDrafts.length})
+                    <div class="submit-section">
+                        ${player
+                            ? html`
+                                  <div class="current-player">
+                                      <div class="current-player-label">
+                                          Current Player
+                                      </div>
+                                      <div class="current-player-name">
+                                          ${player.player_label} (Seat
+                                          ${player.seat})
+                                      </div>
+                                      <div class="current-player-stats">
+                                          Stack: ${player.starting_stack} |
+                                          Contributed:
+                                          ${player.contributed_this_street}
+                                      </div>
+                                  </div>
+                              `
+                            : html`<div class="current-player">
+                                  No active players
+                              </div>`}
+                        <button
+                            class="submit-button"
+                            ?disabled=${!currentActionType ||
+                            (needsAmount &&
+                                !currentActionAmount &&
+                                !currentActionRaiseTo)}
+                            @click=${this.handleSubmit}
+                            title="Add Action & Next Player"
+                        >
+                            <span class="submit-icon">${arrowRightIcon}</span>
+                        </button>
+                    </div>
+
+                    ${handBuilderStore.actionDrafts.length > 0
+                        ? html`
+                              <div class="section">
+                                  <div class="section-title">
+                                      Action Timeline
+                                      (${handBuilderStore.actionDrafts.length})
+                                  </div>
+                                  <div class="action-timeline">
+                                      ${handBuilderStore.actionDrafts.map(
+                                          (action, idx) => html`
+                                              <div class="action-timeline-item">
+                                                  ${idx + 1}. ${action.street}:
+                                                  ${action.type}
+                                                  ${action.actor_seat
+                                                      ? ` (Seat ${action.actor_seat})`
+                                                      : ""}
+                                                  ${action.amount
+                                                      ? ` ${action.amount}`
+                                                      : ""}
+                                                  ${action.raise_to
+                                                      ? ` (to ${action.raise_to})`
+                                                      : ""}
+                                                  ${action.tags.length > 0
+                                                      ? ` [${action.tags.join(", ")}]`
+                                                      : ""}
+                                              </div>
+                                          `
+                                      )}
+                                  </div>
                               </div>
-                              <div class="action-timeline">
-                                  ${handBuilderStore.actionDrafts.map(
-                                      (action, idx) => html`
-                                          <div class="action-timeline-item">
-                                              ${idx + 1}. ${action.street}:
-                                              ${action.type}
-                                              ${action.actor_seat
-                                                  ? ` (Seat ${action.actor_seat})`
-                                                  : ""}
-                                              ${action.amount
-                                                  ? ` ${action.amount}`
-                                                  : ""}
-                                              ${action.raise_to
-                                                  ? ` (to ${action.raise_to})`
-                                                  : ""}
-                                              ${action.tags.length > 0
-                                                  ? ` [${action.tags.join(", ")}]`
-                                                  : ""}
-                                          </div>
-                                      `
-                                  )}
-                              </div>
-                          </div>
-                      `
-                    : null}
+                          `
+                        : null}
+                </div>
             </div>
         `;
     }
