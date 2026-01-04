@@ -197,6 +197,10 @@ export const styles = css`
         box-sizing: border-box;
     }
 
+    .section.action-section-full-width {
+        flex: 1 1 100%;
+    }
+
     .section-title {
         font-size: 14px;
         font-weight: 600;
@@ -278,6 +282,26 @@ export const styles = css`
     .action-button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    .inline-bet-input {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .inline-bet-amount-input {
+        padding: 10px 16px;
+        border: 2px solid #007bff;
+        border-radius: var(--spectrum-global-dimension-size-100);
+        font-size: 14px;
+        min-width: 150px;
+        height: 42px;
+        box-sizing: border-box;
+    }
+
+    .inline-bet-amount-input:focus {
+        outline: none;
+        border-color: #0056b3;
     }
 
     .bet-inputs {

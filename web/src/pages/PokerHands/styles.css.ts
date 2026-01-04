@@ -25,7 +25,7 @@ export const styles = css`
         position: absolute;
         top: 16px;
         right: 16px;
-        z-index: 10;
+        z-index: 10001;
         display: flex;
         flex-direction: column;
         gap: 12px;

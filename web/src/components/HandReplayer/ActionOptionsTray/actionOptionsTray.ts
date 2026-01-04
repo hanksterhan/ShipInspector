@@ -164,30 +164,83 @@ export class ActionOptionsTray extends MobxLitElement {
                             : ""}
                     </div>
 
-                    <div class="section">
+                    <div class="section action-section-full-width">
                         <div class="section-title">Select Action</div>
                         <div class="action-buttons">
-                            ${this.availableActions.map(
-                                (action) => html`
-                                    <button
-                                        class="action-button ${currentActionType ===
-                                        action.type
-                                            ? "selected"
-                                            : ""}"
-                                        @click=${() =>
-                                            this.handleActionSelect(
-                                                action.type
-                                            )}
-                                    >
-                                        ${action.label}
-                                    </button>
-                                `
-                            )}
+                            ${this.availableActions
+                                .filter((action) => action.type !== "ALL_IN")
+                                .map(
+                                    (action) => html`
+                                        <button
+                                            class="action-button ${currentActionType ===
+                                            action.type
+                                                ? "selected"
+                                                : ""}"
+                                            @click=${() =>
+                                                this.handleActionSelect(
+                                                    action.type
+                                                )}
+                                        >
+                                            ${action.label}
+                                        </button>
+                                        ${currentActionType === "BET" &&
+                                        action.type === "BET"
+                                            ? html`
+                                                  <div class="inline-bet-input">
+                                                      <input
+                                                          type="number"
+                                                          class="inline-bet-amount-input"
+                                                          .value=${currentActionAmount?.toString() ??
+                                                          ""}
+                                                          @input=${this
+                                                              .handleAmountChange}
+                                                          placeholder="Enter bet size"
+                                                          min="0"
+                                                      />
+                                                  </div>
+                                              `
+                                            : currentActionType === "RAISE" &&
+                                                action.type === "RAISE"
+                                              ? html`
+                                                    <div class="inline-bet-input">
+                                                        <input
+                                                            type="number"
+                                                            class="inline-bet-amount-input"
+                                                            .value=${currentActionRaiseTo?.toString() ??
+                                                            ""}
+                                                            @input=${this
+                                                                .handleRaiseToChange}
+                                                            placeholder="Enter total raise size"
+                                                            min=${current_bet + 1}
+                                                        />
+                                                    </div>
+                                                `
+                                              : null}
+                                    `
+                                )}
+                            ${this.availableActions
+                                .filter((action) => action.type === "ALL_IN")
+                                .map(
+                                    (action) => html`
+                                        <button
+                                            class="action-button ${currentActionType ===
+                                            action.type
+                                                ? "selected"
+                                                : ""}"
+                                            @click=${() =>
+                                                this.handleActionSelect(
+                                                    action.type
+                                                )}
+                                        >
+                                            ${action.label}
+                                        </button>
+                                    `
+                                )}
                         </div>
                     </div>
 
                     <div class="section">
-                        <div class="section-title">Tags (Optional)</div>
+                        <div class="section-title">Tags</div>
                         <div class="tags-section">
                             ${this.availableTags.map(
                                 (tag) => html`
@@ -207,49 +260,6 @@ export class ActionOptionsTray extends MobxLitElement {
                         </div>
                     </div>
 
-                    ${needsAmount && currentActionType
-                        ? html`
-                              <div class="section">
-                                  <div class="section-title">Bet Size</div>
-                                  <div class="bet-inputs">
-                                      ${currentActionType === "BET"
-                                          ? html`
-                                                <div class="input-group">
-                                                    <label>Bet Amount</label>
-                                                    <input
-                                                        type="number"
-                                                        .value=${currentActionAmount?.toString() ??
-                                                        ""}
-                                                        @input=${this
-                                                            .handleAmountChange}
-                                                        placeholder="Enter bet size"
-                                                        min="0"
-                                                    />
-                                                </div>
-                                            `
-                                          : currentActionType === "RAISE"
-                                            ? html`
-                                                  <div class="input-group">
-                                                      <label
-                                                          >Raise To
-                                                          (Total)</label
-                                                      >
-                                                      <input
-                                                          type="number"
-                                                          .value=${currentActionRaiseTo?.toString() ??
-                                                          ""}
-                                                          @input=${this
-                                                              .handleRaiseToChange}
-                                                          placeholder="Enter total raise size"
-                                                          min=${current_bet + 1}
-                                                      />
-                                                  </div>
-                                              `
-                                            : null}
-                                  </div>
-                              </div>
-                          `
-                        : null}
 
                     <div class="submit-section">
                         ${player
