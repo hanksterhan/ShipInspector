@@ -15,11 +15,13 @@ export const styles = css`
         background-color: #28a745;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: var(--spectrum-global-dimension-size-200);
         font-size: 16px;
         font-weight: 500;
         cursor: pointer;
         transition: background-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .start-button:hover {

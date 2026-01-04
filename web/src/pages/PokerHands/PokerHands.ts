@@ -47,6 +47,7 @@ export class PokerHands extends MobxLitElement {
                     <!-- Blind Controls in upper right corner -->
                     <div class="blind-controls-wrapper">
                         <blind-controls></blind-controls>
+                        <start-hand-button></start-hand-button>
                     </div>
                     <div class="poker-hands-content">
                         <poker-table></poker-table>
@@ -58,10 +59,6 @@ export class PokerHands extends MobxLitElement {
                                   </div>
                               `
                             : null}
-                        <!-- Hand Builder Controls -->
-                        <div class="hand-builder-controls">
-                            <start-hand-button></start-hand-button>
-                        </div>
                     </div>
                 </div>
 

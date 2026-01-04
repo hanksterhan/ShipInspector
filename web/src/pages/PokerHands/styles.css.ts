@@ -26,6 +26,15 @@ export const styles = css`
         top: 16px;
         right: 16px;
         z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-end;
+        width: fit-content;
+    }
+
+    .blind-controls-wrapper start-hand-button {
+        width: 100%;
     }
 
     .poker-hands-content {
@@ -44,14 +53,6 @@ export const styles = css`
         justify-content: center;
         width: 100%;
         padding: 0 32px;
-    }
-
-    .hand-builder-controls {
-        margin-top: 20px;
-        text-align: center;
-        display: flex;
-        gap: 12px;
-        justify-content: center;
     }
 
     .player-hands-section {
