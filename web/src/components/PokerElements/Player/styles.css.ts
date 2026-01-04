@@ -20,7 +20,7 @@ export const styles = css`
     }
 
     .player-wrapper.in-scope {
-        border: 2px solid #DAA520;
+        border: 2px solid #daa520;
         box-shadow:
             0 2px 8px rgba(255, 215, 0, 0.3),
             0 0 0 2px rgba(255, 215, 0, 0.15);
@@ -398,7 +398,7 @@ export const styles = css`
     }
 
     .card-placeholder.in-scope {
-        border: 2px solid #DAA520;
+        border: 2px solid #daa520;
         border-style: solid;
         box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: scope-pulse 2s ease-in-out infinite;
@@ -417,7 +417,7 @@ export const styles = css`
     }
 
     .card-display.in-scope {
-        border: 2px solid #DAA520;
+        border: 2px solid #daa520;
         box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: scope-pulse 2s ease-in-out infinite;
     }

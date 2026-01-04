@@ -37,7 +37,7 @@ export const styles = css`
     }
 
     .board-card-placeholder.in-scope {
-        border: 2px solid #DAA520;
+        border: 2px solid #daa520;
         border-style: solid;
         box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: board-scope-pulse 2s ease-in-out infinite;
@@ -68,7 +68,7 @@ export const styles = css`
     }
 
     .board-card-display.in-scope {
-        border: 2px solid #DAA520;
+        border: 2px solid #daa520;
         box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         animation: board-scope-pulse 2s ease-in-out infinite;
     }

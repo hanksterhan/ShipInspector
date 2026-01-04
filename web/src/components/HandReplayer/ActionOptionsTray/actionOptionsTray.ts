@@ -40,8 +40,10 @@ export class ActionOptionsTray extends MobxLitElement {
 
         const currentBet = handBuilderStore.current_bet;
         const contributed = player.contributed_this_street;
-        const canCheck = currentBet === 0 || contributed >= currentBet;
-        const canCall = currentBet > 0 && contributed < currentBet;
+        const isFacingBet = handBuilderStore.isFacingBet;
+        const canCheck =
+            !isFacingBet && (currentBet === 0 || contributed >= currentBet);
+        const canCall = isFacingBet;
         const canBet = currentBet === 0;
         const canRaise = currentBet > 0;
 
@@ -54,7 +56,7 @@ export class ActionOptionsTray extends MobxLitElement {
         // Always available
         actions.push({ type: "FOLD", label: "Fold" });
 
-        // Conditional actions
+        // Conditional actions - show CALL instead of CHECK when facing a bet
         if (canCheck) {
             actions.push({ type: "CHECK", label: "Check" });
         }
@@ -153,6 +155,9 @@ export class ActionOptionsTray extends MobxLitElement {
 
                 <div class="street-info">
                     Street: ${current_street} | Current Bet: ${current_bet}
+                    ${handBuilderStore.isBettingRoundComplete
+                        ? " | Betting Round Complete"
+                        : ""}
                 </div>
 
                 <div class="section">

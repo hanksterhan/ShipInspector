@@ -3,7 +3,11 @@ import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { Card } from "@common/interfaces";
-import { pokerBoardStore, deckStore } from "../../../stores/index";
+import {
+    pokerBoardStore,
+    deckStore,
+    handBuilderStore,
+} from "../../../stores/index";
 
 /**
  * BoardCardContainer component - Container for all board cards
@@ -20,11 +24,94 @@ export class BoardCardContainer extends MobxLitElement {
      * Check if a board card slot is currently in scope
      */
     isBoardCardInScope(boardIndex: number): boolean {
-        // No blue glow if river card is selected or board is complete
         const board = pokerBoardStore.board;
-        const riverCardSelected = board[4] !== null;
         const boardComplete = pokerBoardStore.isBoardComplete();
-        if (riverCardSelected || boardComplete) {
+
+        // If board is complete, no highlighting
+        if (boardComplete) {
+            return false;
+        }
+
+        // If hand has started, highlight board cards based on betting round completion
+        if (handBuilderStore.handStarted) {
+            const bettingComplete = handBuilderStore.isBettingRoundComplete;
+            const currentStreet = handBuilderStore.current_street;
+
+            // When betting is complete, highlight the next board cards to be dealt
+            if (bettingComplete) {
+                // After preflop betting, highlight flop cards
+                if (currentStreet === "PREFLOP" || currentStreet === "FLOP") {
+                    const flopCardsSet =
+                        board[0] !== null &&
+                        board[1] !== null &&
+                        board[2] !== null;
+                    if (!flopCardsSet) {
+                        // Highlight the first empty flop card slot
+                        if (board[0] === null) {
+                            return boardIndex === 0;
+                        } else if (board[1] === null) {
+                            return boardIndex === 1;
+                        } else if (board[2] === null) {
+                            return boardIndex === 2;
+                        }
+                    }
+                }
+
+                // After flop betting, highlight turn card
+                if (currentStreet === "TURN") {
+                    const turnCardSet = board[3] !== null;
+                    if (!turnCardSet) {
+                        return boardIndex === 3;
+                    }
+                }
+
+                // After turn betting, highlight river card
+                if (currentStreet === "RIVER") {
+                    const riverCardSet = board[4] !== null;
+                    if (!riverCardSet) {
+                        return boardIndex === 4;
+                    }
+                }
+            } else {
+                // Betting not complete - highlight based on street and cards set
+                // When waiting for flop (FLOP street but flop cards not all set)
+                if (currentStreet === "FLOP") {
+                    const flopCardsSet =
+                        board[0] !== null &&
+                        board[1] !== null &&
+                        board[2] !== null;
+                    if (!flopCardsSet) {
+                        // Highlight flop cards (indices 0, 1, 2)
+                        return boardIndex >= 0 && boardIndex <= 2;
+                    }
+                }
+
+                // When waiting for turn (TURN street but turn card not set)
+                if (currentStreet === "TURN") {
+                    const turnCardSet = board[3] !== null;
+                    if (!turnCardSet) {
+                        // Highlight turn card (index 3)
+                        return boardIndex === 3;
+                    }
+                }
+
+                // When waiting for river (RIVER street but river card not set)
+                if (currentStreet === "RIVER") {
+                    const riverCardSet = board[4] !== null;
+                    if (!riverCardSet) {
+                        // Highlight river card (index 4)
+                        return boardIndex === 4;
+                    }
+                }
+            }
+
+            // No highlighting for other cases
+            return false;
+        }
+
+        // Before hand starts, use scope-based highlighting
+        const riverCardSelected = board[4] !== null;
+        if (riverCardSelected) {
             return false;
         }
 

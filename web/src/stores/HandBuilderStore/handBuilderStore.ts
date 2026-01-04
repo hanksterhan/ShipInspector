@@ -5,6 +5,7 @@ import {
     HandSaveRequest,
     handReplayClient,
 } from "../../services/handReplayClient";
+import { pokerBoardStore } from "../index";
 
 export type Street = "PREFLOP" | "FLOP" | "TURN" | "RIVER" | "SHOWDOWN";
 export type ActionType =
@@ -314,7 +315,21 @@ export class HandBuilderStore {
                 }
                 break;
             case "POST_SB":
+                if (action.amount) {
+                    player.contributed_this_street += action.amount;
+                    // Set current bet to small blind initially
+                    if (this.current_bet === 0) {
+                        this.current_bet = action.amount;
+                    }
+                }
+                break;
             case "POST_BB":
+                if (action.amount) {
+                    player.contributed_this_street += action.amount;
+                    // Set current bet to big blind (overrides small blind)
+                    this.current_bet = action.amount;
+                }
+                break;
             case "POST_ANTE":
             case "STRADDLE":
             case "CALL":
@@ -582,6 +597,212 @@ export class HandBuilderStore {
         return playersInHand[this.acting_position % playersInHand.length];
     }
 
+    /**
+     * Get actions for the current street
+     */
+    @computed
+    get currentStreetActions(): ActionDraft[] {
+        return this.actionDrafts.filter(
+            (a) => a.street === this.current_street
+        );
+    }
+
+    /**
+     * Get the seat that posted the big blind or straddle in preflop
+     */
+    private getBigBlindOrStraddleSeat(): number | null {
+        if (this.current_street !== "PREFLOP") return null;
+
+        const currentStreetActions = this.currentStreetActions;
+
+        // Find straddle first (if exists, it's the last blind)
+        for (let i = currentStreetActions.length - 1; i >= 0; i--) {
+            const action = currentStreetActions[i];
+            if (action.type === "STRADDLE" && action.actor_seat !== undefined) {
+                return action.actor_seat;
+            }
+        }
+
+        // Otherwise find big blind
+        for (let i = currentStreetActions.length - 1; i >= 0; i--) {
+            const action = currentStreetActions[i];
+            if (action.type === "POST_BB" && action.actor_seat !== undefined) {
+                return action.actor_seat;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if betting round is complete
+     * A betting round is complete when all active players have either:
+     * 1. Folded, OR
+     * 2. Matched the current bet (contributed_this_street >= current_bet), OR
+     * 3. Are all-in
+     * AND action has returned to the last aggressor (or big blind/straddle in preflop)
+     */
+    @computed
+    get isBettingRoundComplete(): boolean {
+        const playersInHand = this.playersInHand;
+        if (playersInHand.length <= 1) return true; // Only one player left
+
+        const currentStreetActions = this.currentStreetActions;
+
+        // Check if all players have matched the bet or folded
+        const allMatchedOrFolded = playersInHand.every((player) => {
+            // Player has folded
+            if (player.status === "FOLDED") return true;
+            // Player is all-in
+            if (player.status === "ALL_IN") return true;
+            // Player has matched the current bet
+            return player.contributed_this_street >= this.current_bet;
+        });
+
+        if (!allMatchedOrFolded) return false;
+
+        // Find the last aggressive action (BET or RAISE)
+        let lastAggressorSeat: number | null = null;
+        let lastAggressorIndex = -1;
+
+        for (let i = currentStreetActions.length - 1; i >= 0; i--) {
+            const action = currentStreetActions[i];
+            if (
+                (action.type === "BET" || action.type === "RAISE") &&
+                action.actor_seat !== undefined
+            ) {
+                lastAggressorSeat = action.actor_seat;
+                lastAggressorIndex = i;
+                break;
+            }
+        }
+
+        // Special handling for PREFLOP: if no bet/raise, check if BB/straddle has checked
+        if (lastAggressorSeat === null && this.current_street === "PREFLOP") {
+            const bbOrStraddleSeat = this.getBigBlindOrStraddleSeat();
+            if (bbOrStraddleSeat !== null) {
+                // Find the index of the POST_BB or STRADDLE action
+                let blindActionIndex = -1;
+                for (let i = 0; i < currentStreetActions.length; i++) {
+                    const action = currentStreetActions[i];
+                    if (
+                        (action.type === "POST_BB" ||
+                            action.type === "STRADDLE") &&
+                        action.actor_seat === bbOrStraddleSeat
+                    ) {
+                        blindActionIndex = i;
+                        break;
+                    }
+                }
+
+                // Check if BB/straddle has checked AFTER posting the blind
+                if (blindActionIndex >= 0) {
+                    const actionsAfterBlind = currentStreetActions.slice(
+                        blindActionIndex + 1
+                    );
+                    const hasChecked = actionsAfterBlind.some(
+                        (a) =>
+                            a.actor_seat === bbOrStraddleSeat &&
+                            a.type === "CHECK"
+                    );
+
+                    if (hasChecked) {
+                        // Count unique players who have acted (excluding blinds/antes/straddle)
+                        const actingSeats = new Set(
+                            currentStreetActions
+                                .filter(
+                                    (a) =>
+                                        a.actor_seat !== undefined &&
+                                        a.type !== "POST_SB" &&
+                                        a.type !== "POST_BB" &&
+                                        a.type !== "POST_ANTE" &&
+                                        a.type !== "STRADDLE"
+                                )
+                                .map((a) => a.actor_seat!)
+                        );
+                        // All players have acted (including BB/straddle checking)
+                        return actingSeats.size >= playersInHand.length;
+                    }
+                }
+            }
+
+            // If no bet/raise and BB/straddle hasn't checked yet, betting is not complete
+            return false;
+        }
+
+        // If no bet/raise happened in post-flop, betting round is complete when all players have checked
+        if (lastAggressorSeat === null) {
+            // Count unique players who have acted (excluding blinds/antes)
+            const actingSeats = new Set(
+                currentStreetActions
+                    .filter(
+                        (a) =>
+                            a.actor_seat !== undefined &&
+                            a.type !== "POST_SB" &&
+                            a.type !== "POST_BB" &&
+                            a.type !== "POST_ANTE" &&
+                            a.type !== "STRADDLE"
+                    )
+                    .map((a) => a.actor_seat!)
+            );
+            return actingSeats.size >= playersInHand.length;
+        }
+
+        // Action has returned to last aggressor if:
+        // 1. There are actions after the last bet/raise
+        // 2. All other active players have acted after the last bet/raise
+        // 3. Last aggressor has acted again (or all others folded)
+        const actionsAfterLastBet = currentStreetActions.slice(
+            lastAggressorIndex + 1
+        );
+
+        if (actionsAfterLastBet.length === 0) return false;
+
+        // Get seats that acted after the last bet/raise
+        const seatsThatActedAfter = new Set(
+            actionsAfterLastBet
+                .filter((a) => a.actor_seat !== undefined)
+                .map((a) => a.actor_seat!)
+        );
+
+        // Get active seats (excluding folded players)
+        const activeSeats = new Set(
+            playersInHand
+                .filter((p) => p.status !== "FOLDED")
+                .map((p) => p.seat)
+        );
+
+        // Check if all active players (except possibly the last aggressor) have acted
+        // and the last aggressor has acted again OR all others have folded
+        const otherActiveSeats = new Set(activeSeats);
+        otherActiveSeats.delete(lastAggressorSeat);
+
+        // All other active players have acted
+        const allOthersActed = Array.from(otherActiveSeats).every((seat) =>
+            seatsThatActedAfter.has(seat)
+        );
+
+        // Last aggressor has acted again OR all others folded
+        const lastAggressorActedAgain =
+            seatsThatActedAfter.has(lastAggressorSeat);
+        const allOthersFolded = otherActiveSeats.size === 0;
+
+        return allOthersActed && (lastAggressorActedAgain || allOthersFolded);
+    }
+
+    /**
+     * Check if current player is facing a bet (needs to call)
+     */
+    @computed
+    get isFacingBet(): boolean {
+        const player = this.currentActingPlayer;
+        if (!player) return false;
+        return (
+            this.current_bet > 0 &&
+            player.contributed_this_street < this.current_bet
+        );
+    }
+
     @action
     submitCurrentAction() {
         const player = this.currentActingPlayer;
@@ -646,19 +867,187 @@ export class HandBuilderStore {
             tags: [...this.currentActionTags],
         });
 
-        // Move to next player (only if there are players in hand)
-        const playersInHand = this.playersInHand;
-        if (playersInHand.length > 0) {
-            this.acting_position =
-                (this.acting_position + 1) % playersInHand.length;
+        // Check if betting round is now complete
+        const bettingComplete = this.isBettingRoundComplete;
+
+        // Move to next player (only if there are players in hand and betting not complete)
+        if (!bettingComplete) {
+            const playersInHand = this.playersInHand;
+            if (playersInHand.length > 0) {
+                this.acting_position =
+                    (this.acting_position + 1) % playersInHand.length;
+            }
         }
 
         // Clear current action
         this.clearCurrentAction();
+
+        // If betting is complete, update scope to highlight board cards
+        if (bettingComplete) {
+            this.updateScopeForNextAction();
+        }
+    }
+
+    /**
+     * Update scope to highlight the next action (board cards)
+     * This is called when betting round completes
+     */
+    @action
+    updateScopeForNextAction() {
+        const board = pokerBoardStore.board;
+        const currentStreet = this.current_street;
+
+        // Determine which board card should be highlighted
+        if (currentStreet === "PREFLOP" || currentStreet === "FLOP") {
+            // Waiting for flop - highlight first empty flop card
+            if (board[0] === null) {
+                pokerBoardStore.setScope({ kind: "board", boardIndex: 0 });
+            } else if (board[1] === null) {
+                pokerBoardStore.setScope({ kind: "board", boardIndex: 1 });
+            } else if (board[2] === null) {
+                pokerBoardStore.setScope({ kind: "board", boardIndex: 2 });
+            }
+        } else if (currentStreet === "TURN") {
+            // Waiting for turn - highlight turn card
+            if (board[3] === null) {
+                pokerBoardStore.setScope({ kind: "board", boardIndex: 3 });
+            }
+        } else if (currentStreet === "RIVER") {
+            // Waiting for river - highlight river card
+            if (board[4] === null) {
+                pokerBoardStore.setScope({ kind: "board", boardIndex: 4 });
+            }
+        }
+    }
+
+    /**
+     * Get the next active player seat clockwise from a given seat
+     */
+    private getNextActivePlayerClockwise(fromSeat: number): number | null {
+        const activePlayers = this.activePlayers;
+        if (activePlayers.length === 0) return null;
+
+        // Sort by seat number
+        const sortedSeats = activePlayers
+            .map((p) => p.seat)
+            .sort((a, b) => a - b);
+
+        // Find the next seat after fromSeat
+        for (const seat of sortedSeats) {
+            if (seat > fromSeat) {
+                return seat;
+            }
+        }
+
+        // Wrap around: return the first seat
+        return sortedSeats[0] !== fromSeat ? sortedSeats[0] : null;
+    }
+
+    /**
+     * Calculate small blind seat based on button and number of players
+     * In heads-up, dealer is small blind
+     */
+    private getSmallBlindSeat(): number | null {
+        const activePlayers = this.activePlayers;
+        if (activePlayers.length < 2) return null;
+
+        // Heads-up: dealer is small blind
+        if (activePlayers.length === 2) {
+            return this.button_seat;
+        }
+
+        // 3+ players: SB is next clockwise from button
+        return this.getNextActivePlayerClockwise(this.button_seat);
+    }
+
+    /**
+     * Calculate big blind seat based on button and number of players
+     */
+    private getBigBlindSeat(): number | null {
+        const activePlayers = this.activePlayers;
+        if (activePlayers.length < 2) return null;
+
+        // Heads-up: BB is the non-dealer
+        if (activePlayers.length === 2) {
+            const nonDealer = activePlayers.find(
+                (p) => p.seat !== this.button_seat
+            );
+            return nonDealer?.seat ?? null;
+        }
+
+        // 3+ players: BB is next clockwise from SB
+        const sbSeat = this.getSmallBlindSeat();
+        if (sbSeat === null) return null;
+        return this.getNextActivePlayerClockwise(sbSeat);
+    }
+
+    /**
+     * Get the first player to act after blinds (UTG in multi-way, SB in heads-up)
+     */
+    private getFirstToActSeat(): number | null {
+        const activePlayers = this.activePlayers;
+        if (activePlayers.length < 2) return null;
+
+        // Heads-up: SB acts first (dealer)
+        if (activePlayers.length === 2) {
+            return this.button_seat;
+        }
+
+        // Multi-way: UTG is next clockwise from big blind
+        const bbSeat = this.getBigBlindSeat();
+        if (bbSeat === null) return null;
+        return this.getNextActivePlayerClockwise(bbSeat);
     }
 
     @action
     setHandStarted(started: boolean) {
+        if (started && !this.handStarted) {
+            // Check if blinds have already been posted
+            const hasBlinds = this.actionDrafts.some(
+                (a) => a.type === "POST_SB" || a.type === "POST_BB"
+            );
+
+            // Hand is starting - automatically post blinds if not already posted
+            if (!hasBlinds) {
+                const sbSeat = this.getSmallBlindSeat();
+                const bbSeat = this.getBigBlindSeat();
+
+                // Post small blind
+                if (sbSeat !== null) {
+                    this.addActionDraft({
+                        street: "PREFLOP",
+                        type: "POST_SB",
+                        actor_seat: sbSeat,
+                        amount: this.small_blind,
+                        tags: [],
+                    });
+                }
+
+                // Post big blind
+                if (bbSeat !== null) {
+                    this.addActionDraft({
+                        street: "PREFLOP",
+                        type: "POST_BB",
+                        actor_seat: bbSeat,
+                        amount: this.big_blind,
+                        tags: [],
+                    });
+                }
+            }
+
+            // Set acting position to first player to act
+            const firstToActSeat = this.getFirstToActSeat();
+            if (firstToActSeat !== null) {
+                const playersInHand = this.playersInHand;
+                const firstToActIndex = playersInHand.findIndex(
+                    (p) => p.seat === firstToActSeat
+                );
+                if (firstToActIndex >= 0) {
+                    this.acting_position = firstToActIndex;
+                }
+            }
+        }
+
         this.handStarted = started;
     }
 

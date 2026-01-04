@@ -482,20 +482,25 @@ export class PokerBoardStore {
 
     /**
      * Get the player index that is currently in scope for the hand builder
-     * Defaults to player 1 (index 0) on page load
-     * When hand starts, defaults to the player who is next to take action
+     * Returns null before hand starts and when betting is complete (no players should be highlighted)
+     * When hand has started and betting is active, returns the current acting player index
      */
     @computed
     get playerInScope(): number | null {
-        // If hand hasn't started, default to player 1 (index 0)
+        // Before hand starts, no players should be highlighted
         if (!handBuilderStore.handStarted) {
-            return 0;
+            return null;
         }
 
-        // When hand has started, get the current acting player from HandBuilderStore
+        // When betting is complete, no players should be highlighted
+        if (handBuilderStore.isBettingRoundComplete) {
+            return null;
+        }
+
+        // When hand has started and betting is not complete, get the current acting player
         const currentActingPlayer = handBuilderStore.currentActingPlayer;
         if (!currentActingPlayer) {
-            return 0; // Fallback to player 1
+            return null; // No acting player
         }
 
         // Map seat number (1-based) to player index (0-based)
@@ -507,7 +512,7 @@ export class PokerBoardStore {
             return playerIndex;
         }
 
-        return 0; // Fallback to player 1
+        return null; // Invalid player index
     }
 
     /**

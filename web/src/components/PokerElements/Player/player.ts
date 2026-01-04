@@ -34,6 +34,12 @@ export class Player extends MobxLitElement {
      * Check if this card slot is currently in scope
      */
     isCardInScope(cardIndex: 0 | 1): boolean {
+        // Once the hand starts, player cards should never be highlighted
+        // (no additional player cards will be selected during the hand)
+        if (handBuilderStore.handStarted) {
+            return false;
+        }
+
         // No blue glow if river card is selected or board is complete
         const board = pokerBoardStore.board;
         const riverCardSelected = board[4] !== null;
@@ -185,7 +191,11 @@ export class Player extends MobxLitElement {
             !handBuilderStore.handBuilderTrayOpen;
 
         return html`
-            <div class="player-wrapper ${isWinner ? "winner" : ""} ${isInScope ? "in-scope" : ""}">
+            <div
+                class="player-wrapper ${isWinner ? "winner" : ""} ${isInScope
+                    ? "in-scope"
+                    : ""}"
+            >
                 ${showRemoveButton
                     ? html`
                           <button
