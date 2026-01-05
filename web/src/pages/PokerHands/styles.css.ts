@@ -37,6 +37,11 @@ export const styles = css`
         width: 100%;
     }
 
+    .blind-controls-wrapper action-timeline {
+        width: 100%;
+        margin-top: 8px;
+    }
+
     .poker-hands-content {
         display: flex;
         flex-direction: column;

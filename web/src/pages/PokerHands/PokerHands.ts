@@ -5,7 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
-import { pokerBoardStore } from "../../stores/index";
+import { pokerBoardStore, handBuilderStore } from "../../stores/index";
 // Import components to ensure they're registered
 
 /**
@@ -48,6 +48,9 @@ export class PokerHands extends MobxLitElement {
                     <div class="blind-controls-wrapper">
                         <blind-controls></blind-controls>
                         <start-hand-button></start-hand-button>
+                        ${handBuilderStore.GetHandStarted
+                            ? html`<action-timeline></action-timeline>`
+                            : null}
                     </div>
                     <div class="poker-hands-content">
                         <poker-table></poker-table>

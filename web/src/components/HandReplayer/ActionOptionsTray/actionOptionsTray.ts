@@ -202,7 +202,9 @@ export class ActionOptionsTray extends MobxLitElement {
                                             : currentActionType === "RAISE" &&
                                                 action.type === "RAISE"
                                               ? html`
-                                                    <div class="inline-bet-input">
+                                                    <div
+                                                        class="inline-bet-input"
+                                                    >
                                                         <input
                                                             type="number"
                                                             class="inline-bet-amount-input"
@@ -211,7 +213,8 @@ export class ActionOptionsTray extends MobxLitElement {
                                                             @input=${this
                                                                 .handleRaiseToChange}
                                                             placeholder="Enter total raise size"
-                                                            min=${current_bet + 1}
+                                                            min=${current_bet +
+                                                            1}
                                                         />
                                                     </div>
                                                 `
@@ -259,7 +262,6 @@ export class ActionOptionsTray extends MobxLitElement {
                             )}
                         </div>
                     </div>
-
 
                     <div class="submit-section">
                         ${player
