@@ -2,7 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { pokerBoardStore, handBuilderStore } from "../../../stores/index";
+import { handBuilderStore, gameSettingsStore } from "../../../stores/index";
 
 /**
  * BlindControls component - Allows editing small blind and big blind amounts
@@ -24,9 +24,9 @@ export class BlindControls extends MobxLitElement {
     connectedCallback() {
         super.connectedCallback();
         // Initialize values from store
-        this.smallBlindValue = pokerBoardStore.smallBlind.toString();
-        this.bigBlindValue = pokerBoardStore.bigBlind.toString();
-        this.defaultStackValue = pokerBoardStore.defaultStack.toString();
+        this.smallBlindValue = gameSettingsStore.smallBlind.toString();
+        this.bigBlindValue = gameSettingsStore.bigBlind.toString();
+        this.defaultStackValue = gameSettingsStore.defaultStack.toString();
     }
 
     private isNumeric(value: string): boolean {
@@ -46,7 +46,7 @@ export class BlindControls extends MobxLitElement {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue >= 0) {
                 this.smallBlindInvalid = false;
-                pokerBoardStore.setSmallBlind(numValue);
+                gameSettingsStore.setSmallBlind(numValue);
             } else {
                 this.smallBlindInvalid = true;
             }
@@ -65,7 +65,7 @@ export class BlindControls extends MobxLitElement {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue >= 0) {
                 this.bigBlindInvalid = false;
-                pokerBoardStore.setBigBlind(numValue);
+                gameSettingsStore.setBigBlind(numValue);
             } else {
                 this.bigBlindInvalid = true;
             }
@@ -84,7 +84,7 @@ export class BlindControls extends MobxLitElement {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue >= 0) {
                 this.defaultStackInvalid = false;
-                pokerBoardStore.setDefaultStack(numValue);
+                gameSettingsStore.setDefaultStack(numValue);
                 // Update all player stacks in handBuilderStore
                 handBuilderStore.updateAllPlayerStacksToDefault(numValue);
             } else {

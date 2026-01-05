@@ -7,6 +7,7 @@ import {
     pokerBoardStore,
     deckStore,
     handBuilderStore,
+    gameSettingsStore,
 } from "../../../stores/index";
 import { SUITS, RANKS } from "../../utilities";
 import {
@@ -185,7 +186,7 @@ export class Player extends MobxLitElement {
         const playerStack = pokerBoardStore.getPlayerStack(playerIndex);
 
         // Calculate number of big blinds (rounded down)
-        const bigBlind = pokerBoardStore.bigBlind;
+        const bigBlind = gameSettingsStore.bigBlind;
         const bigBlinds = bigBlind > 0 ? Math.floor(playerStack / bigBlind) : 0;
 
         // Check if this player is in scope
@@ -276,7 +277,9 @@ export class Player extends MobxLitElement {
                     </div>
                     <div class="player-stack">
                         <span class="stack-icon">${coinsIcon}</span>
-                        <span class="stack-amount">${playerStack.toLocaleString()}</span>
+                        <span class="stack-amount"
+                            >${playerStack.toLocaleString()}</span
+                        >
                         <span class="stack-separator">|</span>
                         <span class="stack-big-blinds">${bigBlinds}BB</span>
                     </div>

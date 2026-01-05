@@ -8,6 +8,7 @@ import { RouterStore } from "./RouterStore";
 import { OutsStore } from "./OutsStore";
 import { PokerBoardStore } from "./PokerBoardStore";
 import { HandBuilderStore } from "./HandBuilderStore";
+import { GameSettingsStore } from "./GameSettingsStore";
 // PLOP: APPEND STORE IMPORTS
 
 export const menuStore = new MenuStore();
@@ -23,6 +24,8 @@ export * from "./AuthStore";
 export const authStore = new AuthStore();
 export * from "./RouterStore";
 export const routerStore = new RouterStore();
+export * from "./GameSettingsStore";
+export const gameSettingsStore = new GameSettingsStore();
 export * from "./PokerBoardStore";
 export const pokerBoardStore = new PokerBoardStore();
 export * from "./OutsStore";

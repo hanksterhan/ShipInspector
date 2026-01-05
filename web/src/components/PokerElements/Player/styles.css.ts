@@ -565,7 +565,9 @@ export const styles = css`
         }
 
         .player-stack {
-            font-size: calc(var(--spectrum-global-dimension-font-size-150) * 0.8);
+            font-size: calc(
+                var(--spectrum-global-dimension-font-size-150) * 0.8
+            );
             gap: var(--spectrum-global-dimension-size-50);
         }
 
@@ -639,7 +641,9 @@ export const styles = css`
         }
 
         .player-stack {
-            font-size: calc(var(--spectrum-global-dimension-font-size-125) * 0.8);
+            font-size: calc(
+                var(--spectrum-global-dimension-font-size-125) * 0.8
+            );
             gap: var(--spectrum-global-dimension-size-50);
         }
 
@@ -727,7 +731,9 @@ export const styles = css`
         }
 
         .player-stack {
-            font-size: calc(var(--spectrum-global-dimension-font-size-100) * 0.8);
+            font-size: calc(
+                var(--spectrum-global-dimension-font-size-100) * 0.8
+            );
             gap: var(--spectrum-global-dimension-size-25);
         }
 

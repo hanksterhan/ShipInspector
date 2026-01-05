@@ -5,7 +5,7 @@ import {
     HandSaveRequest,
     handReplayClient,
 } from "../../services/handReplayClient";
-import { pokerBoardStore } from "../index";
+import { pokerBoardStore, gameSettingsStore } from "../index";
 
 export type Street = "PREFLOP" | "FLOP" | "TURN" | "RIVER" | "SHOWDOWN";
 export type ActionType =
@@ -57,12 +57,6 @@ export interface PlayerConfig {
  */
 export class HandBuilderStore {
     // Hand settings
-    @observable
-    small_blind: number = 10;
-
-    @observable
-    big_blind: number = 20;
-
     @observable
     ante: number = 0;
 
@@ -143,8 +137,8 @@ export class HandBuilderStore {
 
     @action
     initializeDefaultPlayers() {
-        // Get default stack from pokerBoardStore or use 2000 as fallback
-        const defaultStack = pokerBoardStore?.defaultStack ?? 2000;
+        // Get default stack from gameSettingsStore (with fallback for initialization order)
+        const defaultStack = gameSettingsStore?.defaultStack ?? 2000;
 
         // Initialize with 2 players by default
         this.players.set(1, {
@@ -172,12 +166,26 @@ export class HandBuilderStore {
     // Hand settings
     @action
     setSmallBlind(value: number) {
-        this.small_blind = value;
+        gameSettingsStore.setSmallBlind(value);
     }
 
     @action
     setBigBlind(value: number) {
-        this.big_blind = value;
+        gameSettingsStore.setBigBlind(value);
+    }
+
+    /**
+     * Get small blind (delegates to GameSettingsStore)
+     */
+    get small_blind(): number {
+        return gameSettingsStore.smallBlind;
+    }
+
+    /**
+     * Get big blind (delegates to GameSettingsStore)
+     */
+    get big_blind(): number {
+        return gameSettingsStore.bigBlind;
     }
 
     @action
@@ -1131,8 +1139,7 @@ export class HandBuilderStore {
 
     @action
     reset() {
-        this.small_blind = 10;
-        this.big_blind = 20;
+        // Blinds are now managed by GameSettingsStore
         this.ante = 0;
         this.button_seat = 1;
         this.table_size = 6;

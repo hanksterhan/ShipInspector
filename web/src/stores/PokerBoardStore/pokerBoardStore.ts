@@ -6,7 +6,7 @@ import {
     boardToString,
     formatHandRank,
 } from "../../components/utilities";
-import { handBuilderStore } from "../index";
+import { handBuilderStore, gameSettingsStore } from "../index";
 
 /**
  * Scope represents the currently focused slot for card selection
@@ -53,19 +53,7 @@ export class PokerBoardStore {
     playerNames: Map<number, string> = new Map(); // Custom player names
 
     @observable
-    playerStacks: Map<number, number> = new Map(); // Player stack sizes
-
-    @observable
     dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
-
-    @observable
-    smallBlind: number = 10;
-
-    @observable
-    bigBlind: number = 20;
-
-    @observable
-    defaultStack: number = 2000;
 
     @observable
     board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
@@ -463,8 +451,7 @@ export class PokerBoardStore {
      * Get player stack size (custom stack if set, otherwise default stack)
      */
     getPlayerStack(playerIndex: number): number {
-        const customStack = this.playerStacks.get(playerIndex);
-        return customStack !== undefined ? customStack : this.defaultStack;
+        return gameSettingsStore.getPlayerStack(playerIndex);
     }
 
     /**
@@ -472,14 +459,7 @@ export class PokerBoardStore {
      */
     @action
     setPlayerStack(playerIndex: number, stack: number | null) {
-        if (stack === null) {
-            // Remove custom stack to use default
-            this.playerStacks.delete(playerIndex);
-        } else {
-            this.playerStacks.set(playerIndex, stack);
-        }
-        // Trigger observable update by creating new Map
-        this.playerStacks = new Map(this.playerStacks);
+        gameSettingsStore.setPlayerStack(playerIndex, stack);
     }
 
     /**
@@ -608,7 +588,7 @@ export class PokerBoardStore {
      */
     @action
     setSmallBlind(value: number) {
-        this.smallBlind = value;
+        gameSettingsStore.setSmallBlind(value);
     }
 
     /**
@@ -616,7 +596,7 @@ export class PokerBoardStore {
      */
     @action
     setBigBlind(value: number) {
-        this.bigBlind = value;
+        gameSettingsStore.setBigBlind(value);
     }
 
     /**
@@ -624,7 +604,28 @@ export class PokerBoardStore {
      */
     @action
     setDefaultStack(value: number) {
-        this.defaultStack = value;
+        gameSettingsStore.setDefaultStack(value);
+    }
+
+    /**
+     * Get small blind (delegates to GameSettingsStore)
+     */
+    get smallBlind(): number {
+        return gameSettingsStore.smallBlind;
+    }
+
+    /**
+     * Get big blind (delegates to GameSettingsStore)
+     */
+    get bigBlind(): number {
+        return gameSettingsStore.bigBlind;
+    }
+
+    /**
+     * Get default stack (delegates to GameSettingsStore)
+     */
+    get defaultStack(): number {
+        return gameSettingsStore.defaultStack;
     }
 
     /**
@@ -748,7 +749,7 @@ export class PokerBoardStore {
         this.activePlayers = new Set([0, 1]);
 
         // Reset player stacks
-        this.playerStacks = new Map();
+        gameSettingsStore.resetPlayerStacks();
 
         // Reset board
         this.board = [null, null, null, null, null];
