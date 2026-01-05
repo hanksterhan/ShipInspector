@@ -2,7 +2,7 @@ import { html } from "lit";
 import { styles } from "./styles.css";
 import { customElement } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import { pokerBoardStore } from "../../../stores/index";
+import { pokerBoardStore, handBuilderStore } from "../../../stores/index";
 
 /**
  * BlindControls component - Allows editing small blind and big blind amounts
@@ -16,14 +16,17 @@ export class BlindControls extends MobxLitElement {
 
     private smallBlindValue: string = "";
     private bigBlindValue: string = "";
+    private defaultStackValue: string = "";
     private smallBlindInvalid: boolean = false;
     private bigBlindInvalid: boolean = false;
+    private defaultStackInvalid: boolean = false;
 
     connectedCallback() {
         super.connectedCallback();
         // Initialize values from store
         this.smallBlindValue = pokerBoardStore.smallBlind.toString();
         this.bigBlindValue = pokerBoardStore.bigBlind.toString();
+        this.defaultStackValue = pokerBoardStore.defaultStack.toString();
     }
 
     private isNumeric(value: string): boolean {
@@ -72,6 +75,27 @@ export class BlindControls extends MobxLitElement {
         this.requestUpdate();
     }
 
+    handleDefaultStackChange(e: Event) {
+        const target = e.target as any;
+        const value = target.value || "";
+        this.defaultStackValue = value;
+
+        if (this.isNumeric(value)) {
+            const numValue = parseInt(value, 10);
+            if (!isNaN(numValue) && numValue >= 0) {
+                this.defaultStackInvalid = false;
+                pokerBoardStore.setDefaultStack(numValue);
+                // Update all player stacks in handBuilderStore
+                handBuilderStore.updateAllPlayerStacksToDefault(numValue);
+            } else {
+                this.defaultStackInvalid = true;
+            }
+        } else {
+            this.defaultStackInvalid = true;
+        }
+        this.requestUpdate();
+    }
+
     render() {
         return html`
             <div class="blind-controls-container">
@@ -95,6 +119,19 @@ export class BlindControls extends MobxLitElement {
                         @input=${this.handleBigBlindChange}
                         required
                         ?invalid=${this.bigBlindInvalid}
+                    ></sp-textfield>
+                </div>
+                <div class="blind-input-group">
+                    <sp-field-label for="default-stack-input"
+                        >Default stack</sp-field-label
+                    >
+                    <sp-textfield
+                        id="default-stack-input"
+                        type="text"
+                        .value=${this.defaultStackValue}
+                        @input=${this.handleDefaultStackChange}
+                        required
+                        ?invalid=${this.defaultStackInvalid}
                     ></sp-textfield>
                 </div>
             </div>

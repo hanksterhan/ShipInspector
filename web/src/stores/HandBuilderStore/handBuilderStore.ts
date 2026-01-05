@@ -45,6 +45,7 @@ export interface PlayerConfig {
     seat: number;
     player_label: string;
     starting_stack: number;
+    current_stack: number; // Current remaining stack (decreases as player bets)
     is_hero: boolean;
     hole_cards: [Card | null, Card | null];
     status: PlayerStatus;
@@ -57,10 +58,10 @@ export interface PlayerConfig {
 export class HandBuilderStore {
     // Hand settings
     @observable
-    small_blind: number = 25;
+    small_blind: number = 10;
 
     @observable
-    big_blind: number = 50;
+    big_blind: number = 20;
 
     @observable
     ante: number = 0;
@@ -142,11 +143,15 @@ export class HandBuilderStore {
 
     @action
     initializeDefaultPlayers() {
+        // Get default stack from pokerBoardStore or use 2000 as fallback
+        const defaultStack = pokerBoardStore?.defaultStack ?? 2000;
+
         // Initialize with 2 players by default
         this.players.set(1, {
             seat: 1,
             player_label: "", // Empty string means use default "p1"
-            starting_stack: 10000,
+            starting_stack: defaultStack,
+            current_stack: defaultStack,
             is_hero: true,
             hole_cards: [null, null],
             status: "ACTIVE",
@@ -155,7 +160,8 @@ export class HandBuilderStore {
         this.players.set(2, {
             seat: 2,
             player_label: "", // Empty string means use default "p2"
-            starting_stack: 9500,
+            starting_stack: defaultStack,
+            current_stack: defaultStack,
             is_hero: false,
             hole_cards: [null, null],
             status: "ACTIVE",
@@ -205,6 +211,7 @@ export class HandBuilderStore {
             seat,
             player_label: label,
             starting_stack: stack,
+            current_stack: stack,
             is_hero: isHero,
             hole_cards: [null, null],
             status: "ACTIVE",
@@ -243,8 +250,32 @@ export class HandBuilderStore {
     updatePlayerStack(seat: number, stack: number) {
         const player = this.players.get(seat);
         if (player) {
+            // Calculate the difference to adjust current_stack accordingly
+            const difference = stack - player.starting_stack;
             player.starting_stack = stack;
+            player.current_stack = Math.max(
+                0,
+                player.current_stack + difference
+            );
         }
+    }
+
+    /**
+     * Update all player stacks to a new default value
+     * Adjusts both starting_stack and current_stack proportionally
+     */
+    @action
+    updateAllPlayerStacksToDefault(newDefaultStack: number) {
+        this.players.forEach((player) => {
+            // Calculate the difference between old and new default
+            const difference = newDefaultStack - player.starting_stack;
+            player.starting_stack = newDefaultStack;
+            // Adjust current_stack by the same difference
+            player.current_stack = Math.max(
+                0,
+                player.current_stack + difference
+            );
+        });
     }
 
     @action
@@ -318,6 +349,9 @@ export class HandBuilderStore {
         const player = this.players.get(action.actor_seat);
         if (!player) return;
 
+        // Calculate the amount to subtract from current_stack
+        let betAmount: number = 0;
+
         switch (action.type) {
             case "FOLD":
                 player.status = "FOLDED";
@@ -325,11 +359,13 @@ export class HandBuilderStore {
             case "ALL_IN":
                 player.status = "ALL_IN";
                 if (action.amount) {
+                    betAmount = action.amount;
                     player.contributed_this_street += action.amount;
                 }
                 break;
             case "POST_SB":
                 if (action.amount) {
+                    betAmount = action.amount;
                     player.contributed_this_street += action.amount;
                     // Set current bet to small blind initially
                     if (this.current_bet === 0) {
@@ -339,6 +375,7 @@ export class HandBuilderStore {
                 break;
             case "POST_BB":
                 if (action.amount) {
+                    betAmount = action.amount;
                     player.contributed_this_street += action.amount;
                     // Set current bet to big blind (overrides small blind)
                     this.current_bet = action.amount;
@@ -346,20 +383,43 @@ export class HandBuilderStore {
                 break;
             case "POST_ANTE":
             case "STRADDLE":
+                if (action.amount) {
+                    betAmount = action.amount;
+                    player.contributed_this_street += action.amount;
+                }
+                break;
             case "CALL":
+                if (action.amount) {
+                    betAmount = action.amount;
+                    player.contributed_this_street += action.amount;
+                }
+                break;
             case "BET":
                 if (action.amount) {
+                    betAmount = action.amount;
                     player.contributed_this_street += action.amount;
                 }
                 break;
             case "RAISE":
                 if (action.raise_to) {
+                    // For raise, use action.amount if available (already calculated), otherwise calculate it
+                    betAmount =
+                        action.amount ??
+                        action.raise_to - player.contributed_this_street;
                     player.contributed_this_street = action.raise_to;
                     if (action.tags?.includes("all_in")) {
                         player.status = "ALL_IN";
                     }
                 }
                 break;
+        }
+
+        // Update current_stack by subtracting the bet amount
+        if (betAmount > 0) {
+            player.current_stack = Math.max(
+                0,
+                player.current_stack - betAmount
+            );
         }
 
         // Update current_bet
@@ -858,7 +918,7 @@ export class HandBuilderStore {
                 }
                 break;
             case "ALL_IN":
-                amount = player.starting_stack;
+                amount = player.current_stack;
                 break;
             case "POST_SB":
                 amount = this.small_blind;
@@ -1071,8 +1131,8 @@ export class HandBuilderStore {
 
     @action
     reset() {
-        this.small_blind = 25;
-        this.big_blind = 50;
+        this.small_blind = 10;
+        this.big_blind = 20;
         this.ante = 0;
         this.button_seat = 1;
         this.table_size = 6;

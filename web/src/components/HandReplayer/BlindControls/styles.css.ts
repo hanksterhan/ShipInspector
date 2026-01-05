@@ -25,7 +25,7 @@ export const styles = css`
     }
 
     .blind-input-group sp-field-label {
-        min-width: 30px;
+        min-width: 100px;
         flex-shrink: 0;
     }
 

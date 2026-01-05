@@ -56,10 +56,13 @@ export class PokerBoardStore {
     dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
 
     @observable
-    smallBlind: number = 25;
+    smallBlind: number = 10;
 
     @observable
-    bigBlind: number = 50;
+    bigBlind: number = 20;
+
+    @observable
+    defaultStack: number = 2000;
 
     @observable
     board: [Card | null, Card | null, Card | null, Card | null, Card | null] = [
@@ -588,6 +591,14 @@ export class PokerBoardStore {
     @action
     setBigBlind(value: number) {
         this.bigBlind = value;
+    }
+
+    /**
+     * Set the default stack amount
+     */
+    @action
+    setDefaultStack(value: number) {
+        this.defaultStack = value;
     }
 
     /**

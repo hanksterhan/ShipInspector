@@ -164,14 +164,62 @@ export class ActionOptionsTray extends MobxLitElement {
                         >
                     </sp-action-button>
 
-                    <div class="street-info">
-                        Street: ${current_street} | Current Bet: ${current_bet}
-                        ${handBuilderStore.isBettingRoundComplete
-                            ? " | Betting Round Complete"
-                            : ""}
+                    <div class="top-info-section">
+                        <div class="street-info">
+                            Street: ${current_street} | Current Bet:
+                            ${current_bet}
+                            ${handBuilderStore.isBettingRoundComplete
+                                ? " | Betting Round Complete"
+                                : ""}
+                        </div>
+                        ${player
+                            ? html`
+                                  <div class="current-player">
+                                      <div class="current-player-label">
+                                          Current Player
+                                      </div>
+                                      <div class="current-player-name">
+                                          ${handBuilderStore.getPlayerDisplayName(
+                                              player.seat
+                                          )}
+                                          (Seat ${player.seat})
+                                      </div>
+                                      <div class="current-player-stats">
+                                          Stack: ${player.current_stack} |
+                                          Contributed:
+                                          ${player.contributed_this_street}
+                                      </div>
+                                  </div>
+                              `
+                            : html`<div class="current-player">
+                                  No active players
+                              </div>`}
                     </div>
 
-                    <div class="section action-section-full-width">
+                    <div class="section">
+                        <div class="section-title">Tags</div>
+                        <div class="tags-section">
+                            ${this.availableTags.map(
+                                (tag) => html`
+                                    <button
+                                        class="tag-button ${currentActionTags.includes(
+                                            tag
+                                        )
+                                            ? "selected"
+                                            : ""}"
+                                        @click=${() =>
+                                            this.handleTagToggle(tag)}
+                                    >
+                                        ${this.formatTagName(tag)}
+                                    </button>
+                                `
+                            )}
+                        </div>
+                    </div>
+
+                    <div
+                        class="section action-section-full-width action-section-with-submit"
+                    >
                         <div class="section-title">Select Action</div>
                         <div class="action-buttons">
                             ${this.availableActions
@@ -246,64 +294,20 @@ export class ActionOptionsTray extends MobxLitElement {
                                         </button>
                                     `
                                 )}
+                            <button
+                                class="submit-button"
+                                ?disabled=${!currentActionType ||
+                                (needsAmount &&
+                                    !currentActionAmount &&
+                                    !currentActionRaiseTo)}
+                                @click=${this.handleSubmit}
+                                title="Add Action & Next Player"
+                            >
+                                <span class="submit-icon"
+                                    >${arrowRightIcon}</span
+                                >
+                            </button>
                         </div>
-                    </div>
-
-                    <div class="section">
-                        <div class="section-title">Tags</div>
-                        <div class="tags-section">
-                            ${this.availableTags.map(
-                                (tag) => html`
-                                    <button
-                                        class="tag-button ${currentActionTags.includes(
-                                            tag
-                                        )
-                                            ? "selected"
-                                            : ""}"
-                                        @click=${() =>
-                                            this.handleTagToggle(tag)}
-                                    >
-                                        ${this.formatTagName(tag)}
-                                    </button>
-                                `
-                            )}
-                        </div>
-                    </div>
-
-                    <div class="submit-section">
-                        ${player
-                            ? html`
-                                  <div class="current-player">
-                                      <div class="current-player-label">
-                                          Current Player
-                                      </div>
-                                      <div class="current-player-name">
-                                          ${handBuilderStore.getPlayerDisplayName(
-                                              player.seat
-                                          )}
-                                          (Seat ${player.seat})
-                                      </div>
-                                      <div class="current-player-stats">
-                                          Stack: ${player.starting_stack} |
-                                          Contributed:
-                                          ${player.contributed_this_street}
-                                      </div>
-                                  </div>
-                              `
-                            : html`<div class="current-player">
-                                  No active players
-                              </div>`}
-                        <button
-                            class="submit-button"
-                            ?disabled=${!currentActionType ||
-                            (needsAmount &&
-                                !currentActionAmount &&
-                                !currentActionRaiseTo)}
-                            @click=${this.handleSubmit}
-                            title="Add Action & Next Player"
-                        >
-                            <span class="submit-icon">${arrowRightIcon}</span>
-                        </button>
                     </div>
                 </div>
             </div>

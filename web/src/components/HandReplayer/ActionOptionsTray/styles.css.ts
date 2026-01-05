@@ -208,15 +208,24 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-800);
     }
 
-    .street-info {
+    .top-info-section {
         flex: 1 1 100%;
+        display: flex;
+        flex-direction: row;
+        gap: var(--spectrum-global-dimension-size-100);
+        align-items: flex-start;
+        margin-bottom: var(--spectrum-global-dimension-size-50);
+    }
+
+    .street-info {
+        flex: 1 1 auto;
         background: #e7f3ff;
         padding: var(--spectrum-global-dimension-size-100);
         border-radius: var(--spectrum-global-dimension-size-100);
         font-size: 14px;
         font-weight: 500;
         color: #0056b3;
-        margin-bottom: var(--spectrum-global-dimension-size-50);
+        min-width: 0;
     }
 
     .current-player {
@@ -224,7 +233,6 @@ export const styles = css`
         background: var(--spectrum-global-color-gray-100);
         padding: var(--spectrum-global-dimension-size-100);
         border-radius: var(--spectrum-global-dimension-size-100);
-        margin-right: var(--spectrum-global-dimension-size-150);
         min-width: 0;
     }
 
@@ -340,6 +348,10 @@ export const styles = css`
         border-color: #007bff;
     }
 
+    .action-section-with-submit {
+        flex: 1 1 100%;
+    }
+
     .tags-section {
         display: flex;
         flex-wrap: wrap;
@@ -368,20 +380,9 @@ export const styles = css`
         border-color: #007bff;
     }
 
-    .submit-section {
-        flex: 1 1 100%;
-        padding-top: var(--spectrum-global-dimension-size-100);
-        border-top: 1px solid var(--spectrum-global-color-gray-200);
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--spectrum-global-dimension-size-150);
-    }
-
     .submit-button {
-        width: 48px;
-        height: 48px;
+        width: 42px;
+        height: 42px;
         padding: 0;
         background: #28a745;
         color: white;
@@ -392,6 +393,9 @@ export const styles = css`
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+        align-self: center;
+        margin-left: auto;
     }
 
     .submit-icon {
@@ -425,19 +429,16 @@ export const styles = css`
             min-width: 100%;
         }
 
-        .street-info,
-        .submit-section {
+        .top-info-section {
+            flex-direction: column;
+        }
+
+        .street-info {
             flex: 1 1 100%;
         }
 
-        .submit-section {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
         .current-player {
-            margin-right: 0;
-            margin-bottom: var(--spectrum-global-dimension-size-100);
+            flex: 1 1 100%;
         }
     }
 `;
