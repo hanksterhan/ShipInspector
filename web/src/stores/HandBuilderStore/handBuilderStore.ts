@@ -145,7 +145,7 @@ export class HandBuilderStore {
         // Initialize with 2 players by default
         this.players.set(1, {
             seat: 1,
-            player_label: "Hero",
+            player_label: "", // Empty string means use default "p1"
             starting_stack: 10000,
             is_hero: true,
             hole_cards: [null, null],
@@ -154,7 +154,7 @@ export class HandBuilderStore {
         });
         this.players.set(2, {
             seat: 2,
-            player_label: "Villain",
+            player_label: "", // Empty string means use default "p2"
             starting_stack: 9500,
             is_hero: false,
             hole_cards: [null, null],
@@ -194,7 +194,7 @@ export class HandBuilderStore {
     @action
     addPlayer(
         seat: number,
-        label: string,
+        label: string = "", // Default to empty string (will display as "p{seat}")
         stack: number,
         isHero: boolean = false
     ) {
@@ -223,6 +223,20 @@ export class HandBuilderStore {
         if (player) {
             player.player_label = label;
         }
+    }
+
+    /**
+     * Get display name for a player: custom name if set, otherwise "p{seat}"
+     */
+    getPlayerDisplayName(seat: number): string {
+        const player = this.players.get(seat);
+        if (!player) {
+            return `p${seat}`;
+        }
+        // If player_label is set and non-empty, use it; otherwise use "p{seat}"
+        return player.player_label && player.player_label.trim() !== ""
+            ? player.player_label
+            : `p${seat}`;
     }
 
     @action
@@ -490,7 +504,7 @@ export class HandBuilderStore {
                 },
                 players: Array.from(this.players.values()).map((p) => ({
                     seat: p.seat,
-                    player_label: p.player_label,
+                    player_label: this.getPlayerDisplayName(p.seat), // Use display name when saving
                     starting_stack: p.starting_stack,
                     is_hero: p.is_hero,
                     hole_cards: HandReplayClient.holeCardsToStrings(

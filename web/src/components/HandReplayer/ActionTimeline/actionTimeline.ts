@@ -21,14 +21,9 @@ export class ActionTimeline extends MobxLitElement {
         amount?: number;
         raise_to?: number;
     }): string {
-        const player = action.actor_seat
-            ? handBuilderStore.players.get(action.actor_seat)
-            : null;
-        const playerName = player
-            ? player.player_label
-            : action.actor_seat
-              ? `Seat ${action.actor_seat}`
-              : "Unknown";
+        const playerName = action.actor_seat
+            ? handBuilderStore.getPlayerDisplayName(action.actor_seat)
+            : "Unknown";
 
         switch (action.type) {
             case "POST_SB":

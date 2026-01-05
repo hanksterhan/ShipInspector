@@ -97,7 +97,7 @@ export const styles = css`
     .settings-card action-options-tray {
         pointer-events: all;
         width: 100%;
-        max-width: 600px;
+        max-width: 720px;
         box-sizing: border-box;
         overflow-x: hidden;
     }

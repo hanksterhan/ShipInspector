@@ -115,7 +115,7 @@ export const styles = css`
 
     .expand-tab {
         width: 100%;
-        max-width: 600px;
+        max-width: 720px;
         height: 48px;
         padding: 0 var(--spectrum-global-dimension-size-200);
         background: white;
@@ -414,19 +414,6 @@ export const styles = css`
     .submit-button:disabled {
         background: #6c757d;
         cursor: not-allowed;
-    }
-
-    .action-timeline {
-        max-height: 200px;
-        overflow-y: auto;
-        font-size: 12px;
-    }
-
-    .action-timeline-item {
-        padding: 4px 8px;
-        margin: 2px 0;
-        background: var(--spectrum-global-color-gray-100);
-        border-radius: var(--spectrum-global-dimension-size-50);
     }
 
     @media (max-width: 768px) {

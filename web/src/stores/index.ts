@@ -23,7 +23,6 @@ export * from "./AuthStore";
 export const authStore = new AuthStore();
 export * from "./RouterStore";
 export const routerStore = new RouterStore();
-// Create PokerBoardStore before OutsStore since OutsStore depends on it
 export * from "./PokerBoardStore";
 export const pokerBoardStore = new PokerBoardStore();
 export * from "./OutsStore";

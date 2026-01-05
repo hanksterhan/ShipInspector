@@ -151,7 +151,9 @@ export class HandReplay extends MobxLitElement {
                                               ${action.tags.map(
                                                   (tag) =>
                                                       html`<span class="tag"
-                                                          >${tag.key}</span
+                                                          >${this.formatTagName(
+                                                              tag.key
+                                                          )}</span
                                                       >`
                                               )}
                                           </span>
@@ -168,13 +170,30 @@ export class HandReplay extends MobxLitElement {
         `;
     }
 
+    /**
+     * Format tag name for display: replace underscores with spaces
+     */
+    private formatTagName(tag: string): string {
+        return tag.replace(/_/g, " ");
+    }
+
     private getActionDescription(
         action: HandForPlayback["actions"][0]
     ): string {
         const player = this.playback?.players.find(
             (p) => p.id === action.actor_player_id
         );
-        const actorName = player ? player.player_label : "Dealer";
+        // For backwards compatibility: if player_label is empty, use "p{seat}"
+        // Otherwise use the saved label (could be custom name, "Hero", "Villain", or "p{seat}")
+        let actorName = "Dealer";
+        if (player) {
+            if (player.player_label && player.player_label.trim() !== "") {
+                actorName = player.player_label;
+            } else {
+                // Use seat number for default display
+                actorName = `p${player.seat}`;
+            }
+        }
         let desc = `${actorName} ${action.type}`;
         if (action.amount) {
             desc += ` ${action.amount}`;

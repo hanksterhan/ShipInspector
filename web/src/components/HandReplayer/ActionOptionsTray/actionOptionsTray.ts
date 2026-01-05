@@ -30,6 +30,13 @@ export class ActionOptionsTray extends MobxLitElement {
         ];
     }
 
+    /**
+     * Format tag name for display: replace underscores with spaces
+     */
+    private formatTagName(tag: string): string {
+        return tag.replace(/_/g, " ");
+    }
+
     get availableActions(): Array<{
         type: ActionType;
         label: string;
@@ -256,7 +263,7 @@ export class ActionOptionsTray extends MobxLitElement {
                                         @click=${() =>
                                             this.handleTagToggle(tag)}
                                     >
-                                        ${tag}
+                                        ${this.formatTagName(tag)}
                                     </button>
                                 `
                             )}
@@ -271,8 +278,10 @@ export class ActionOptionsTray extends MobxLitElement {
                                           Current Player
                                       </div>
                                       <div class="current-player-name">
-                                          ${player.player_label} (Seat
-                                          ${player.seat})
+                                          ${handBuilderStore.getPlayerDisplayName(
+                                              player.seat
+                                          )}
+                                          (Seat ${player.seat})
                                       </div>
                                       <div class="current-player-stats">
                                           Stack: ${player.starting_stack} |
@@ -296,39 +305,6 @@ export class ActionOptionsTray extends MobxLitElement {
                             <span class="submit-icon">${arrowRightIcon}</span>
                         </button>
                     </div>
-
-                    ${handBuilderStore.actionDrafts.length > 0
-                        ? html`
-                              <div class="section">
-                                  <div class="section-title">
-                                      Action Timeline
-                                      (${handBuilderStore.actionDrafts.length})
-                                  </div>
-                                  <div class="action-timeline">
-                                      ${handBuilderStore.actionDrafts.map(
-                                          (action, idx) => html`
-                                              <div class="action-timeline-item">
-                                                  ${idx + 1}. ${action.street}:
-                                                  ${action.type}
-                                                  ${action.actor_seat
-                                                      ? ` (Seat ${action.actor_seat})`
-                                                      : ""}
-                                                  ${action.amount
-                                                      ? ` ${action.amount}`
-                                                      : ""}
-                                                  ${action.raise_to
-                                                      ? ` (to ${action.raise_to})`
-                                                      : ""}
-                                                  ${action.tags.length > 0
-                                                      ? ` [${action.tags.join(", ")}]`
-                                                      : ""}
-                                              </div>
-                                          `
-                                      )}
-                                  </div>
-                              </div>
-                          `
-                        : null}
                 </div>
             </div>
         `;
