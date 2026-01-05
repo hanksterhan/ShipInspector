@@ -53,6 +53,9 @@ export class PokerBoardStore {
     playerNames: Map<number, string> = new Map(); // Custom player names
 
     @observable
+    playerStacks: Map<number, number> = new Map(); // Player stack sizes
+
+    @observable
     dealerIndex: number = 0; // Dealer position (default: player 1, which is index 0)
 
     @observable
@@ -457,6 +460,29 @@ export class PokerBoardStore {
     }
 
     /**
+     * Get player stack size (custom stack if set, otherwise default stack)
+     */
+    getPlayerStack(playerIndex: number): number {
+        const customStack = this.playerStacks.get(playerIndex);
+        return customStack !== undefined ? customStack : this.defaultStack;
+    }
+
+    /**
+     * Set player stack size
+     */
+    @action
+    setPlayerStack(playerIndex: number, stack: number | null) {
+        if (stack === null) {
+            // Remove custom stack to use default
+            this.playerStacks.delete(playerIndex);
+        } else {
+            this.playerStacks.set(playerIndex, stack);
+        }
+        // Trigger observable update by creating new Map
+        this.playerStacks = new Map(this.playerStacks);
+    }
+
+    /**
      * Set player name
      */
     @action
@@ -720,6 +746,9 @@ export class PokerBoardStore {
 
         // Reset active players to default (players 0 and 1)
         this.activePlayers = new Set([0, 1]);
+
+        // Reset player stacks
+        this.playerStacks = new Map();
 
         // Reset board
         this.board = [null, null, null, null, null];

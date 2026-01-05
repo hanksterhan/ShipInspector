@@ -307,7 +307,7 @@ export const styles = css`
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: var(--spectrum-global-dimension-size-150);
+        gap: var(--spectrum-global-dimension-size-50);
     }
 
     .player-label-container {
@@ -324,6 +324,45 @@ export const styles = css`
         color: var(--spectrum-global-color-gray-800);
         text-align: center;
         flex: 1;
+    }
+
+    .player-stack {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spectrum-global-dimension-size-75);
+        font-size: calc(var(--spectrum-global-dimension-font-size-175) * 0.8);
+        font-weight: var(--spectrum-global-font-weight-medium);
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .stack-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .stack-icon svg {
+        width: 100%;
+        height: 100%;
+        color: currentColor;
+    }
+
+    .stack-amount {
+        font-weight: var(--spectrum-global-font-weight-bold);
+    }
+
+    .stack-separator {
+        color: var(--spectrum-global-color-gray-500);
+        margin: 0 var(--spectrum-global-dimension-size-50);
+    }
+
+    .stack-big-blinds {
+        color: var(--spectrum-global-color-gray-600);
+        font-weight: var(--spectrum-global-font-weight-medium);
     }
 
     .player-cards {
@@ -525,6 +564,16 @@ export const styles = css`
             font-size: var(--spectrum-global-dimension-font-size-175);
         }
 
+        .player-stack {
+            font-size: calc(var(--spectrum-global-dimension-font-size-150) * 0.8);
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .stack-icon {
+            width: 14px;
+            height: 14px;
+        }
+
         .card-placeholder,
         .card-display {
             width: 55px;
@@ -587,6 +636,16 @@ export const styles = css`
 
         .player-label {
             font-size: var(--spectrum-global-dimension-font-size-150);
+        }
+
+        .player-stack {
+            font-size: calc(var(--spectrum-global-dimension-font-size-125) * 0.8);
+            gap: var(--spectrum-global-dimension-size-50);
+        }
+
+        .stack-icon {
+            width: 12px;
+            height: 12px;
         }
 
         .player-container {
@@ -665,6 +724,20 @@ export const styles = css`
 
         .player-label {
             font-size: var(--spectrum-global-dimension-font-size-100);
+        }
+
+        .player-stack {
+            font-size: calc(var(--spectrum-global-dimension-font-size-100) * 0.8);
+            gap: var(--spectrum-global-dimension-size-25);
+        }
+
+        .stack-icon {
+            width: 10px;
+            height: 10px;
+        }
+
+        .stack-separator {
+            margin: 0 var(--spectrum-global-dimension-size-25);
         }
 
         .player-container {

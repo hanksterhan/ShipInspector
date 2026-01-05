@@ -17,6 +17,7 @@ import {
     oneCoinIcon,
     twoCoinIcon,
     closeIcon,
+    coinsIcon,
 } from "../../../assets";
 
 @customElement("poker-player")
@@ -180,6 +181,13 @@ export class Player extends MobxLitElement {
         // Get player name
         const playerName = pokerBoardStore.getPlayerName(playerIndex);
 
+        // Get player stack size
+        const playerStack = pokerBoardStore.getPlayerStack(playerIndex);
+
+        // Calculate number of big blinds (rounded down)
+        const bigBlind = pokerBoardStore.bigBlind;
+        const bigBlinds = bigBlind > 0 ? Math.floor(playerStack / bigBlind) : 0;
+
         // Check if this player is in scope
         const isInScope = pokerBoardStore.isPlayerInScope(playerIndex);
 
@@ -265,6 +273,12 @@ export class Player extends MobxLitElement {
                                   </button>
                               `
                             : null}
+                    </div>
+                    <div class="player-stack">
+                        <span class="stack-icon">${coinsIcon}</span>
+                        <span class="stack-amount">${playerStack.toLocaleString()}</span>
+                        <span class="stack-separator">|</span>
+                        <span class="stack-big-blinds">${bigBlinds}BB</span>
                     </div>
                     <div class="player-cards">
                         ${this.renderCard(playerCards[0], 0)}
