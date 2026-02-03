@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strict": false,
-    "types": ["node"],
+    "types": ["node", "jest"],
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "baseUrl": "..",

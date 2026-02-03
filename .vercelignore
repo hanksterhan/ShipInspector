@@ -1,3 +1,6 @@
+# API spec/tests (not serverless functions)
+api/**/*.spec.ts
+
 # Development files
 *.log
 *.md
