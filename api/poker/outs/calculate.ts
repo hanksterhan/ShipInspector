@@ -20,7 +20,7 @@ import { handleError } from "../../utils/errorHandler";
  * POST /poker/outs/calculate
  * Calculate outs for heads-up turn scenario
  */
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {

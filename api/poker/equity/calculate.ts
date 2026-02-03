@@ -23,7 +23,7 @@ import { handleError } from "../../utils/errorHandler";
  * POST /poker/equity/calculate
  * Calculate equity for multiple players
  */
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {

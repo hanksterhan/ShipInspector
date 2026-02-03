@@ -12,7 +12,7 @@ import { handleError } from "../utils/errorHandler";
  * GET /auth/clerk-user
  * Get Clerk user information (example protected route)
  */
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {

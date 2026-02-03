@@ -83,7 +83,7 @@ const createHandRequestSchema = z.object({
 
 export type CreateHandRequest = z.infer<typeof createHandRequestSchema>;
 
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {

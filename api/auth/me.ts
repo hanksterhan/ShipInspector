@@ -13,7 +13,7 @@ import { handleError } from "../utils/errorHandler";
  * GET /auth/me
  * Get current user information
  */
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {

@@ -6,13 +6,13 @@
 import { clerkMiddlewareInstance } from "./_helpers";
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import authMeHandler from "./auth/me";
-import authClerkUserHandler from "./auth/clerk-user";
-import evaluateHandHandler from "./poker/hand/evaluate";
-import compareHandsHandler from "./poker/hand/compare";
-import calculateEquityHandler from "./poker/equity/calculate";
-import calculateOutsHandler from "./poker/outs/calculate";
-import handsCreateHandler from "./hands";
+import { handler as authMeHandler } from "./auth/me";
+import { handler as authClerkUserHandler } from "./auth/clerk-user";
+import { handler as evaluateHandHandler } from "./poker/hand/evaluate";
+import { handler as compareHandsHandler } from "./poker/hand/compare";
+import { handler as calculateEquityHandler } from "./poker/equity/calculate";
+import { handler as calculateOutsHandler } from "./poker/outs/calculate";
+import { handler as handsCreateHandler } from "./hands";
 
 /**
  * Main router for Vercel serverless functions

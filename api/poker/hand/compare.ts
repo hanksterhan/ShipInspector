@@ -20,7 +20,7 @@ import { handleError } from "../../utils/errorHandler";
  * POST /poker/hand/compare
  * Compare two poker hands
  */
-export default async function handler(
+export async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {
