@@ -1,45 +1,15 @@
-// Register path aliases first (before any @common/* imports)
-import "../_helpers";
-
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAuth, clerkClient, requireAuth } from "../utils/auth";
-import { getUserById, syncClerkUser } from "../../server/src/services/userService";
-import { handleCors } from "../utils/cors";
-import { globalRateLimiter } from "../utils/rateLimit";
-import { logRequest } from "../utils/logger";
-import { handleError } from "../utils/errorHandler";
+import { clerkClient } from "../../../utils/auth";
+import { getUserById, syncClerkUser } from "../../../../server/src/services/userService";
+import { createHandler } from "../../../utils/createHandler";
 
 /**
  * GET /auth/me
  * Get current user information
  */
-export async function handler(
-    req: VercelRequest,
-    res: VercelResponse
-) {
-    const startTime = Date.now();
-    const logger = logRequest(req, startTime);
-
-    // Handle CORS
-    if (!handleCors(req, res)) {
-        return;
-    }
-
-    // Only allow GET
-    if (req.method !== "GET") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-    }
-
-    // Rate limiting
-    if (!globalRateLimiter(req, res)) {
-        return;
-    }
-
-    try {
-        // Check authentication
-        const { userId } = requireAuth(req);
-
+export const handler = createHandler(
+    { method: "GET", rateLimit: "global" },
+    async (req, res, { userId, logger }) => {
         console.log(`[getCurrentUser] Getting user info for userId: ${userId}`);
 
         // Get Clerk user information
@@ -111,14 +81,5 @@ export async function handler(
                 },
             },
         });
-    } catch (error: any) {
-        if (error.message === "Not authenticated") {
-            res.status(401).json({
-                error: "Not authenticated",
-            });
-            return;
-        }
-        handleError(error, res, 500);
     }
-}
-
+);

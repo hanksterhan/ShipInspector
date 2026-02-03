@@ -1,6 +1,3 @@
-// Register path aliases first (before any @common/* imports)
-import "../../_helpers";
-
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
     CalculateOutsRequest,
@@ -9,44 +6,17 @@ import {
     parseHole,
     parseBoard,
 } from "@common/interfaces";
-import { calculateTurnOuts } from "../../../server/src/integrations/hand/equity";
-import { requireAuth } from "../../utils/auth";
-import { handleCors } from "../../utils/cors";
-import { strictRateLimiter } from "../../utils/rateLimit";
-import { logRequest } from "../../utils/logger";
-import { handleError } from "../../utils/errorHandler";
+import { calculateTurnOuts } from "../../../../../server/src/integrations/hand/equity";
+import { createHandler } from "../../../../utils/createHandler";
+import { handleError } from "../../../../utils/errorHandler";
 
 /**
  * POST /poker/outs/calculate
  * Calculate outs for heads-up turn scenario
  */
-export async function handler(
-    req: VercelRequest,
-    res: VercelResponse
-) {
-    const startTime = Date.now();
-    const logger = logRequest(req, startTime);
-
-    // Handle CORS
-    if (!handleCors(req, res)) {
-        return;
-    }
-
-    // Only allow POST
-    if (req.method !== "POST") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-    }
-
-    // Rate limiting
-    if (!strictRateLimiter(req, res)) {
-        return;
-    }
-
-    try {
-        // Check authentication
-        requireAuth(req);
-
+export const handler = createHandler(
+    { method: "POST", rateLimit: "strict" },
+    async (req, res, { logger }) => {
         const { hero, villain, board }: CalculateOutsRequest = req.body;
 
         if (!hero || !villain || !board) {
@@ -87,25 +57,20 @@ export async function handler(
             return;
         }
 
-        // Calculate outs
-        const result = await calculateTurnOuts(
-            heroCards,
-            villainCards,
-            boardCards
-        );
+        try {
+            // Calculate outs
+            const result = await calculateTurnOuts(
+                heroCards,
+                villainCards,
+                boardCards
+            );
 
-        const response: CalculateOutsResponse = result;
+            const response: CalculateOutsResponse = result;
 
-        logger?.logComplete();
-        res.status(200).json(response);
-    } catch (error: any) {
-        if (error.message === "Not authenticated") {
-            res.status(401).json({
-                error: "Not authenticated",
-            });
-            return;
+            logger?.logComplete();
+            res.status(200).json(response);
+        } catch (error: any) {
+            handleError(error, res, 500);
         }
-        handleError(error, res, 500);
     }
-}
-
+);

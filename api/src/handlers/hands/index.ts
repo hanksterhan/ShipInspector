@@ -2,15 +2,9 @@
  * POST /api/hands – Create a hand (SI-7)
  * Validates body with Zod, requires Clerk auth, inserts hand + players + actions in a transaction.
  */
-import "../_helpers";
-
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { requireAuth } from "../utils/auth";
-import { handleCors } from "../utils/cors";
-import { globalRateLimiter } from "../utils/rateLimit";
-import { logRequest } from "../utils/logger";
-import { handleError } from "../utils/errorHandler";
+import { createHandler } from "../../../utils/createHandler";
 
 const VALID_ACTION_TAGS = [
     "tanked",
@@ -83,29 +77,9 @@ const createHandRequestSchema = z.object({
 
 export type CreateHandRequest = z.infer<typeof createHandRequestSchema>;
 
-export async function handler(
-    req: VercelRequest,
-    res: VercelResponse
-) {
-    const startTime = Date.now();
-    const logger = logRequest(req, startTime);
-
-    if (!handleCors(req, res)) {
-        return;
-    }
-
-    if (req.method !== "POST") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-    }
-
-    if (!globalRateLimiter(req, res)) {
-        return;
-    }
-
-    try {
-        const { userId } = requireAuth(req);
-
+export const handler = createHandler(
+    { method: "POST", rateLimit: "global" },
+    async (req, res, { userId, logger }) => {
         const parseResult = createHandRequestSchema.safeParse(
             typeof req.body === "object" ? req.body : undefined
         );
@@ -123,7 +97,7 @@ export async function handler(
         const now = Date.now();
 
         // Use server's Neon client for transactional insert
-        const sql = (await import("../../server/src/config/database")).default;
+        const sql = (await import("../../../../server/src/config/database")).default;
 
         const hand = body.hand;
         // Constrain button_seat < table_size
@@ -180,11 +154,5 @@ export async function handler(
 
         logger?.logComplete();
         res.status(201).json({ hand_id: handId });
-    } catch (err: any) {
-        if (err.message === "Not authenticated") {
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-        }
-        handleError(err, res, 500);
     }
-}
+);

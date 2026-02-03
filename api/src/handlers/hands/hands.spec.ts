@@ -18,7 +18,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { clerkClient } from "@clerk/express";
 
 // Mock server DB so 201 test doesn't hit Neon (transaction no-op)
-jest.mock("../../server/src/config/database", () => ({
+jest.mock("../../../../server/src/config/database", () => ({
     __esModule: true,
     default: {
         transaction: jest.fn().mockResolvedValue(undefined),
@@ -86,7 +86,7 @@ describe("POST /api/hands", () => {
     let apiHandler: (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
     beforeAll(async () => {
-        apiHandler = (await import("../index")).default;
+        apiHandler = (await import("../../../index")).default;
         if (process.env.CLERK_SECRET_KEY) {
             const result = await clerkClient.testingTokens.createTestingToken();
             testingToken = result.token;
