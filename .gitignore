@@ -6,6 +6,7 @@ admin/.env
 server/src/data/
 .DS_Store
 otel-collector-logs/
+.claude/
 
 # Rust build artifacts
 **/target/
