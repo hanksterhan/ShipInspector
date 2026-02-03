@@ -105,7 +105,7 @@ export default async function handler(
             });
             return;
         }
-        handleError(error, req, res, logger);
+        handleError(error, res, 500);
     }
 }
 

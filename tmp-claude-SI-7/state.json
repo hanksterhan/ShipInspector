@@ -1,0 +1,11 @@
+{
+  "ticketId": "SI-7",
+  "summary": "API Endpoint - Create Hand (POST /api/hands)",
+  "scope": "POST /api/hands with Zod validation, Clerk auth, transactional insert",
+  "status": "implemented",
+  "acVerificationMap": "tmp-claude-SI-7/ac-verification-map.md",
+  "executionPlan": "tmp-claude-SI-7/execution-plan.md",
+  "targetFiles": ["api/package.json", "api/hands/index.ts", "api/index.ts"],
+  "decisions": ["Use server's Neon sql (dynamic import) for transactional insert; fixed pre-existing handleError call in api/poker/outs/calculate.ts to unblock build."],
+  "risks": []
+}
