@@ -4,7 +4,7 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { createHandler } from "../../../utils/createHandler";
+import { createHandler } from "../../api-utils/createHandler";
 
 const VALID_ACTION_TAGS = [
     "tanked",

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { clerkClient } from "../../../utils/auth";
+import { clerkClient } from "../../api-utils/auth";
 import { getUserById, syncClerkUser } from "../../../../server/src/services/userService";
-import { createHandler } from "../../../utils/createHandler";
+import { createHandler } from "../../api-utils/createHandler";
 
 /**
  * GET /auth/me

@@ -2,10 +2,11 @@
  * Vercel Serverless Function Router
  *
  * This is the ONLY serverless function entry point.
- * All API routes are handled by this single function, routing to handlers in src/handlers/.
+ * All API routes are handled by this single function, routing to handlers in _lib/handlers/.
  *
- * This architecture reduces Vercel's function count from 8+ to 1, staying well within
- * the 12-function free tier limit.
+ * IMPORTANT: Only files starting with _ are excluded from serverless function detection.
+ * The _lib/ directory contains all handlers and utilities, prefixed with _ to be excluded.
+ * See: https://vercel.com/docs/functions/limitations
  */
 
 // Register path aliases for @common/* imports (must be first)
@@ -13,7 +14,7 @@
 import { clerkMiddlewareInstance } from "./_helpers";
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { routes } from "./src/handlers";
+import { routes } from "./_lib/handlers";
 
 /**
  * Normalize request path for routing.
