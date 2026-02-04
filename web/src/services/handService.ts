@@ -1,5 +1,5 @@
 import { httpClient } from "./fetch";
-import { HandSaveRequest } from "@common/interfaces";
+import { HandSaveRequest, HandForPlayback } from "@common/interfaces";
 
 export interface HandListItem {
     id: string;
@@ -34,6 +34,11 @@ export class HandService {
     async createHand(payload: HandSaveRequest): Promise<{ hand_id: string }> {
         const response = await httpClient.post("/hands", payload);
         return response as { hand_id: string };
+    }
+
+    async getHand(handId: string): Promise<HandForPlayback> {
+        const response = await httpClient.get(`/hands/${handId}`);
+        return response as HandForPlayback;
     }
 
     async listHands(params: HandListParams): Promise<HandListResponse> {
