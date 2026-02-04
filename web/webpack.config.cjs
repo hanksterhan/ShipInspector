@@ -5,6 +5,18 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 // Load .env file for local development (optional - Vercel uses environment variables directly)
 require("dotenv").config();
 
+const vercelEnv = process.env.VERCEL_ENV;
+const isPreview = vercelEnv === "preview";
+const isVercel = vercelEnv === "preview" || vercelEnv === "production";
+const apiUrlDefault = isVercel ? "" : "http://localhost:3000";
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY;
+
+if (isPreview && !clerkPublishableKey) {
+    throw new Error(
+        "Missing CLERK_PUBLISHABLE_KEY for Vercel preview build. Set it in Vercel Preview env vars."
+    );
+}
+
 module.exports = {
     mode: process.env.NODE_ENV === "production" ? "production" : "development",
     entry: "./src/index.ts",
@@ -49,10 +61,10 @@ module.exports = {
         new MiniCssExtractPlugin(),
         new webpack.DefinePlugin({
             "process.env.CLERK_PUBLISHABLE_KEY": JSON.stringify(
-                process.env.CLERK_PUBLISHABLE_KEY || ""
+                clerkPublishableKey || ""
             ),
             "process.env.API_URL": JSON.stringify(
-                process.env.API_URL || "http://localhost:3000"
+                process.env.API_URL || apiUrlDefault
             ),
             "process.env.NODE_ENV": JSON.stringify(
                 process.env.NODE_ENV || "development"

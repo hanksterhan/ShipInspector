@@ -24,6 +24,14 @@ cd web
 npm run start
 ```
 
+### Vercel Preview environment variables
+
+Set these for Vercel Preview builds:
+
+- `CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `API_URL` (optional; defaults to empty string for relative requests)
+
 ### Helpful commands
 
 #### Lint
