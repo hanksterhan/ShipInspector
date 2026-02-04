@@ -2,11 +2,13 @@
  * /api/hands – Hands endpoint router
  * POST – Create a hand (SI-7)
  * GET – List hands with pagination (SI-8)
+ * GET /api/hands/:id – Retrieve a single hand (SI-9)
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { createHandler } from "../../api-utils/createHandler";
 import { listHandler } from "./list";
+import { getHandler } from "./get";
 
 const VALID_ACTION_TAGS = [
     "tanked",
