@@ -13,7 +13,11 @@ const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY;
 
 if (isPreview && !clerkPublishableKey) {
     throw new Error(
-        "Missing CLERK_PUBLISHABLE_KEY for Vercel preview build. Set it in Vercel Preview env vars."
+        "Missing CLERK_PUBLISHABLE_KEY for Vercel preview build.\n\n" +
+        "Required setup:\n" +
+        "1. Set CLERK_PUBLISHABLE_KEY in Vercel Dashboard → Settings → Environment Variables (Preview environment)\n" +
+        "2. Configure Clerk Dashboard → Paths to allow '*.vercel.app' domains\n" +
+        "   See README.md 'Deployment Configuration' section for details.\n"
     );
 }
 
