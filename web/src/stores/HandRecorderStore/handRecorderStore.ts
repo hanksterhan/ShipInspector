@@ -73,6 +73,14 @@ const createDefaultGameSettings = (): GameSettings => ({
     board: [null, null, null, null, null],
 });
 
+const createEmptyPlayer = (seatIndex: number): HandRecorderPlayer => ({
+    seatIndex,
+    displayName: "",
+    stackAtStart: 0,
+    isHero: seatIndex === 0,
+    showdownCards: [null, null],
+});
+
 export class HandRecorderStore {
     @observable
     gameSettings: GameSettings = createDefaultGameSettings();
@@ -99,6 +107,7 @@ export class HandRecorderStore {
         makeObservable(this);
         this.setupDraftReaction();
         void this.loadDraft();
+        this.ensurePlayersForTableSize(this.gameSettings.tableSize);
     }
 
     private setupDraftReaction() {
@@ -117,6 +126,35 @@ export class HandRecorderStore {
             ...this.gameSettings,
             ...updates,
         };
+    }
+
+    @action
+    setTableSize(tableSize: number) {
+        const nextSize = Math.min(10, Math.max(2, tableSize));
+        const nextButtonSeat =
+            this.gameSettings.buttonSeat >= nextSize
+                ? 0
+                : this.gameSettings.buttonSeat;
+        this.gameSettings = {
+            ...this.gameSettings,
+            tableSize: nextSize,
+            buttonSeat: nextButtonSeat,
+        };
+        this.ensurePlayersForTableSize(nextSize);
+    }
+
+    @action
+    updatePlayer(seatIndex: number, updates: Partial<HandRecorderPlayer>) {
+        const players = [...this.players];
+        const playerIndex = players.findIndex(
+            (player) => player.seatIndex === seatIndex
+        );
+        if (playerIndex === -1) {
+            players.push({ ...createEmptyPlayer(seatIndex), ...updates });
+        } else {
+            players[playerIndex] = { ...players[playerIndex], ...updates };
+        }
+        this.players = players.sort((a, b) => a.seatIndex - b.seatIndex);
     }
 
     @action
@@ -233,6 +271,7 @@ export class HandRecorderStore {
         this.actions = [...snapshot.actions];
         this.currentStreet = snapshot.currentStreet;
         this.isDraft = true;
+        this.ensurePlayersForTableSize(this.gameSettings.tableSize);
     }
 
     async loadDraft() {
@@ -282,7 +321,7 @@ export class HandRecorderStore {
         this.isDraft = false;
     }
 
-    private validate(): Record<string, string[]> {
+    private validateGameSetup(): Record<string, string[]> {
         const errors: Record<string, string[]> = {};
         const { tableSize, buttonSeat, smallBlind, bigBlind, ante } =
             this.gameSettings;
@@ -315,12 +354,6 @@ export class HandRecorderStore {
                     ];
                 }
                 seatIndices.add(player.seatIndex);
-                if (!player.displayName.trim()) {
-                    errors.players = [
-                        ...(errors.players || []),
-                        `seat ${player.seatIndex} is missing a name`,
-                    ];
-                }
                 if (player.stackAtStart <= 0) {
                     errors.players = [
                         ...(errors.players || []),
@@ -330,11 +363,32 @@ export class HandRecorderStore {
             }
         }
 
+        return errors;
+    }
+
+    private validate(): Record<string, string[]> {
+        const errors = this.validateGameSetup();
         if (this.actions.length === 0) {
             errors.actions = ["at least one action is required"];
         }
-
         return errors;
+    }
+
+    @action
+    validateSetup(): boolean {
+        const errors = this.validateGameSetup();
+        this.validationErrors = errors;
+        return Object.keys(errors).length === 0;
+    }
+
+    @action
+    private ensurePlayersForTableSize(tableSize: number) {
+        const playersBySeat = new Map(
+            this.players.map((player) => [player.seatIndex, player])
+        );
+        this.players = Array.from({ length: tableSize }, (_, index) => {
+            return playersBySeat.get(index) ?? createEmptyPlayer(index);
+        });
     }
 
     private toCardString(card: Card | null): string | null {
@@ -362,7 +416,9 @@ export class HandRecorderStore {
             },
             players: this.players.map((player) => ({
                 seat_index: player.seatIndex,
-                display_name: player.displayName,
+                display_name:
+                    player.displayName.trim() ||
+                    `Player ${player.seatIndex + 1}`,
                 stack_at_start: player.stackAtStart,
                 is_hero: player.isHero,
                 showdown_card_1: this.toCardString(player.showdownCards[0]),
