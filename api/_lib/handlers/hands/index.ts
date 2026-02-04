@@ -1,10 +1,12 @@
 /**
- * POST /api/hands – Create a hand (SI-7)
- * Validates body with Zod, requires Clerk auth, inserts hand + players + actions in a transaction.
+ * /api/hands – Hands endpoint router
+ * POST – Create a hand (SI-7)
+ * GET – List hands with pagination (SI-8)
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { createHandler } from "../../api-utils/createHandler";
+import { listHandler } from "./list";
 
 const VALID_ACTION_TAGS = [
     "tanked",
@@ -77,7 +79,8 @@ const createHandRequestSchema = z.object({
 
 export type CreateHandRequest = z.infer<typeof createHandRequestSchema>;
 
-export const handler = createHandler(
+// POST handler for creating a hand
+const createHandler_POST = createHandler(
     { method: "POST", rateLimit: "global" },
     async (req, res, { userId, logger }) => {
         const parseResult = createHandRequestSchema.safeParse(
@@ -156,3 +159,16 @@ export const handler = createHandler(
         res.status(201).json({ hand_id: handId });
     }
 );
+
+/**
+ * Combined handler that routes by HTTP method
+ */
+export const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+    if (req.method === "GET") {
+        return listHandler(req, res);
+    } else if (req.method === "POST") {
+        return createHandler_POST(req, res);
+    } else {
+        res.status(405).json({ error: "Method not allowed" });
+    }
+};
