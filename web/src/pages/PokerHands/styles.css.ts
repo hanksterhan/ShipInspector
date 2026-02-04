@@ -38,6 +38,13 @@ export const styles = css`
         padding: 0 32px;
     }
 
+    .hand-recorder-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 16px;
+    }
+
     .action-recorder-container {
         display: flex;
         justify-content: center;
