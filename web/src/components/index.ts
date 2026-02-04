@@ -11,4 +11,6 @@ export * from "./BoardCards";
 export * from "./AddPlayerButton";
 export * from "./CardPickerModal";
 export * from "./PokerTable";
+export * from "./ActionRecorder";
+export * from "./HandRecorder";
 // PLOP: APPEND COMPONENT EXPORTS

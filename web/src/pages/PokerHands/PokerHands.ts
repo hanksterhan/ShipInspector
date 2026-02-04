@@ -55,6 +55,12 @@ export class PokerHands extends MobxLitElement {
                                   </div>
                               `
                             : null}
+                        <div class="hand-recorder-container">
+                            <hand-recorder></hand-recorder>
+                        </div>
+                        <div class="action-recorder-container">
+                            <action-recorder></action-recorder>
+                        </div>
                     </div>
                 </div>
 

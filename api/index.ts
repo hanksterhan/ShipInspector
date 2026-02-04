@@ -58,6 +58,45 @@ function normalizePath(url: string | undefined): string {
 }
 
 /**
+ * Match a normalized path against a route pattern with :param support.
+ * Returns the handler and extracted params, or null if no match.
+ *
+ * @param normalizedPath - The normalized request path (e.g., "/hands/123")
+ * @param routePattern - The route pattern (e.g., "/hands/:id")
+ * @returns Object with params if match, or null
+ */
+function matchRoute(
+    normalizedPath: string,
+    routePattern: string
+): Record<string, string> | null {
+    const pathSegments = normalizedPath.split("/");
+    const patternSegments = routePattern.split("/");
+
+    // Must have same number of segments
+    if (pathSegments.length !== patternSegments.length) {
+        return null;
+    }
+
+    const params: Record<string, string> = {};
+
+    for (let i = 0; i < patternSegments.length; i++) {
+        const patternSegment = patternSegments[i];
+        const pathSegment = pathSegments[i];
+
+        if (patternSegment.startsWith(":")) {
+            // This is a parameter - extract it
+            const paramName = patternSegment.substring(1);
+            params[paramName] = pathSegment;
+        } else if (patternSegment !== pathSegment) {
+            // Literal segment doesn't match
+            return null;
+        }
+    }
+
+    return params;
+}
+
+/**
  * Main router for Vercel serverless functions.
  * Routes requests to handlers based on the normalized path.
  */
@@ -87,10 +126,24 @@ export default async function handler(
 
     // Normalize path and find handler
     const normalizedPath = normalizePath(req.url);
-    const routeHandler = routes[normalizedPath];
+
+    // Try exact match first
+    let routeHandler = routes[normalizedPath];
 
     if (routeHandler) {
         return routeHandler(req, res);
+    }
+
+    // Try pattern matching for :param routes
+    for (const [routePattern, handler] of Object.entries(routes)) {
+        if (routePattern.includes(":")) {
+            const params = matchRoute(normalizedPath, routePattern);
+            if (params !== null) {
+                // Attach params to request for handler access
+                (req as any).params = params;
+                return handler(req, res);
+            }
+        }
     }
 
     // 404 for unknown routes

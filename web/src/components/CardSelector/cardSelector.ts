@@ -1,6 +1,6 @@
 import { html, TemplateResult } from "lit";
 import { styles } from "./styles.css";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { CardSuit, CardRank, Card } from "@common/interfaces";
 import {
@@ -11,12 +11,24 @@ import {
 } from "../../stores/index";
 import { SUITS, RANKS } from "../utilities";
 
+export interface CardSelectionTarget {
+    isCardUsed: (card: Card) => boolean;
+    setCard: (card: Card) => boolean;
+    closePicker?: () => void;
+}
+
 @customElement("card-selector")
 export class CardSelector extends MobxLitElement {
     static readonly TAG_NAME = "card-selector";
     static get styles() {
         return styles;
     }
+
+    @property({ attribute: false })
+    selectionTarget?: CardSelectionTarget;
+
+    @property({ type: Boolean })
+    closeOnSelect?: boolean;
 
     firstUpdated() {
         // Initialize the selection stage based on the current mode
@@ -41,6 +53,14 @@ export class CardSelector extends MobxLitElement {
     }
 
     handleSuitClick(suit: CardSuit) {
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const canSetCard = this.selectionTarget
+            ? true
+            : pokerBoardStore.pickerOpen;
+        const shouldClose =
+            this.closeOnSelect !== undefined
+                ? this.closeOnSelect
+                : !this.selectionTarget && pokerBoardStore.pickerOpen;
         // In Rank-Suit mode, rank should already be selected
         if (settingsStore.cardSelectionMode === "Rank - Suit Selection") {
             if (cardStore.selectedRank) {
@@ -54,11 +74,11 @@ export class CardSelector extends MobxLitElement {
                     cardStore.setSelectedSuit(suit);
 
                     // If picker is open, apply card to poker board scope
-                    if (pokerBoardStore.pickerOpen) {
-                        if (pokerBoardStore.setCard(card)) {
-                            pokerBoardStore.closePicker();
-                            this.handleReset();
+                    if (canSetCard && target.setCard(card)) {
+                        if (shouldClose) {
+                            target.closePicker?.();
                         }
+                        this.handleReset();
                     }
                 }
             }
@@ -69,6 +89,14 @@ export class CardSelector extends MobxLitElement {
     }
 
     handleRankClick(rank: CardRank) {
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const canSetCard = this.selectionTarget
+            ? true
+            : pokerBoardStore.pickerOpen;
+        const shouldClose =
+            this.closeOnSelect !== undefined
+                ? this.closeOnSelect
+                : !this.selectionTarget && pokerBoardStore.pickerOpen;
         // In Suit-Rank mode, suit must be selected first
         if (settingsStore.cardSelectionMode === "Suit - Rank Selection") {
             if (cardStore.selectedSuit) {
@@ -79,11 +107,11 @@ export class CardSelector extends MobxLitElement {
                     cardStore.setSelectedRank(rank);
 
                     // If picker is open, apply card to poker board scope
-                    if (pokerBoardStore.pickerOpen) {
-                        if (pokerBoardStore.setCard(card)) {
-                            pokerBoardStore.closePicker();
-                            this.handleReset();
+                    if (canSetCard && target.setCard(card)) {
+                        if (shouldClose) {
+                            target.closePicker?.();
                         }
+                        this.handleReset();
                     }
                 }
             }
@@ -94,17 +122,25 @@ export class CardSelector extends MobxLitElement {
     }
 
     handleCardClick(card: Card) {
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const canSetCard = this.selectionTarget
+            ? true
+            : pokerBoardStore.pickerOpen;
+        const shouldClose =
+            this.closeOnSelect !== undefined
+                ? this.closeOnSelect
+                : !this.selectionTarget && pokerBoardStore.pickerOpen;
         // Only allow selection if card is not already selected
         if (!deckStore.isCardSelected(card)) {
             deckStore.markCardAsSelected(card);
             cardStore.setSelectedCard(card);
 
             // If picker is open, apply card to poker board scope
-            if (pokerBoardStore.pickerOpen) {
-                if (pokerBoardStore.setCard(card)) {
-                    pokerBoardStore.closePicker();
-                    cardStore.resetSelection();
+            if (canSetCard && target.setCard(card)) {
+                if (shouldClose) {
+                    target.closePicker?.();
                 }
+                cardStore.resetSelection();
             }
         }
     }
@@ -156,6 +192,11 @@ export class CardSelector extends MobxLitElement {
         );
         const numberRanks = RANKS.filter((r) => r.rank >= 2 && r.rank <= 10);
         const faceRanks = RANKS.filter((r) => r.rank >= 11);
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const shouldCheckUsed =
+            this.selectionTarget !== undefined
+                ? true
+                : pokerBoardStore.pickerOpen;
         return html`
             <div class="selection-stage">
                 <div class="rank-grid">
@@ -166,8 +207,8 @@ export class CardSelector extends MobxLitElement {
                                 suit: cardStore.selectedSuit!,
                             };
                             const isSelected = deckStore.isCardSelected(card);
-                            const isUsed = pokerBoardStore.pickerOpen
-                                ? pokerBoardStore.isCardUsed(card)
+                            const isUsed = shouldCheckUsed
+                                ? target.isCardUsed(card)
                                 : false;
                             const isDisabled = isSelected || isUsed;
                             return html`
@@ -202,8 +243,8 @@ export class CardSelector extends MobxLitElement {
                                 suit: cardStore.selectedSuit!,
                             };
                             const isSelected = deckStore.isCardSelected(card);
-                            const isUsed = pokerBoardStore.pickerOpen
-                                ? pokerBoardStore.isCardUsed(card)
+                            const isUsed = shouldCheckUsed
+                                ? target.isCardUsed(card)
                                 : false;
                             const isDisabled = isSelected || isUsed;
                             return html`
@@ -300,6 +341,11 @@ export class CardSelector extends MobxLitElement {
         const selectedRankData = RANKS.find(
             (r) => r.rank === cardStore.selectedRank
         );
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const shouldCheckUsed =
+            this.selectionTarget !== undefined
+                ? true
+                : pokerBoardStore.pickerOpen;
         return html`
             <div class="selection-stage">
                 <div class="suit-grid">
@@ -309,8 +355,8 @@ export class CardSelector extends MobxLitElement {
                             suit: suitData.suit,
                         };
                         const isSelected = deckStore.isCardSelected(card);
-                        const isUsed = pokerBoardStore.pickerOpen
-                            ? pokerBoardStore.isCardUsed(card)
+                        const isUsed = shouldCheckUsed
+                            ? target.isCardUsed(card)
                             : false;
                         const isDisabled = isSelected || isUsed;
                         return html`
@@ -402,6 +448,11 @@ export class CardSelector extends MobxLitElement {
     }
 
     render52CardsSelection(): TemplateResult {
+        const target = this.selectionTarget ?? pokerBoardStore;
+        const shouldCheckUsed =
+            this.selectionTarget !== undefined
+                ? true
+                : pokerBoardStore.pickerOpen;
         return html`
             <div class="selection-stage">
                 <div class="cards-52-grid">
@@ -415,8 +466,8 @@ export class CardSelector extends MobxLitElement {
                                     };
                                     const isSelected =
                                         deckStore.isCardSelected(card);
-                                    const isUsed = pokerBoardStore.pickerOpen
-                                        ? pokerBoardStore.isCardUsed(card)
+                                    const isUsed = shouldCheckUsed
+                                        ? target.isCardUsed(card)
                                         : false;
                                     const isDisabled = isSelected || isUsed;
                                     return html`

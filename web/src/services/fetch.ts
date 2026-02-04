@@ -91,6 +91,10 @@ export class HttpClient {
     async patch(url: string, body: any, signal?: AbortSignal): Promise<any> {
         return this.request("PATCH", url, body, signal);
     }
+
+    async delete(url: string, signal?: AbortSignal): Promise<any> {
+        return this.request("DELETE", url, undefined, signal);
+    }
 }
 
 // Get API URL from environment variable, fallback to localhost for development

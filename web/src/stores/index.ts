@@ -7,6 +7,9 @@ import { AuthStore } from "./AuthStore";
 import { RouterStore } from "./RouterStore";
 import { OutsStore } from "./OutsStore";
 import { PokerBoardStore } from "./PokerBoardStore";
+import { HandRecorderStore } from "./HandRecorderStore";
+import { HandLibraryStore } from "./HandLibraryStore";
+import { HandReplayStore } from "./HandReplayStore";
 // PLOP: APPEND STORE IMPORTS
 
 export const menuStore = new MenuStore();
@@ -27,4 +30,10 @@ export * from "./PokerBoardStore";
 export const pokerBoardStore = new PokerBoardStore();
 export * from "./OutsStore";
 export const outsStore = new OutsStore();
+export * from "./HandRecorderStore";
+export const handRecorderStore = new HandRecorderStore();
+export * from "./HandLibraryStore";
+export const handLibraryStore = new HandLibraryStore();
+export * from "./HandReplayStore";
+export const handReplayStore = new HandReplayStore();
 // PLOP: APPEND STORE EXPORTS

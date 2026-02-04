@@ -45,6 +45,7 @@ module.exports = {
     resolve: {
         extensions: [".ts", ".js"],
         alias: {
+            "@common/interfaces": path.resolve(__dirname, "../common/src/interfaces"),
             "@common": path.resolve(__dirname, "../common/"),
         },
         fullySpecified: false,
