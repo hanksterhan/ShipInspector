@@ -13,7 +13,7 @@ import { handler as authClerkUserHandler } from "./auth/clerk-user";
 
 // Hand management handlers
 import { handler as handsCreateHandler } from "./hands";
-import { getHandler as handsGetHandler } from "./hands/get";
+import { handler as handsSingleHandler } from "./hands/single";
 
 export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
@@ -30,5 +30,5 @@ export const routes: Record<string, RouteHandler> = {
     "/auth/me": authMeHandler,
     "/auth/clerk-user": authClerkUserHandler,
     "/hands": handsCreateHandler,
-    "/hands/:id": handsGetHandler,
+    "/hands/:id": handsSingleHandler,
 };

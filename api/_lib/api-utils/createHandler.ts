@@ -9,7 +9,7 @@ import { handleError } from "./errorHandler";
  * Handler configuration options
  */
 export interface HandlerOptions {
-    method: "GET" | "POST";
+    method: "GET" | "POST" | "DELETE";
     rateLimit?: "global" | "strict"; // defaults to "global"
 }
 
