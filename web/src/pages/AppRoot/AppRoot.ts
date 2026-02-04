@@ -48,9 +48,32 @@ export class AppRoot extends MobxLitElement {
         const isLoading = authStore.isLoading;
         const isAuthenticated = authStore.isAuthenticated;
         const currentRoute = routerStore.currentRoute;
+        const hasClerkDevJwt =
+            typeof window !== "undefined" &&
+            new URLSearchParams(window.location.search).has("__clerk_db_jwt");
 
         // Show loading state while checking authentication
         if (isLoading) {
+            return html`
+                <sp-theme
+                    system="spectrum"
+                    color="light"
+                    scale="medium"
+                    dir="ltr"
+                >
+                    <div class="loading-container">
+                        <sp-progress-circle
+                            indeterminate
+                            aria-label="Loading"
+                        ></sp-progress-circle>
+                    </div>
+                </sp-theme>
+            `;
+        }
+
+        // If Clerk dev token is in the URL, keep the URL intact so Clerk can finish the
+        // dev session handshake before we redirect (prevents auth loop in previews).
+        if (!isAuthenticated && hasClerkDevJwt) {
             return html`
                 <sp-theme
                     system="spectrum"
