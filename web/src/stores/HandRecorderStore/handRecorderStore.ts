@@ -130,6 +130,60 @@ export class HandRecorderStore {
     }
 
     @action
+    updateAction(index: number, updates: Partial<HandRecorderAction>) {
+        if (index < 0 || index >= this.actions.length) {
+            return;
+        }
+        const nextActions = [...this.actions];
+        nextActions[index] = { ...nextActions[index], ...updates };
+        this.actions = nextActions;
+    }
+
+    @action
+    removeAction(index: number) {
+        if (index < 0 || index >= this.actions.length) {
+            return;
+        }
+        this.actions = this.actions.filter((_, idx) => idx !== index);
+    }
+
+    @action
+    setBoardCard(index: number, card: Card | null) {
+        if (index < 0 || index >= this.gameSettings.board.length) {
+            return;
+        }
+        const board: BoardCards = [...this.gameSettings.board];
+        board[index] = card;
+        this.gameSettings = { ...this.gameSettings, board };
+    }
+
+    isCardUsed(card: Card): boolean {
+        for (const boardCard of this.gameSettings.board) {
+            if (
+                boardCard &&
+                boardCard.rank === card.rank &&
+                boardCard.suit === card.suit
+            ) {
+                return true;
+            }
+        }
+        for (const player of this.players) {
+            const [cardOne, cardTwo] = player.showdownCards;
+            if (
+                (cardOne &&
+                    cardOne.rank === card.rank &&
+                    cardOne.suit === card.suit) ||
+                (cardTwo &&
+                    cardTwo.rank === card.rank &&
+                    cardTwo.suit === card.suit)
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action
     setStreet(street: Street) {
         this.currentStreet = street;
     }
