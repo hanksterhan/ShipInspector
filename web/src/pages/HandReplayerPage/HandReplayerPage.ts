@@ -5,6 +5,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
+import "../../components/HandRecorder";
 
 import { handReplayStore, routerStore } from "../../stores";
 import { tableIcon } from "../../assets";
@@ -85,6 +86,26 @@ export class HandReplayerPage extends MobxLitElement {
         const loadError = handReplayStore.loadError;
         const hand = handReplayStore.hand;
         const handId = routerStore.replayHandId;
+
+        // SI-30: /hand-replayer shows Record a New Hand (HandRecorder); /replay shows replay UI
+        if (routerStore.currentRoute === "/hand-replayer") {
+            return html`
+                <div class="page-wrapper">
+                    <div class="page-container">
+                        <div class="page-header">
+                            <h1>Record a New Hand</h1>
+                            <p>
+                                Build a hand step-by-step: configure the game,
+                                add players, set the board, and record actions.
+                            </p>
+                        </div>
+                        <div class="page-content">
+                            <hand-recorder></hand-recorder>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         // Show placeholder if no hand is selected
         if (!handId && loadStatus === "idle") {
