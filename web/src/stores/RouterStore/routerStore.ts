@@ -1,6 +1,12 @@
 import { makeObservable, observable, action } from "mobx";
 
-export type Route = "/" | "/signin" | "/poker-hands" | "/equity-calculator";
+export type Route =
+    | "/"
+    | "/signin"
+    | "/poker-hands"
+    | "/equity-calculator"
+    | "/hand-replayer"
+    | "/hand-library";
 
 export class RouterStore {
     @observable
@@ -57,6 +63,10 @@ export class RouterStore {
             this.currentRoute = "/poker-hands";
         } else if (path === "/equity-calculator") {
             this.currentRoute = "/equity-calculator";
+        } else if (path === "/hand-replayer") {
+            this.currentRoute = "/hand-replayer";
+        } else if (path === "/hand-library") {
+            this.currentRoute = "/hand-library";
         } else {
             // Default to root
             this.currentRoute = "/";

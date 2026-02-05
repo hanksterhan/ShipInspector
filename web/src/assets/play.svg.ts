@@ -1,0 +1,8 @@
+import { svg } from "lit";
+
+export const playIcon = svg`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+    <rect width="256" height="256" fill="none"/>
+    <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a8,8,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+</svg>
+`;

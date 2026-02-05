@@ -77,7 +77,9 @@ export class HandRecorder extends MobxLitElement {
 
     private getPlayerErrors(seatIndex: number): string[] {
         const errors = handRecorderStore.validationErrors.players ?? [];
-        return errors.filter((message) => message.includes(`seat ${seatIndex}`));
+        return errors.filter((message) =>
+            message.includes(`seat ${seatIndex}`)
+        );
     }
 
     private renderErrors(errors: string[]) {
@@ -219,7 +221,9 @@ export class HandRecorder extends MobxLitElement {
                                     ></sp-textfield>
                                 </label>
                                 <label class="field">
-                                    <sp-field-label>Name (optional)</sp-field-label>
+                                    <sp-field-label
+                                        >Name (optional)</sp-field-label
+                                    >
                                     <sp-textfield
                                         placeholder="Player name"
                                         .value=${player?.displayName ?? ""}
@@ -269,8 +273,7 @@ export class HandRecorder extends MobxLitElement {
                         actions.
                     </div>
                 </div>
-                ${this.renderGameSettings()}
-                ${this.renderPlayerSettings()}
+                ${this.renderGameSettings()} ${this.renderPlayerSettings()}
                 <div class="footer-actions">
                     <sp-button variant="cta" @click=${this.handleProceed}>
                         Continue to actions
