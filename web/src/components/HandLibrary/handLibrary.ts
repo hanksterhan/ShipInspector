@@ -1,7 +1,7 @@
 import { html, TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
-import "@lit-labs/virtualizer/lit-virtualizer.js";
+import "@lit-labs/virtualizer";
 
 import { styles } from "./styles.css";
 import { handLibraryStore } from "../../stores";
