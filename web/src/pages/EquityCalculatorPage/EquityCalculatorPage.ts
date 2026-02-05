@@ -5,6 +5,10 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 
 import "../index";
 import "../../components/index";
+import { pokerBoardStore } from "../../stores/index";
+import "../../components/OutsDisplay";
+import "../../components/PokerTable";
+import "../../components/CardPickerModal";
 
 /**
  * EquityCalculatorPage - Dedicated equity calculation page
@@ -19,7 +23,20 @@ export class EquityCalculatorPage extends MobxLitElement {
         return styles;
     }
 
+    /**
+     * Check if outs display should be shown
+     * Only show when there are exactly 4 board cards (turn) and 2 active players with complete hands
+     */
+    shouldShowOuts(): boolean {
+        const activePlayersWithHands =
+            pokerBoardStore.getActivePlayersWithCompleteHands();
+        const boardCards = pokerBoardStore.getBoardCards();
+        return activePlayersWithHands.length === 2 && boardCards.length === 4;
+    }
+
     render() {
+        const showOuts = this.shouldShowOuts();
+
         return html`
             <div class="page-wrapper">
                 <div class="page-container">
@@ -31,6 +48,14 @@ export class EquityCalculatorPage extends MobxLitElement {
                     </div>
                     <div class="page-content">
                         <poker-table></poker-table>
+                        <!-- Outs Display below the board - only show when necessary -->
+                        ${showOuts
+                            ? html`
+                                  <div class="outs-display-container">
+                                      <outs-display></outs-display>
+                                  </div>
+                              `
+                            : null}
                     </div>
                 </div>
             </div>
