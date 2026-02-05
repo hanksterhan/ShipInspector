@@ -157,6 +157,12 @@ export const styles = css`
         gap: 12px;
     }
 
+    .history-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     .history-main {
         display: flex;
         gap: 12px;
@@ -184,6 +190,11 @@ export const styles = css`
 
     .edit-button {
         min-height: 36px;
+    }
+
+    .remove-button {
+        min-height: 36px;
+        background: #f5f5f5;
     }
 
     .history-empty {

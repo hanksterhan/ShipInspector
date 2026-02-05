@@ -122,6 +122,17 @@ export class ActionRecorder extends MobxLitElement {
         this.resetActionInputs();
     }
 
+    private handleRemoveAction(index: number) {
+        if (this.editingIndex !== null) {
+            if (this.editingIndex === index) {
+                this.cancelEdit();
+            } else if (this.editingIndex > index) {
+                this.editingIndex -= 1;
+            }
+        }
+        handRecorderStore.removeAction(index);
+    }
+
     private validateActionInputs(actionType: ActionType): {
         amount: number | null;
         raiseTo: number | null;
@@ -323,13 +334,23 @@ export class ActionRecorder extends MobxLitElement {
                                     </div>
                                 </div>
                             </div>
-                            <sp-action-button
-                                class="edit-button"
-                                size="s"
-                                @click=${() => this.startEdit(index)}
-                            >
-                                Edit
-                            </sp-action-button>
+                            <div class="history-actions">
+                                <sp-action-button
+                                    class="edit-button"
+                                    size="s"
+                                    @click=${() => this.startEdit(index)}
+                                >
+                                    Edit
+                                </sp-action-button>
+                                <sp-action-button
+                                    class="remove-button"
+                                    size="s"
+                                    @click=${() =>
+                                        this.handleRemoveAction(index)}
+                                >
+                                    Remove
+                                </sp-action-button>
+                            </div>
                         </div>
                     `
                 )}
@@ -339,6 +360,9 @@ export class ActionRecorder extends MobxLitElement {
 
     render() {
         const { currentStreet } = handRecorderStore;
+        const activePlayers = handRecorderStore.players.filter(
+            (player) => player.isActive
+        );
         const selectedSeat =
             this.selectedActorSeat !== null
                 ? [String(this.selectedActorSeat)]
@@ -386,7 +410,7 @@ export class ActionRecorder extends MobxLitElement {
                         .selected=${selectedSeat}
                         @change=${this.handleActorSelection}
                     >
-                        ${handRecorderStore.players.map(
+                        ${activePlayers.map(
                             (player) => html`
                                 <sp-action-button value=${player.seatIndex}>
                                     ${player.displayName || "Player"} (Seat
@@ -395,7 +419,7 @@ export class ActionRecorder extends MobxLitElement {
                             `
                         )}
                     </sp-action-group>
-                    ${handRecorderStore.players.length === 0
+                    ${activePlayers.length === 0
                         ? html`<div class="empty-state">
                               Add players to record actions.
                           </div>`
