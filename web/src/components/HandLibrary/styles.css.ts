@@ -132,7 +132,7 @@ export const styles = css`
     }
 
     .value.muted {
-        color: #9ca3af;
+        color: #6b7280;
         font-weight: 500;
     }
 

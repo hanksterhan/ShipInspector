@@ -53,7 +53,7 @@ export const styles = css`
 
     .empty-text {
         font-size: 0.875rem;
-        color: var(--spectrum-global-color-gray-500);
+        color: var(--spectrum-global-color-gray-700);
         font-style: italic;
     }
 

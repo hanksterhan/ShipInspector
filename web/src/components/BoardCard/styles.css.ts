@@ -98,7 +98,7 @@ export const styles = css`
         justify-content: center;
         width: 32px;
         height: 32px;
-        color: var(--spectrum-global-color-gray-500);
+        color: var(--spectrum-global-color-gray-700);
     }
 
     .board-card-placeholder-icon svg {

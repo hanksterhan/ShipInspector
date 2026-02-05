@@ -181,7 +181,7 @@ export const styles = css`
         justify-content: center;
         width: 32px;
         height: 32px;
-        color: var(--spectrum-global-color-gray-500);
+        color: var(--spectrum-global-color-gray-700);
     }
 
     .placeholder-icon svg {
@@ -243,7 +243,7 @@ export const styles = css`
     .equity-tie {
         font-size: var(--spectrum-global-dimension-font-size-200);
         font-weight: var(--spectrum-global-font-weight-bold);
-        color: #ff8c00; /* Orange */
+        color: #d97706; /* Orange */
         text-align: center;
     }
 
