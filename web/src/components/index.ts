@@ -14,4 +14,7 @@ export * from "./PokerTable";
 export * from "./ActionRecorder";
 export * from "./HandRecorder";
 export * from "./HandLibrary";
+export * from "./ReplayPlayer";
+export * from "./ReplayBoardCards";
+export * from "./ReplayControls";
 // PLOP: APPEND COMPONENT EXPORTS

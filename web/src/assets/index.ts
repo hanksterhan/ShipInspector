@@ -16,4 +16,5 @@ export * from "./refresh.svg";
 export * from "./crown.svg";
 export * from "./play.svg";
 export * from "./folder.svg";
+export * from "./cardBack.svg";
 // PLOP: APPEND ICON EXPORTS

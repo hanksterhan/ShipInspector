@@ -1,6 +1,10 @@
 import { action, makeObservable, observable } from "mobx";
 
-export type AppPages = "equity-calculator" | "hand-replayer" | "hand-library";
+export type AppPages =
+    | "equity-calculator"
+    | "hand-replayer"
+    | "hand-library"
+    | "replay";
 export class MenuStore {
     constructor() {
         makeObservable(this);

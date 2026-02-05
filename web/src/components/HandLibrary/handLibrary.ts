@@ -4,7 +4,7 @@ import { MobxLitElement } from "@adobe/lit-mobx";
 import "@lit-labs/virtualizer";
 
 import { styles } from "./styles.css";
-import { handLibraryStore } from "../../stores";
+import { handLibraryStore, routerStore } from "../../stores";
 import type { HandListItem } from "../../services/handService";
 
 interface FiltersDraft {
@@ -175,7 +175,7 @@ export class HandLibrary extends MobxLitElement {
     }
 
     private handleReplay(handId: string) {
-        window.location.assign(`/replay/${handId}`);
+        routerStore.navigateToReplay(handId);
     }
 
     private handleDelete(handId: string) {
