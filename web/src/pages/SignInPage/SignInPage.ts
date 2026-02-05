@@ -21,7 +21,7 @@ export class SignInPage extends MobxLitElement {
 
             // Redirect to Clerk's hosted sign-in page
             // Clerk will handle the redirect back to the app after sign-in
-            const returnBackUrl = window.location.origin + "/poker-hands";
+            const returnBackUrl = window.location.origin + "/equity-calculator";
 
             // Use Clerk's redirectToSignIn method if available
             if (clerk.redirectToSignIn) {

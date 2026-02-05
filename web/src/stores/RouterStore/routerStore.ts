@@ -3,7 +3,6 @@ import { makeObservable, observable, action } from "mobx";
 export type Route =
     | "/"
     | "/signin"
-    | "/poker-hands"
     | "/equity-calculator"
     | "/hand-replayer"
     | "/hand-library";
@@ -59,8 +58,6 @@ export class RouterStore {
         // Map paths to routes
         if (path === "/" || path === "/signin" || path === "/login") {
             this.currentRoute = "/";
-        } else if (path === "/poker-hands") {
-            this.currentRoute = "/poker-hands";
         } else if (path === "/equity-calculator") {
             this.currentRoute = "/equity-calculator";
         } else if (path === "/hand-replayer") {

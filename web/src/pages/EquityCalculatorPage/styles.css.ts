@@ -48,4 +48,11 @@ export const styles = css`
         flex: 1;
         gap: 16px;
     }
+
+    .outs-display-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 32px;
+    }
 `;
