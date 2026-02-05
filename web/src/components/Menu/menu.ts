@@ -13,13 +13,7 @@ import {
     pokerBoardStore,
     outsStore,
 } from "../../stores/index";
-import {
-    pokerIcon,
-    boatIcon,
-    percentageIcon,
-    playIcon,
-    folderIcon,
-} from "../../assets";
+import { boatIcon, percentageIcon, playIcon, folderIcon } from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
 import { Route } from "../../stores/RouterStore/routerStore";
 
@@ -31,12 +25,6 @@ interface MenuItemDetails {
 }
 
 const MENU_ITEMS: MenuItemDetails[] = [
-    {
-        id: "poker-hands",
-        route: "/poker-hands",
-        name: "Poker Hands",
-        icon: html`<span class="menu-icon">${pokerIcon}</span>`,
-    },
     {
         id: "equity-calculator",
         route: "/equity-calculator",

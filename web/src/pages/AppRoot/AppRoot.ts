@@ -105,7 +105,7 @@ export class AppRoot extends MobxLitElement {
             isAuthenticated &&
             (currentRoute === "/" || currentRoute === "/signin")
         ) {
-            routerStore.navigate("/poker-hands");
+            routerStore.navigate("/equity-calculator");
             return html`
                 <sp-theme
                     system="spectrum"
@@ -135,7 +135,6 @@ export class AppRoot extends MobxLitElement {
 
                             // Update menuStore to match route
                             const pageFromRoute = route.slice(1) as
-                                | "poker-hands"
                                 | "equity-calculator"
                                 | "hand-replayer"
                                 | "hand-library";
@@ -147,8 +146,6 @@ export class AppRoot extends MobxLitElement {
                             }
 
                             switch (route) {
-                                case "/poker-hands":
-                                    return html`<poker-hands></poker-hands>`;
                                 case "/equity-calculator":
                                     return html`<equity-calculator-page></equity-calculator-page>`;
                                 case "/hand-replayer":
@@ -156,7 +153,7 @@ export class AppRoot extends MobxLitElement {
                                 case "/hand-library":
                                     return html`<hand-library-page></hand-library-page>`;
                                 default:
-                                    return html`<poker-hands></poker-hands>`;
+                                    return html`<equity-calculator-page></equity-calculator-page>`;
                             }
                         })()}
                     </div>

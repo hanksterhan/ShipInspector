@@ -1,17 +1,13 @@
 import { action, makeObservable, observable } from "mobx";
 
-export type AppPages =
-    | "poker-hands"
-    | "equity-calculator"
-    | "hand-replayer"
-    | "hand-library";
+export type AppPages = "equity-calculator" | "hand-replayer" | "hand-library";
 export class MenuStore {
     constructor() {
         makeObservable(this);
     }
 
     @observable
-    selectedPage: AppPages = "poker-hands";
+    selectedPage: AppPages = "equity-calculator";
 
     @action
     setSelectedPage(page: AppPages) {
