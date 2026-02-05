@@ -4,6 +4,7 @@ import { customElement, property } from "lit/decorators.js";
 import { MobxLitElement } from "@adobe/lit-mobx";
 import { pokerBoardStore } from "../../stores/index";
 import "../../components/CardSelector";
+import type { CardSelectionTarget } from "../CardSelector/cardSelector";
 
 /**
  * CardPickerModal component - Modal dialog for card selection
@@ -18,14 +19,31 @@ export class CardPickerModal extends MobxLitElement {
     @property({ type: Boolean })
     isOpen: boolean = false;
 
+    @property({ attribute: false })
+    selectionTarget?: CardSelectionTarget;
+
+    @property({ type: Boolean })
+    closeOnSelect?: boolean;
+
+    @property({ attribute: false })
+    onClose?: () => void;
+
     handleOverlayClick(e: Event) {
         if (e.target === e.currentTarget) {
-            pokerBoardStore.closePicker();
+            if (this.onClose) {
+                this.onClose();
+            } else {
+                pokerBoardStore.closePicker();
+            }
         }
     }
 
     handleClose() {
-        pokerBoardStore.closePicker();
+        if (this.onClose) {
+            this.onClose();
+        } else {
+            pokerBoardStore.closePicker();
+        }
     }
 
     render() {
@@ -52,7 +70,10 @@ export class CardPickerModal extends MobxLitElement {
                             ✕
                         </sp-action-button>
                     </div>
-                    <card-selector></card-selector>
+                    <card-selector
+                        .selectionTarget=${this.selectionTarget}
+                        .closeOnSelect=${this.closeOnSelect}
+                    ></card-selector>
                 </div>
             </div>
         `;

@@ -34,6 +34,7 @@ export interface HandRecorderPlayer {
     displayName: string;
     stackAtStart: number;
     isHero: boolean;
+    isActive: boolean;
     showdownCards: [Card | null, Card | null];
 }
 
@@ -77,7 +78,8 @@ const createEmptyPlayer = (seatIndex: number): HandRecorderPlayer => ({
     seatIndex,
     displayName: "",
     stackAtStart: 0,
-    isHero: seatIndex === 0,
+    isHero: false,
+    isActive: false,
     showdownCards: [null, null],
 });
 
@@ -129,8 +131,28 @@ export class HandRecorderStore {
     }
 
     @action
+    setSmallBlind(amount: number) {
+        this.updateGameSettings({ smallBlind: amount });
+    }
+
+    @action
+    setBigBlind(amount: number) {
+        this.updateGameSettings({ bigBlind: amount });
+    }
+
+    @action
+    setAnte(amount: number) {
+        this.updateGameSettings({ ante: amount });
+    }
+
+    @action
+    setButtonSeat(seatIndex: number) {
+        this.updateGameSettings({ buttonSeat: seatIndex });
+    }
+
+    @action
     setTableSize(tableSize: number) {
-        const nextSize = Math.min(10, Math.max(2, tableSize));
+        const nextSize = Math.min(9, Math.max(2, tableSize));
         const nextButtonSeat =
             this.gameSettings.buttonSeat >= nextSize
                 ? 0
@@ -158,8 +180,81 @@ export class HandRecorderStore {
     }
 
     @action
-    addPlayer(player: HandRecorderPlayer) {
-        this.players = [...this.players, player];
+    setPlayerActive(seatIndex: number, isActive: boolean) {
+        const players = [...this.players];
+        const playerIndex = players.findIndex(
+            (player) => player.seatIndex === seatIndex
+        );
+        const nextPlayer =
+            playerIndex === -1
+                ? { ...createEmptyPlayer(seatIndex), isActive }
+                : { ...players[playerIndex], isActive };
+
+        if (!isActive) {
+            nextPlayer.isHero = false;
+            nextPlayer.showdownCards = [null, null];
+        }
+
+        if (playerIndex === -1) {
+            players.push(nextPlayer);
+        } else {
+            players[playerIndex] = nextPlayer;
+        }
+
+        const hasHero = players.some((player) => player.isHero);
+        if (isActive && !hasHero) {
+            players.forEach((player) => {
+                player.isHero = player.seatIndex === seatIndex;
+            });
+        }
+
+        if (!isActive && !players.some((player) => player.isHero)) {
+            const nextHero = players.find((player) => player.isActive);
+            if (nextHero) {
+                players.forEach((player) => {
+                    player.isHero = player.seatIndex === nextHero.seatIndex;
+                });
+            }
+        }
+
+        this.players = players.sort((a, b) => a.seatIndex - b.seatIndex);
+    }
+
+    @action
+    addPlayer(seatIndex: number) {
+        this.setPlayerActive(seatIndex, true);
+    }
+
+    @action
+    removePlayer(seatIndex: number) {
+        this.setPlayerActive(seatIndex, false);
+    }
+
+    @action
+    setHero(seatIndex: number) {
+        const players = this.players.map((player) => ({
+            ...player,
+            isHero: player.seatIndex === seatIndex && player.isActive,
+        }));
+        this.players = players;
+    }
+
+    @action
+    setPlayerHoleCard(seatIndex: number, cardIndex: 0 | 1, card: Card | null) {
+        const players = [...this.players];
+        const playerIndex = players.findIndex(
+            (player) => player.seatIndex === seatIndex
+        );
+        if (playerIndex === -1) {
+            return;
+        }
+        const player = players[playerIndex];
+        const showdownCards: [Card | null, Card | null] = [
+            ...player.showdownCards,
+        ];
+        showdownCards[cardIndex] = card;
+        players[playerIndex] = { ...player, showdownCards };
+        this.players = players;
     }
 
     @action
@@ -326,8 +421,8 @@ export class HandRecorderStore {
         const { tableSize, buttonSeat, smallBlind, bigBlind, ante } =
             this.gameSettings;
 
-        if (tableSize < 2 || tableSize > 10) {
-            errors["hand.table_size"] = ["must be between 2 and 10"];
+        if (tableSize < 2 || tableSize > 9) {
+            errors["hand.table_size"] = ["must be between 2 and 9"];
         }
         if (buttonSeat < 0 || buttonSeat >= tableSize) {
             errors["hand.button_seat"] = ["must be within table size"];
@@ -338,26 +433,39 @@ export class HandRecorderStore {
         if (bigBlind <= 0) {
             errors["hand.big_blind"] = ["must be greater than 0"];
         }
+        if (bigBlind <= smallBlind) {
+            errors["hand.big_blind"] = [
+                ...(errors["hand.big_blind"] || []),
+                "must be greater than small blind",
+            ];
+        }
         if (ante < 0) {
             errors["hand.ante"] = ["must be 0 or greater"];
         }
 
-        if (this.players.length === 0) {
-            errors.players = ["at least one player is required"];
+        const activePlayers = this.players.filter((player) => player.isActive);
+        if (activePlayers.length < 2) {
+            errors.players = ["at least two players are required"];
         } else {
             const seatIndices = new Set<number>();
-            for (const player of this.players) {
+            for (const player of activePlayers) {
                 if (seatIndices.has(player.seatIndex)) {
                     errors.players = [
                         ...(errors.players || []),
-                        `duplicate seat ${player.seatIndex}`,
+                        `duplicate seat ${player.seatIndex + 1}`,
                     ];
                 }
                 seatIndices.add(player.seatIndex);
+                if (!player.displayName.trim()) {
+                    errors.players = [
+                        ...(errors.players || []),
+                        `seat ${player.seatIndex + 1} must have a name`,
+                    ];
+                }
                 if (player.stackAtStart <= 0) {
                     errors.players = [
                         ...(errors.players || []),
-                        `seat ${player.seatIndex} must have positive stack`,
+                        `seat ${player.seatIndex + 1} must have positive stack`,
                     ];
                 }
             }
@@ -387,7 +495,14 @@ export class HandRecorderStore {
             this.players.map((player) => [player.seatIndex, player])
         );
         this.players = Array.from({ length: tableSize }, (_, index) => {
-            return playersBySeat.get(index) ?? createEmptyPlayer(index);
+            const existing = playersBySeat.get(index);
+            if (!existing) {
+                return createEmptyPlayer(index);
+            }
+            return {
+                ...existing,
+                showdownCards: [...existing.showdownCards],
+            };
         });
     }
 
@@ -414,16 +529,18 @@ export class HandRecorderStore {
                 board_turn: this.toCardString(board[3]),
                 board_river: this.toCardString(board[4]),
             },
-            players: this.players.map((player) => ({
-                seat_index: player.seatIndex,
-                display_name:
-                    player.displayName.trim() ||
-                    `Player ${player.seatIndex + 1}`,
-                stack_at_start: player.stackAtStart,
-                is_hero: player.isHero,
-                showdown_card_1: this.toCardString(player.showdownCards[0]),
-                showdown_card_2: this.toCardString(player.showdownCards[1]),
-            })),
+            players: this.players
+                .filter((player) => player.isActive)
+                .map((player) => ({
+                    seat_index: player.seatIndex,
+                    display_name:
+                        player.displayName.trim() ||
+                        `Player ${player.seatIndex + 1}`,
+                    stack_at_start: player.stackAtStart,
+                    is_hero: player.isHero,
+                    showdown_card_1: this.toCardString(player.showdownCards[0]),
+                    showdown_card_2: this.toCardString(player.showdownCards[1]),
+                })),
             actions: this.actions.map((action, index) => ({
                 sequence_index: index,
                 street: action.street,
@@ -452,6 +569,11 @@ export class HandRecorderStore {
         await this.clearDraftStorage();
         this.logEvent("hand_recorder.submit.success");
         return response.hand_id;
+    }
+
+    @action
+    async saveHand(): Promise<string | null> {
+        return this.submitHand();
     }
 
     private logEvent(event: string) {

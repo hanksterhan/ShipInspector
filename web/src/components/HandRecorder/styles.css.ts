@@ -4,6 +4,7 @@ export const styles = css`
     :host {
         display: block;
         width: 100%;
+        scroll-behavior: smooth;
     }
 
     .hand-recorder {
@@ -32,6 +33,23 @@ export const styles = css`
     .section-subtitle {
         font-size: 14px;
         opacity: 0.8;
+    }
+
+    .toast {
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .toast.success {
+        background: rgba(20, 120, 20, 0.2);
+        border: 1px solid rgba(20, 120, 20, 0.5);
+    }
+
+    .toast.error {
+        background: rgba(180, 20, 20, 0.2);
+        border: 1px solid rgba(180, 20, 20, 0.5);
     }
 
     .form-grid {
@@ -93,8 +111,92 @@ export const styles = css`
         gap: 10px;
     }
 
+    .player-card.inactive {
+        opacity: 0.7;
+    }
+
     .player-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-weight: 600;
+    }
+
+    .player-toggle {
+        min-height: 32px;
+    }
+
+    .player-inactive {
+        font-size: 13px;
+        opacity: 0.7;
+    }
+
+    .player-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .hero-toggle {
+        min-height: 32px;
+    }
+
+    .hole-cards {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .hole-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .card-slot {
+        min-height: 44px;
+        justify-content: center;
+        font-weight: 600;
+    }
+
+    .card-slot.filled {
+        outline: 2px solid rgba(38, 128, 235, 0.7);
+        outline-offset: 2px;
+    }
+
+    .clear-card {
+        min-height: 32px;
+    }
+
+    .board-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .board-row {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .board-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .board-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .board-slot {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 140px;
     }
 
     .field-errors {
@@ -121,6 +223,10 @@ export const styles = css`
     @media (max-width: 720px) {
         .hand-recorder {
             padding: 16px;
+        }
+
+        .board-row {
+            grid-template-columns: 1fr;
         }
     }
 `;
