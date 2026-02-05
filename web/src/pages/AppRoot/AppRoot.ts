@@ -137,7 +137,8 @@ export class AppRoot extends MobxLitElement {
                             const pageFromRoute = route.slice(1) as
                                 | "equity-calculator"
                                 | "hand-replayer"
-                                | "hand-library";
+                                | "hand-library"
+                                | "replay";
                             if (
                                 pageFromRoute &&
                                 menuStore.selectedPage !== pageFromRoute
@@ -152,6 +153,8 @@ export class AppRoot extends MobxLitElement {
                                     return html`<hand-replayer-page></hand-replayer-page>`;
                                 case "/hand-library":
                                     return html`<hand-library-page></hand-library-page>`;
+                                case "/replay":
+                                    return html`<hand-replayer-page></hand-replayer-page>`;
                                 default:
                                     return html`<equity-calculator-page></equity-calculator-page>`;
                             }

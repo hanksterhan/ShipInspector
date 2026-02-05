@@ -202,6 +202,68 @@ export class HandReplayStore {
     }
 
     @action
+    setActionIndex(index: number): void {
+        if (!this.hand) return;
+        const maxIndex = this.hand.actions.length - 1;
+        this.currentActionIndex = Math.max(-1, Math.min(index, maxIndex));
+    }
+
+    @computed
+    get totalActions(): number {
+        return this.hand?.actions.length ?? 0;
+    }
+
+    @computed
+    get currentAction() {
+        if (!this.hand || this.currentActionIndex < 0) return null;
+        return this.hand.actions[this.currentActionIndex] ?? null;
+    }
+
+    @computed
+    get playerInfoBySeat(): Map<
+        number,
+        { name: string; stack: number; isHero: boolean }
+    > {
+        const map = new Map<
+            number,
+            { name: string; stack: number; isHero: boolean }
+        >();
+        if (!this.hand) return map;
+        for (const p of this.hand.players) {
+            map.set(p.seat_index, {
+                name: p.display_name,
+                stack: p.stack_at_start,
+                isHero: p.is_hero,
+            });
+        }
+        return map;
+    }
+
+    /**
+     * Returns the set of seat indices that won the pot (collected chips).
+     * Only returns winners when the hand is complete and a COLLECT action is found.
+     */
+    @computed
+    get winnerSeats(): Set<number> {
+        const winners = new Set<number>();
+        if (!this.hand || !this.isComplete) return winners;
+
+        // Find COLLECT actions to determine winners
+        for (const a of this.hand.actions) {
+            if (a.action_type === "COLLECT" && a.actor_seat != null) {
+                winners.add(a.actor_seat);
+            }
+        }
+
+        // If no COLLECT action, winner is the last active player (everyone else folded)
+        if (winners.size === 0 && this.activePlayers.size === 1) {
+            this.activePlayers.forEach((seat) => winners.add(seat));
+        }
+
+        return winners;
+    }
+
+    @action
     play(): void {
         if (!this.hand || this.hand.actions.length === 0 || this.isComplete) {
             return;

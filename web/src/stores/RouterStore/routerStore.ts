@@ -5,11 +5,15 @@ export type Route =
     | "/signin"
     | "/equity-calculator"
     | "/hand-replayer"
-    | "/hand-library";
+    | "/hand-library"
+    | "/replay"; // /replay/:handId route
 
 export class RouterStore {
     @observable
     currentRoute: Route = "/";
+
+    @observable
+    replayHandId: string | null = null;
 
     // Callback for route changes - will be set by AuthStore
     private onRouteChange?: (route: Route) => void;
@@ -58,15 +62,30 @@ export class RouterStore {
         // Map paths to routes
         if (path === "/" || path === "/signin" || path === "/login") {
             this.currentRoute = "/";
+            this.replayHandId = null;
         } else if (path === "/equity-calculator") {
             this.currentRoute = "/equity-calculator";
+            this.replayHandId = null;
         } else if (path === "/hand-replayer") {
             this.currentRoute = "/hand-replayer";
+            this.replayHandId = null;
         } else if (path === "/hand-library") {
             this.currentRoute = "/hand-library";
+            this.replayHandId = null;
+        } else if (path.startsWith("/replay/")) {
+            // Extract hand ID from /replay/:handId
+            const handId = path.slice("/replay/".length);
+            if (handId) {
+                this.currentRoute = "/replay";
+                this.replayHandId = handId;
+            } else {
+                this.currentRoute = "/hand-library";
+                this.replayHandId = null;
+            }
         } else {
             // Default to root
             this.currentRoute = "/";
+            this.replayHandId = null;
         }
 
         // Notify listener of route change (for auth checks)
@@ -77,5 +96,19 @@ export class RouterStore {
 
     get isAuthenticatedRoute(): boolean {
         return this.currentRoute !== "/" && this.currentRoute !== "/signin";
+    }
+
+    /**
+     * Navigate to replay a specific hand
+     */
+    @action
+    navigateToReplay(handId: string): void {
+        this.currentRoute = "/replay";
+        this.replayHandId = handId;
+        window.history.pushState({}, "", `/replay/${handId}`);
+
+        if (this.onRouteChange) {
+            this.onRouteChange("/replay");
+        }
     }
 }

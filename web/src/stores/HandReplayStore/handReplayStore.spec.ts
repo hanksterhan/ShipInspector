@@ -266,4 +266,77 @@ describe("HandReplayStore", () => {
             expect(store.isPlaying).toBe(false);
         });
     });
+
+    describe("setActionIndex", () => {
+        it("sets currentActionIndex to a specific value", async () => {
+            (handService.getHand as jest.Mock).mockResolvedValue(
+                mockHandForPlayback
+            );
+            await store.loadHand("hand-uuid-1");
+
+            store.setActionIndex(1);
+            expect(store.currentActionIndex).toBe(1);
+
+            store.setActionIndex(0);
+            expect(store.currentActionIndex).toBe(0);
+        });
+
+        it("clamps to valid range", async () => {
+            (handService.getHand as jest.Mock).mockResolvedValue(
+                mockHandForPlayback
+            );
+            await store.loadHand("hand-uuid-1");
+
+            store.setActionIndex(100);
+            expect(store.currentActionIndex).toBe(2); // max is 2
+
+            store.setActionIndex(-10);
+            expect(store.currentActionIndex).toBe(-1); // min is -1
+        });
+    });
+
+    describe("computed: totalActions", () => {
+        it("returns total number of actions", async () => {
+            (handService.getHand as jest.Mock).mockResolvedValue(
+                mockHandForPlayback
+            );
+            await store.loadHand("hand-uuid-1");
+            expect(store.totalActions).toBe(3);
+        });
+
+        it("returns 0 when no hand loaded", () => {
+            expect(store.totalActions).toBe(0);
+        });
+    });
+
+    describe("computed: currentAction", () => {
+        it("returns current action at index", async () => {
+            (handService.getHand as jest.Mock).mockResolvedValue(
+                mockHandForPlayback
+            );
+            await store.loadHand("hand-uuid-1");
+            expect(store.currentAction).toBeNull(); // index is -1
+
+            store.stepForward();
+            expect(store.currentAction?.action_type).toBe("POST_SB");
+
+            store.stepForward();
+            expect(store.currentAction?.action_type).toBe("POST_BB");
+        });
+    });
+
+    describe("computed: playerInfoBySeat", () => {
+        it("returns player info map", async () => {
+            (handService.getHand as jest.Mock).mockResolvedValue(
+                mockHandForPlayback
+            );
+            await store.loadHand("hand-uuid-1");
+
+            const info = store.playerInfoBySeat;
+            expect(info.size).toBe(2);
+            expect(info.get(0)?.name).toBe("Hero");
+            expect(info.get(0)?.isHero).toBe(true);
+            expect(info.get(1)?.name).toBe("Villain");
+        });
+    });
 });
