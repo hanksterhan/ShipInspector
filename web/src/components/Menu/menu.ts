@@ -13,11 +13,19 @@ import {
     pokerBoardStore,
     outsStore,
 } from "../../stores/index";
-import { pokerIcon, boatIcon } from "../../assets";
+import {
+    pokerIcon,
+    boatIcon,
+    percentageIcon,
+    playIcon,
+    folderIcon,
+} from "../../assets";
 import { AppPages } from "web/src/stores/MenuStore/menuStore";
+import { Route } from "../../stores/RouterStore/routerStore";
 
 interface MenuItemDetails {
-    id: string;
+    id: AppPages;
+    route: Route;
     name: string;
     icon: TemplateResult;
 }
@@ -25,8 +33,27 @@ interface MenuItemDetails {
 const MENU_ITEMS: MenuItemDetails[] = [
     {
         id: "poker-hands",
+        route: "/poker-hands",
         name: "Poker Hands",
         icon: html`<span class="menu-icon">${pokerIcon}</span>`,
+    },
+    {
+        id: "equity-calculator",
+        route: "/equity-calculator",
+        name: "Equity Calculator",
+        icon: html`<span class="menu-icon">${percentageIcon}</span>`,
+    },
+    {
+        id: "hand-replayer",
+        route: "/hand-replayer",
+        name: "Hand Replayer",
+        icon: html`<span class="menu-icon">${playIcon}</span>`,
+    },
+    {
+        id: "hand-library",
+        route: "/hand-library",
+        name: "Hand Library",
+        icon: html`<span class="menu-icon">${folderIcon}</span>`,
     },
 ];
 
@@ -50,10 +77,10 @@ export class Menu extends MobxLitElement {
         );
     }
 
-    navigateTo(page: AppPages) {
+    navigateTo(page: AppPages, route: Route) {
         menuStore.setSelectedPage(page);
         // Also update router
-        routerStore.navigate(`/${page}`);
+        routerStore.navigate(route);
     }
 
     handleNewHand() {
@@ -74,7 +101,8 @@ export class Menu extends MobxLitElement {
                 static="black"
                 size="xl"
                 class=${isSelected ? "selected" : ""}
-                @click=${() => this.navigateTo(itemDetails.id as AppPages)}
+                @click=${() =>
+                    this.navigateTo(itemDetails.id, itemDetails.route)}
             >
                 <div class="menu-item-container">
                     ${itemDetails.icon}

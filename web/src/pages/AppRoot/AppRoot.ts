@@ -134,16 +134,27 @@ export class AppRoot extends MobxLitElement {
                             const route = routerStore.currentRoute;
 
                             // Update menuStore to match route
+                            const pageFromRoute = route.slice(1) as
+                                | "poker-hands"
+                                | "equity-calculator"
+                                | "hand-replayer"
+                                | "hand-library";
                             if (
-                                route === "/poker-hands" &&
-                                menuStore.selectedPage !== "poker-hands"
+                                pageFromRoute &&
+                                menuStore.selectedPage !== pageFromRoute
                             ) {
-                                menuStore.setSelectedPage("poker-hands");
+                                menuStore.setSelectedPage(pageFromRoute);
                             }
 
                             switch (route) {
                                 case "/poker-hands":
                                     return html`<poker-hands></poker-hands>`;
+                                case "/equity-calculator":
+                                    return html`<equity-calculator-page></equity-calculator-page>`;
+                                case "/hand-replayer":
+                                    return html`<hand-replayer-page></hand-replayer-page>`;
+                                case "/hand-library":
+                                    return html`<hand-library-page></hand-library-page>`;
                                 default:
                                     return html`<poker-hands></poker-hands>`;
                             }
