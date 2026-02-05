@@ -102,7 +102,7 @@ export const styles = css`
         flex-direction: column;
         gap: 4px;
         font-size: 12px;
-        color: #ff9090;
+        color: #d32f2f;
     }
 
     .footer-actions {

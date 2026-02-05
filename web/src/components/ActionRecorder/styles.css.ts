@@ -81,7 +81,7 @@ export const styles = css`
 
     .empty-state {
         font-size: 12px;
-        color: #8a8a8a;
+        color: #5a5a5a;
     }
 
     .amount-row {

@@ -61,7 +61,7 @@ export const styles = css`
 
     .placeholder-content p {
         font-size: 18px;
-        color: #888;
+        color: #4a4a4a;
         text-align: center;
     }
 `;

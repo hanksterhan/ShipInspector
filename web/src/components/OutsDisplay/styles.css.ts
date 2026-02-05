@@ -50,7 +50,7 @@ export const styles = css`
 
     .empty-text {
         font-size: 0.875rem;
-        color: var(--spectrum-global-color-gray-500);
+        color: var(--spectrum-global-color-gray-700);
         font-style: italic;
     }
 
@@ -197,7 +197,7 @@ export const styles = css`
 
     .no-outs {
         font-size: 0.875rem;
-        color: var(--spectrum-global-color-gray-500);
+        color: var(--spectrum-global-color-gray-700);
         font-style: italic;
         text-align: center;
         padding: 1rem 0;
