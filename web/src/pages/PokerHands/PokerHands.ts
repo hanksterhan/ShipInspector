@@ -61,6 +61,9 @@ export class PokerHands extends MobxLitElement {
                         <div class="action-recorder-container">
                             <action-recorder></action-recorder>
                         </div>
+                        <div class="hand-library-container">
+                            <hand-library></hand-library>
+                        </div>
                     </div>
                 </div>
 

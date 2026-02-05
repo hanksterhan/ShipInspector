@@ -52,6 +52,13 @@ export const styles = css`
         padding: 0 16px;
     }
 
+    .hand-library-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 16px 24px;
+    }
+
     .player-hands-section {
         display: flex;
         justify-content: center;
