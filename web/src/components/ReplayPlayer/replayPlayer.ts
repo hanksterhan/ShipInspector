@@ -41,8 +41,17 @@ export class ReplayPlayer extends MobxLitElement {
     @property({ type: Boolean })
     showCards: boolean = false;
 
+    @property({ type: Boolean })
+    isActor: boolean = false;
+
+    @property({ type: Boolean })
+    isAllIn: boolean = false;
+
     @property({ type: Number })
     currentBet: number = 0;
+
+    @property({ type: Number })
+    stack: number = 0;
 
     /**
      * Render a single card (or card back)
@@ -79,6 +88,8 @@ export class ReplayPlayer extends MobxLitElement {
             this.isFolded ? "folded" : "",
             this.isWinner ? "winner" : "",
             this.isHero ? "hero" : "",
+            this.isActor ? "active-actor" : "",
+            this.isAllIn ? "all-in" : "",
         ]
             .filter(Boolean)
             .join(" ");
@@ -96,8 +107,12 @@ export class ReplayPlayer extends MobxLitElement {
                         ${this.renderCard(this.holeCards[0])}
                         ${this.renderCard(this.holeCards[1])}
                     </div>
+                    <div class="stack-label">Stack: $${this.stack}</div>
                     ${this.isFolded
                         ? html`<div class="folded-label">Folded</div>`
+                        : null}
+                    ${this.isAllIn
+                        ? html`<div class="all-in-label">All-in</div>`
                         : null}
                     ${this.currentBet > 0
                         ? html`<div class="current-bet">

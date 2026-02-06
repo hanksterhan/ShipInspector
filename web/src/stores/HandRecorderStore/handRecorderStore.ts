@@ -405,7 +405,7 @@ export class HandRecorderStore {
 
         const envelope: DraftEnvelope = {
             savedAt: Date.now(),
-            draft: snapshot,
+            draft: JSON.parse(JSON.stringify(snapshot)),
         };
         await set(DRAFT_KEY, envelope);
         this.isDraft = true;
