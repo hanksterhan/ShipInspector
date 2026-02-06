@@ -1,6 +1,6 @@
 import { action, makeObservable, observable, reaction } from "mobx";
 import { CalculateOutsResponse } from "@common/interfaces";
-import { pokerBoardStore } from "../index";
+import { PokerBoardStore } from "../PokerBoardStore";
 import { pokerService } from "../../services/index";
 import { holeToString, boardToString } from "../../components/utilities";
 
@@ -20,20 +20,19 @@ export class OutsStore {
     private currentAbortController: AbortController | null = null;
     private reactionDisposer: (() => void) | null = null;
 
-    constructor() {
+    private readonly pokerBoardStore: PokerBoardStore;
+
+    constructor(pokerBoardStore: PokerBoardStore) {
+        this.pokerBoardStore = pokerBoardStore;
         makeObservable(this);
 
         // Watch for card changes - only calculate when we have exactly 4 board cards (turn)
         this.reactionDisposer = reaction(
             () => {
-                // Guard against pokerBoardStore being undefined during initialization
-                if (!pokerBoardStore) {
-                    return [0, [], 0, []];
-                }
                 // Access observable properties directly so MobX can track them
-                const players = pokerBoardStore.players;
-                const activePlayers = pokerBoardStore.activePlayers;
-                const board = pokerBoardStore.board;
+                const players = this.pokerBoardStore.players;
+                const activePlayers = this.pokerBoardStore.activePlayers;
+                const board = this.pokerBoardStore.board;
 
                 // Iterate over activePlayers Set to ensure MobX tracks it
                 // Access Set.size to ensure MobX tracks Set changes
@@ -59,14 +58,10 @@ export class OutsStore {
                 return `${activePlayersSize}|${playerKeys}|${boardKey}`;
             },
             () => {
-                // Guard against pokerBoardStore being undefined
-                if (!pokerBoardStore) {
-                    return;
-                }
                 // Check if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards (turn)
                 const activePlayersWithHands =
-                    pokerBoardStore.getActivePlayersWithCompleteHands();
-                const boardCards = pokerBoardStore.getBoardCards();
+                    this.pokerBoardStore.getActivePlayersWithCompleteHands();
+                const boardCards = this.pokerBoardStore.getBoardCards();
 
                 console.log("[OutsStore] Reaction fired:", {
                     activePlayersCount: activePlayersWithHands.length,
@@ -136,11 +131,6 @@ export class OutsStore {
 
     @action
     async calculateOuts() {
-        // Guard against pokerBoardStore being undefined
-        if (!pokerBoardStore) {
-            return;
-        }
-
         // Cancel any in-flight requests
         if (this.currentAbortController) {
             this.currentAbortController.abort();
@@ -149,7 +139,7 @@ export class OutsStore {
 
         // Only calculate if we have exactly 2 active players with complete hole cards (both cards present) and exactly 4 board cards
         const activePlayersWithHands =
-            pokerBoardStore.getActivePlayersWithCompleteHands();
+            this.pokerBoardStore.getActivePlayersWithCompleteHands();
 
         if (activePlayersWithHands.length !== 2) {
             this.outsResult = null;
@@ -159,7 +149,7 @@ export class OutsStore {
             return;
         }
 
-        const boardCards = pokerBoardStore.getBoardCards();
+        const boardCards = this.pokerBoardStore.getBoardCards();
         if (boardCards.length !== 4) {
             this.outsResult = null;
             this.isLoading = false;
