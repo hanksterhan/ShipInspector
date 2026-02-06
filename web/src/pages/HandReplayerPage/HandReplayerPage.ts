@@ -9,7 +9,7 @@ import "../../components/HandRecorder";
 
 import { handReplayStore, routerStore } from "../../stores";
 import { tableIcon } from "../../assets";
-import { Card } from "@common/interfaces";
+import { Card, HandActionRecord } from "@common/interfaces";
 
 /**
  * HandReplayerPage - Replay recorded poker hands
@@ -79,6 +79,28 @@ export class HandReplayerPage extends MobxLitElement {
         const amount = action.amount ? ` $${action.amount}` : "";
 
         return `${playerName}: ${actionType}${amount}`;
+    }
+
+    private formatActionItem(action: HandActionRecord): string {
+        const playerInfo = handReplayStore.playerInfoBySeat;
+        const playerName =
+            action.actor_seat !== null
+                ? playerInfo.get(action.actor_seat)?.name ||
+                  `Seat ${action.actor_seat}`
+                : "Dealer";
+
+        const actionType = action.action_type.replace(/_/g, " ");
+        const amount = action.amount ? ` $${action.amount}` : "";
+        const raiseTo =
+            !action.amount && action.raise_to != null
+                ? ` to $${action.raise_to}`
+                : "";
+
+        return `${playerName}: ${actionType}${raiseTo}${amount}`;
+    }
+
+    private formatStreetLabel(street: string): string {
+        return street.toUpperCase();
     }
 
     render() {
@@ -154,6 +176,11 @@ export class HandReplayerPage extends MobxLitElement {
 
         // Show error state
         if (loadStatus === "error") {
+            const friendlyMessage =
+                loadError?.toLowerCase().includes("not found") ||
+                loadError?.toLowerCase().includes("invalid")
+                    ? "Hand not found."
+                    : "Failed to load hand.";
             return html`
                 <div class="page-wrapper">
                     <div class="page-container">
@@ -162,7 +189,12 @@ export class HandReplayerPage extends MobxLitElement {
                         </div>
                         <div class="page-content">
                             <div class="error-content">
-                                <p>Error loading hand: ${loadError}</p>
+                                <p>${friendlyMessage}</p>
+                                ${loadError
+                                    ? html`<p class="error-detail">
+                                          ${loadError}
+                                      </p>`
+                                    : null}
                                 <sp-button
                                     @click=${() =>
                                         routerStore.navigate("/hand-library")}
@@ -199,6 +231,17 @@ export class HandReplayerPage extends MobxLitElement {
         const currentStreet = handReplayStore.currentStreet;
         const isComplete = handReplayStore.isComplete;
         const winnerSeats = handReplayStore.winnerSeats;
+        const playerStates = handReplayStore.playerStateBySeat;
+        const currentActionIndex = handReplayStore.currentActionIndex;
+        const totalActions = handReplayStore.totalActions;
+        const currentAction = handReplayStore.currentAction;
+        const currentActorName =
+            currentAction?.actor_seat != null
+                ? handReplayStore.playerInfoBySeat.get(currentAction.actor_seat)
+                      ?.name || `Seat ${currentAction.actor_seat}`
+                : currentAction
+                  ? "Dealer"
+                  : "Hand start";
 
         return html`
             <div class="page-wrapper">
@@ -215,72 +258,152 @@ export class HandReplayerPage extends MobxLitElement {
                     </div>
 
                     <div class="page-content">
-                        <!-- Poker Table -->
-                        <div class="table-container">
-                            <div class="table-svg-container">
-                                <div class="table-svg-background">
-                                    ${tableIcon}
-                                </div>
-                                <div class="table-content-overlay">
-                                    <!-- Players -->
-                                    ${players.map((player) => {
-                                        const pos = this.getPlayerPosition(
-                                            player.seat_index,
-                                            tableSize
-                                        );
-                                        const holeCards =
-                                            visibleCards.holeCardsBySeat.get(
-                                                player.seat_index
-                                            ) || [null, null];
-                                        const isFolded = !activePlayers.has(
-                                            player.seat_index
-                                        );
-                                        const showCards =
-                                            isComplete && !isFolded;
-                                        const isWinner = winnerSeats.has(
-                                            player.seat_index
-                                        );
+                        <div class="replay-content">
+                            <!-- Poker Table -->
+                            <div class="replay-table">
+                                <div class="table-container">
+                                    <div class="table-svg-container">
+                                        <div class="table-svg-background">
+                                            ${tableIcon}
+                                        </div>
+                                        <div class="table-content-overlay">
+                                            <!-- Players -->
+                                            ${players.map((player) => {
+                                                const pos =
+                                                    this.getPlayerPosition(
+                                                        player.seat_index,
+                                                        tableSize
+                                                    );
+                                                const holeCards =
+                                                    visibleCards.holeCardsBySeat.get(
+                                                        player.seat_index
+                                                    ) || [null, null];
+                                                const isFolded =
+                                                    !activePlayers.has(
+                                                        player.seat_index
+                                                    );
+                                                const showCards =
+                                                    isComplete && !isFolded;
+                                                const isWinner =
+                                                    winnerSeats.has(
+                                                        player.seat_index
+                                                    );
+                                                const playerState =
+                                                    playerStates.get(
+                                                        player.seat_index
+                                                    );
+                                                const currentBet =
+                                                    playerState?.streetBet ?? 0;
+                                                const stack =
+                                                    playerState?.stack ??
+                                                    player.stack_at_start;
+                                                const isAllIn =
+                                                    playerState?.isAllIn ??
+                                                    false;
+                                                const isActor =
+                                                    currentAction?.actor_seat ===
+                                                    player.seat_index;
 
-                                        return html`
-                                            <div
-                                                class="player-position"
-                                                style="top: ${pos.top}; left: ${pos.left}; transform: ${pos.transform};"
-                                            >
-                                                <replay-player
-                                                    .playerName=${player.display_name}
-                                                    .seatIndex=${player.seat_index}
-                                                    .holeCards=${holeCards as [
-                                                        Card | null,
-                                                        Card | null,
-                                                    ]}
-                                                    .isFolded=${isFolded}
-                                                    .isHero=${player.is_hero}
-                                                    .showCards=${showCards}
-                                                    .isWinner=${isWinner}
-                                                ></replay-player>
+                                                return html`
+                                                    <div
+                                                        class="player-position"
+                                                        style="top: ${pos.top}; left: ${pos.left}; transform: ${pos.transform};"
+                                                    >
+                                                        <replay-player
+                                                            .playerName=${player.display_name}
+                                                            .seatIndex=${player.seat_index}
+                                                            .holeCards=${holeCards as [
+                                                                Card | null,
+                                                                Card | null,
+                                                            ]}
+                                                            .isFolded=${isFolded}
+                                                            .isHero=${player.is_hero}
+                                                            .showCards=${showCards}
+                                                            .isWinner=${isWinner}
+                                                            .isActor=${isActor}
+                                                            .isAllIn=${isAllIn}
+                                                            .currentBet=${currentBet}
+                                                            .stack=${stack}
+                                                        ></replay-player>
+                                                    </div>
+                                                `;
+                                            })}
+
+                                            <!-- Board Cards -->
+                                            <div class="board-cards-wrapper">
+                                                <replay-board-cards
+                                                    .boardCards=${visibleCards.board}
+                                                ></replay-board-cards>
                                             </div>
-                                        `;
-                                    })}
-
-                                    <!-- Board Cards -->
-                                    <div class="board-cards-wrapper">
-                                        <replay-board-cards
-                                            .boardCards=${visibleCards.board}
-                                        ></replay-board-cards>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Current Action Display -->
-                        <div class="action-display">
-                            <span class="action-text"
-                                >${this.formatCurrentAction()}</span
-                            >
-                        </div>
+                            <div class="replay-sidebar">
+                                <div class="step-counter">
+                                    <div class="step-title">
+                                        Action
+                                        ${Math.max(0, currentActionIndex + 1)}
+                                        of ${totalActions}
+                                    </div>
+                                    <div class="step-details">
+                                        <span
+                                            >${this.formatStreetLabel(
+                                                currentStreet
+                                            )}</span
+                                        >
+                                        <span>•</span>
+                                        <span>${currentActorName}</span>
+                                    </div>
+                                </div>
 
-                        <!-- Replay Controls -->
-                        <replay-controls></replay-controls>
+                                <!-- Current Action Display -->
+                                <div class="action-display">
+                                    <span class="action-text"
+                                        >${this.formatCurrentAction()}</span
+                                    >
+                                </div>
+
+                                <!-- Replay Controls -->
+                                <replay-controls></replay-controls>
+
+                                <!-- Action Timeline -->
+                                <div class="action-timeline">
+                                    ${hand.actions.map((action, index) => {
+                                        const showStreetHeader =
+                                            index === 0 ||
+                                            action.street !==
+                                                hand.actions[index - 1].street;
+                                        return html`
+                                            ${showStreetHeader
+                                                ? html`
+                                                      <div
+                                                          class="street-header"
+                                                      >
+                                                          ${this.formatStreetLabel(
+                                                              action.street
+                                                          )}
+                                                      </div>
+                                                  `
+                                                : null}
+                                            <div
+                                                class="action-item ${index ===
+                                                currentActionIndex
+                                                    ? "active"
+                                                    : ""}"
+                                                @click=${() =>
+                                                    handReplayStore.setActionIndex(
+                                                        index
+                                                    )}
+                                            >
+                                                ${this.formatActionItem(action)}
+                                            </div>
+                                        `;
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

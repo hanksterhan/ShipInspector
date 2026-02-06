@@ -26,6 +26,11 @@ export const styles = css`
         border: 2px solid var(--spectrum-global-color-blue-500);
     }
 
+    .player-wrapper.active-actor {
+        border: 2px solid var(--spectrum-global-color-yellow-400);
+        box-shadow: 0 0 0 3px rgba(255, 214, 10, 0.35);
+    }
+
     .player-wrapper.winner {
         background: rgba(76, 175, 80, 1);
         border: 3px solid rgba(56, 142, 60, 1);
@@ -69,6 +74,17 @@ export const styles = css`
     .hero-badge {
         color: var(--spectrum-global-color-blue-500);
         font-size: 14px;
+    }
+
+    .stack-label {
+        font-size: var(--spectrum-global-dimension-font-size-100);
+        color: var(--spectrum-global-color-gray-700);
+    }
+
+    .all-in-label {
+        font-size: var(--spectrum-global-dimension-font-size-100);
+        color: var(--spectrum-global-color-red-600);
+        font-weight: var(--spectrum-global-font-weight-bold);
     }
 
     .player-cards {

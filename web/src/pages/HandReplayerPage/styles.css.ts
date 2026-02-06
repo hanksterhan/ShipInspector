@@ -80,6 +80,91 @@ export const styles = css`
         gap: 16px;
     }
 
+    .replay-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .replay-table {
+        min-width: 0;
+    }
+
+    .replay-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .step-counter {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px;
+        background: #f7f7f7;
+        border-radius: 8px;
+    }
+
+    .step-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--spectrum-global-color-gray-800);
+    }
+
+    .step-details {
+        display: flex;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--spectrum-global-color-gray-600);
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .action-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fafafa;
+    }
+
+    .street-header {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--spectrum-global-color-gray-700);
+        padding: 8px 6px 4px;
+        border-bottom: 1px solid #e0e0e0;
+        margin-top: 6px;
+    }
+
+    .action-item {
+        font-size: 14px;
+        color: var(--spectrum-global-color-gray-700);
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .action-item:hover {
+        background: #eeeeee;
+    }
+
+    .action-item.active {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--spectrum-global-color-blue-700);
+        font-weight: 600;
+    }
+
     .placeholder-content,
     .loading-content,
     .error-content {
@@ -100,6 +185,11 @@ export const styles = css`
         font-size: 18px;
         color: #4a4a4a;
         text-align: center;
+    }
+
+    .error-detail {
+        font-size: 14px;
+        color: #777;
     }
 
     .placeholder-content a {
@@ -181,6 +271,10 @@ export const styles = css`
         .table-container {
             min-height: 300px;
         }
+
+        .replay-content {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 600px) {
@@ -195,6 +289,10 @@ export const styles = css`
 
         .table-container {
             min-height: 250px;
+        }
+
+        .replay-sidebar {
+            padding: 12px;
         }
     }
 `;

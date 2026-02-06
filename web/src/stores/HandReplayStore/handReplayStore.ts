@@ -36,6 +36,90 @@ export class HandReplayStore {
     }
 
     @computed
+    get playerStateBySeat(): Map<
+        number,
+        { stack: number; streetBet: number; isAllIn: boolean }
+    > {
+        const state = new Map<
+            number,
+            { stack: number; streetBet: number; isAllIn: boolean }
+        >();
+        if (!this.hand) return state;
+
+        const stackBySeat = new Map<number, number>();
+        const streetBetBySeat = new Map<number, number>();
+        for (const p of this.hand.players) {
+            stackBySeat.set(p.seat_index, p.stack_at_start);
+            streetBetBySeat.set(p.seat_index, 0);
+        }
+
+        const contributionActions = new Set([
+            "POST_SB",
+            "POST_BB",
+            "POST_ANTE",
+            "STRADDLE",
+            "CALL",
+            "BET",
+            "RAISE",
+            "ALL_IN",
+        ]);
+
+        let currentStreet: Street | null = null;
+        const actionsToApply = this.hand.actions.slice(
+            0,
+            this.currentActionIndex + 1
+        );
+        for (const action of actionsToApply) {
+            if (currentStreet !== action.street) {
+                currentStreet = action.street;
+                streetBetBySeat.clear();
+                for (const p of this.hand.players) {
+                    streetBetBySeat.set(p.seat_index, 0);
+                }
+            }
+
+            if (action.actor_seat == null) continue;
+            const seat = action.actor_seat;
+
+            if (action.action_type === "COLLECT") {
+                if (action.amount != null) {
+                    const existingStack = stackBySeat.get(seat) ?? 0;
+                    stackBySeat.set(seat, existingStack + action.amount);
+                }
+                continue;
+            }
+
+            if (!contributionActions.has(action.action_type)) continue;
+
+            const currentStreetBet = streetBetBySeat.get(seat) ?? 0;
+            let delta = 0;
+            if (action.amount != null) {
+                delta = action.amount;
+            } else if (action.raise_to != null) {
+                delta = Math.max(0, action.raise_to - currentStreetBet);
+            }
+
+            if (delta > 0) {
+                const existingStack = stackBySeat.get(seat) ?? 0;
+                stackBySeat.set(seat, Math.max(0, existingStack - delta));
+                streetBetBySeat.set(seat, currentStreetBet + delta);
+            }
+        }
+
+        for (const p of this.hand.players) {
+            const stack = stackBySeat.get(p.seat_index) ?? p.stack_at_start;
+            const streetBet = streetBetBySeat.get(p.seat_index) ?? 0;
+            state.set(p.seat_index, {
+                stack,
+                streetBet,
+                isAllIn: stack <= 0,
+            });
+        }
+
+        return state;
+    }
+
+    @computed
     get currentStreet(): Street {
         if (!this.hand || this.hand.actions.length === 0) {
             return "preflop";
@@ -61,6 +145,7 @@ export class HandReplayStore {
 
         const { hand: handRecord, players, actions } = this.hand;
         const actionsToApply = actions.slice(0, this.currentActionIndex + 1);
+        const revealedSeats = new Set<number>();
 
         let flopDealt = false;
         let turnDealt = false;
@@ -70,6 +155,9 @@ export class HandReplayStore {
             if (a.action_type === "DEAL_FLOP") flopDealt = true;
             if (a.action_type === "DEAL_TURN") turnDealt = true;
             if (a.action_type === "DEAL_RIVER") riverDealt = true;
+            if (a.action_type === "REVEAL" && a.actor_seat != null) {
+                revealedSeats.add(a.actor_seat);
+            }
         }
 
         if (
@@ -95,7 +183,7 @@ export class HandReplayStore {
         for (const p of players) {
             const seat = p.seat_index;
             if (
-                isComplete &&
+                (isComplete || revealedSeats.has(seat)) &&
                 p.showdown_card_1 != null &&
                 p.showdown_card_2 != null
             ) {
