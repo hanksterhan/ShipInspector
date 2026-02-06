@@ -48,6 +48,7 @@ export class EquityCalculatorPage extends MobxLitElement {
                     </div>
                     <div class="page-content">
                         <poker-table></poker-table>
+                        <card-picker-modal></card-picker-modal>
                         <!-- Outs Display below the board - only show when necessary -->
                         ${showOuts
                             ? html`

@@ -17,7 +17,7 @@ export class CardPickerModal extends MobxLitElement {
     }
 
     @property({ type: Boolean })
-    isOpen: boolean = false;
+    isOpen?: boolean;
 
     @property({ attribute: false })
     selectionTarget?: CardSelectionTarget;
