@@ -29,7 +29,7 @@ export const routerStore = new RouterStore();
 export * from "./PokerBoardStore";
 export const pokerBoardStore = new PokerBoardStore();
 export * from "./OutsStore";
-export const outsStore = new OutsStore();
+export const outsStore = new OutsStore(pokerBoardStore);
 export * from "./HandRecorderStore";
 export const handRecorderStore = new HandRecorderStore();
 export * from "./HandLibraryStore";
