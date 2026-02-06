@@ -178,7 +178,15 @@ export class HandLibrary extends MobxLitElement {
         routerStore.navigateToReplay(handId);
     }
 
-    private handleDelete(handId: string) {
+    private handleReplayKeydown(handId: string, event: KeyboardEvent) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            this.handleReplay(handId);
+        }
+    }
+
+    private handleDelete(handId: string, event?: Event) {
+        event?.stopPropagation();
         void handLibraryStore.deleteHand(handId);
     }
 
@@ -301,6 +309,11 @@ export class HandLibrary extends MobxLitElement {
         return html`
             <div
                 class="hand-item ${isSwiped ? "swiped" : ""}"
+                role="button"
+                tabindex="0"
+                @click=${() => this.handleReplay(hand.id)}
+                @keydown=${(e: KeyboardEvent) =>
+                    this.handleReplayKeydown(hand.id, e)}
                 @touchstart=${(event: TouchEvent) =>
                     this.handleTouchStart(hand.id, event)}
                 @touchmove=${(event: TouchEvent) =>
@@ -327,7 +340,10 @@ export class HandLibrary extends MobxLitElement {
                         <div class="value muted">Pending</div>
                     </div>
                 </div>
-                <div class="hand-actions">
+                <div
+                    class="hand-actions"
+                    @click=${(e: Event) => e.stopPropagation()}
+                >
                     <sp-action-button
                         class="replay-button"
                         @click=${() => this.handleReplay(hand.id)}
@@ -336,7 +352,7 @@ export class HandLibrary extends MobxLitElement {
                     </sp-action-button>
                     <sp-action-button
                         class="delete-button"
-                        @click=${() => this.handleDelete(hand.id)}
+                        @click=${(e: Event) => this.handleDelete(hand.id, e)}
                     >
                         Delete
                     </sp-action-button>

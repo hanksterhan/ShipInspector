@@ -93,13 +93,16 @@ export const styles = css`
         align-items: center;
         gap: 16px;
         padding: 12px 16px;
+        min-height: 48px;
         border-radius: 10px;
         border: 1px solid #e5e7eb;
         margin-bottom: 8px;
         background: #ffffff;
+        cursor: pointer;
         transition:
             box-shadow 0.2s ease,
-            transform 0.2s ease;
+            transform 0.2s ease,
+            background-color 0.2s ease;
     }
 
     .hand-item:last-child {
@@ -109,6 +112,12 @@ export const styles = css`
     .hand-item:hover {
         box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
         transform: translateY(-1px);
+        background-color: #f8fafc;
+    }
+
+    .hand-item:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
     }
 
     .hand-details {
