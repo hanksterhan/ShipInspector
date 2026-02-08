@@ -17,7 +17,7 @@ export const deleteHandler = createHandler(
             return;
         }
 
-        const sql = (await import("../../../../server/src/config/database")).default;
+        const sql = (await import("@lib/database")).default;
         const now = Date.now();
 
         const rows = await sql`

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.log
+wasm-equity/target/
+wasm-equity/pkg/

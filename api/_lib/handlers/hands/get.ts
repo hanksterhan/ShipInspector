@@ -27,7 +27,7 @@ export const getHandler = createHandler(
         }
 
         // Use server's Neon client
-        const sql = (await import("../../../../server/src/config/database")).default;
+        const sql = (await import("@lib/database")).default;
 
         // Execute 3 parallel queries
         const [handRows, playerRows, actionRows] = await Promise.all([
