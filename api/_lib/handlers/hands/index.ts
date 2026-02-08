@@ -102,7 +102,7 @@ const createHandler_POST = createHandler(
         const now = Date.now();
 
         // Use server's Neon client for transactional insert
-        const sql = (await import("../../../../server/src/config/database")).default;
+        const sql = (await import("@lib/database")).default;
 
         const hand = body.hand;
         // Constrain button_seat < table_size

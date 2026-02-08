@@ -80,7 +80,7 @@ export const listHandler = createHandler(
         }
 
         // Use server's Neon client
-        const sql = (await import("../../../../server/src/config/database")).default;
+        const sql = (await import("@lib/database")).default;
 
         // Build dynamic query with conditions
         let query = sql`
