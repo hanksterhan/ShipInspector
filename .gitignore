@@ -8,6 +8,11 @@ server/src/data/
 otel-collector-logs/
 .claude/
 
+# Playwright E2E testing
+test-results/
+playwright-report/
+.playwright/
+
 # TypeScript build artifacts
 *.tsbuildinfo
 

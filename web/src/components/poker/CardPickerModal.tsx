@@ -32,11 +32,14 @@ function CardButton({
   const rankData = RANKS.find((r) => r.rank === rank);
   const Icon = suitData.Icon;
 
+  const label = `${rankData?.label ?? rank} of ${suitData.label}`;
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
+      aria-label={label}
       className={cn(
         "flex flex-col items-center justify-center rounded-md border border-border p-1 transition-colors",
         "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",

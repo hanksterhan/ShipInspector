@@ -6,8 +6,8 @@ export function EquityDisplay() {
 
   if (equityState.status === "loading") {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
+      <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         <span>Calculating equity...</span>
       </div>
     );
@@ -15,7 +15,7 @@ export function EquityDisplay() {
 
   if (equityState.status === "error") {
     return (
-      <div className="text-sm text-destructive">
+      <div role="alert" className="text-sm text-destructive">
         {equityState.error || "Equity calculation failed"}
       </div>
     );
