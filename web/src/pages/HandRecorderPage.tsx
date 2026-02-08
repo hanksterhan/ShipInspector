@@ -124,7 +124,7 @@ export default function HandRecorderPage() {
           message: "Please fix validation errors before saving.",
         });
       }
-    } catch (error) {
+    } catch {
       showToast({ type: "error", message: "Failed to save hand." });
     } finally {
       setIsSaving(false);
