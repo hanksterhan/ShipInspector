@@ -21,14 +21,6 @@ server/node_modules/
 # Development configs
 nodemon.json
 
-# Docker files
-docker-compose.yml
-clickhouse-init/
-grafana/
-prometheus.yml
-otel-collector-config.yaml
-otel-collector-logs/
-
 # Environment files (will be set in Vercel dashboard)
 .env
 .env.*

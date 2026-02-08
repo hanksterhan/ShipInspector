@@ -5,7 +5,6 @@ web/.env
 admin/.env
 server/src/data/
 .DS_Store
-otel-collector-logs/
 .claude/
 
 # Playwright E2E testing
