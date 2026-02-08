@@ -1,5 +1,5 @@
 import { VercelRequest } from "@vercel/node";
-import { sanitizeObject } from "../../../server/src/middlewares/sanitize";
+import { sanitizeObject } from "../../../lib/src/utils/sanitize";
 
 const PATHS_TO_SKIP = [
     "/favicon.ico",
