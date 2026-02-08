@@ -135,6 +135,8 @@ export default function HandRecorderPage() {
     <div className="relative flex flex-col gap-4 p-4">
       {toast ? (
         <div
+          role="alert"
+          aria-live="assertive"
           className={`fixed right-6 top-6 z-50 rounded-lg border px-4 py-2 text-sm shadow-lg ${
             toast.type === "success"
               ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600"

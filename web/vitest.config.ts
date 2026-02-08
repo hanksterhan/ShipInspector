@@ -9,6 +9,19 @@ export default defineConfig({
     globals: true,
     setupFiles: "./src/test/setup.ts",
     css: true,
+    exclude: ["e2e/**", "node_modules/**"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "text-summary", "lcov"],
+      include: ["src/stores/**", "src/lib/**", "src/services/**", "src/hooks/**"],
+      exclude: ["src/**/*.test.*", "src/test/**"],
+      thresholds: {
+        statements: 80,
+        branches: 75,
+        functions: 80,
+        lines: 80,
+      },
+    },
   },
   resolve: {
     alias: {

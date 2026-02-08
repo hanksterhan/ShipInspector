@@ -51,7 +51,7 @@ export default function HandReplayerPage() {
 
   if (loadStatus === "error" || loadError) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 p-8">
+      <div role="alert" className="flex flex-col items-center justify-center gap-4 p-8">
         <h1 className="text-2xl font-bold">Error loading hand</h1>
         <p className="text-destructive">{loadError ?? "Unknown error"}</p>
         <Button variant="outline" asChild>

@@ -33,7 +33,7 @@ export default function AppLayout() {
         <h2 className="mb-4 truncate text-center text-sm font-semibold text-sidebar-foreground md:hidden">
           SI
         </h2>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

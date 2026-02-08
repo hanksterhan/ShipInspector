@@ -42,15 +42,15 @@ function OutCard({
 export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" />
+      <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         <span>Calculating outs...</span>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-sm text-destructive">{error}</div>;
+    return <div role="alert" className="text-sm text-destructive">{error}</div>;
   }
 
   if (!data) return null;

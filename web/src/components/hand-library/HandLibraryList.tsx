@@ -81,7 +81,7 @@ function BoardPreview({ cards }: { cards: Array<string | null> }) {
 
 function HandLibrarySkeleton() {
   return (
-    <div className="space-y-3">
+    <div role="status" aria-label="Loading hands" className="space-y-3">
       <div className="h-8 w-48 rounded bg-muted/40" />
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, index) => (
@@ -117,7 +117,7 @@ export function HandLibraryList() {
 
   if (error && hands.length === 0) {
     return (
-      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+      <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
         <div className="text-sm text-destructive">{error}</div>
         <Button
           variant="outline"
@@ -134,7 +134,7 @@ export function HandLibraryList() {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {error}
         </div>
       )}
