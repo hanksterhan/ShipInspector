@@ -8,6 +8,9 @@ server/src/data/
 otel-collector-logs/
 .claude/
 
+# TypeScript build artifacts
+*.tsbuildinfo
+
 # Rust build artifacts
 **/target/
 **/*.rs.bk
