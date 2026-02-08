@@ -189,15 +189,54 @@ export function selectVisibleCards(state: HandReplayState): VisibleCardsState {
 export function selectCurrentPot(state: HandReplayState): number {
   if (!state.hand) return 0;
   let pot = 0;
+  const contributionActions = new Set([
+    "POST_SB",
+    "POST_BB",
+    "POST_ANTE",
+    "STRADDLE",
+    "CALL",
+    "BET",
+    "RAISE",
+    "ALL_IN",
+  ]);
   const actionsToApply = state.hand.actions.slice(
     0,
     state.currentActionIndex + 1,
   );
+  const streetBetBySeat = new Map<number, number>();
+  let currentStreet: Street | null = null;
+
+  for (const p of state.hand.players) {
+    streetBetBySeat.set(p.seat_index, 0);
+  }
+
   for (const a of actionsToApply) {
-    if (a.amount != null && a.amount > 0) {
-      pot += a.amount;
+    if (currentStreet !== a.street) {
+      currentStreet = a.street;
+      streetBetBySeat.clear();
+      for (const p of state.hand.players) {
+        streetBetBySeat.set(p.seat_index, 0);
+      }
+    }
+
+    if (!contributionActions.has(a.action_type)) continue;
+    if (a.actor_seat == null) continue;
+
+    const seat = a.actor_seat;
+    const currentStreetBet = streetBetBySeat.get(seat) ?? 0;
+    let delta = 0;
+    if (a.amount != null) {
+      delta = a.amount;
+    } else if (a.raise_to != null) {
+      delta = Math.max(0, a.raise_to - currentStreetBet);
+    }
+
+    if (delta > 0) {
+      pot += delta;
+      streetBetBySeat.set(seat, currentStreetBet + delta);
     }
   }
+
   return pot;
 }
 

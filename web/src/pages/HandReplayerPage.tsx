@@ -12,12 +12,16 @@ export default function HandReplayerPage() {
   const loadStatus = useHandReplayStore((s) => s.loadStatus);
   const loadError = useHandReplayStore((s) => s.loadError);
   const loadHand = useHandReplayStore((s) => s.loadHand);
+  const dispose = useHandReplayStore((s) => s.dispose);
 
   useEffect(() => {
     if (handId) {
       loadHand(handId);
     }
-  }, [handId, loadHand]);
+    return () => {
+      dispose();
+    };
+  }, [handId, loadHand, dispose]);
 
   if (!handId) {
     return (
