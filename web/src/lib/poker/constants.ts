@@ -12,6 +12,7 @@ export interface SuitData {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
   color: string;
+  isDark: boolean;
 }
 
 export interface RankData {
@@ -20,10 +21,22 @@ export interface RankData {
 }
 
 export const SUITS: SuitData[] = [
-  { suit: "c", Icon: ClubsIcon, label: "Clubs", color: "#171717" },
-  { suit: "d", Icon: DiamondsIcon, label: "Diamonds", color: "#ef4444" },
-  { suit: "h", Icon: HeartsIcon, label: "Hearts", color: "#ef4444" },
-  { suit: "s", Icon: SpadesIcon, label: "Spades", color: "#171717" },
+  { suit: "c", Icon: ClubsIcon, label: "Clubs", color: "#4b5563", isDark: true },
+  {
+    suit: "d",
+    Icon: DiamondsIcon,
+    label: "Diamonds",
+    color: "#ef4444",
+    isDark: false,
+  },
+  {
+    suit: "h",
+    Icon: HeartsIcon,
+    label: "Hearts",
+    color: "#ef4444",
+    isDark: false,
+  },
+  { suit: "s", Icon: SpadesIcon, label: "Spades", color: "#4b5563", isDark: true },
 ];
 
 export const RANKS: RankData[] = [

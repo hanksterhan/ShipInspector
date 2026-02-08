@@ -41,6 +41,7 @@ function CardButton({
         "flex flex-col items-center justify-center rounded-md border border-border p-1 transition-colors",
         "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         "min-w-[2.25rem] min-h-[2.75rem]",
+        suitData.isDark && "card-suit-dark",
         disabled && "opacity-25 pointer-events-none",
       )}
       style={{ color: suitData.color }}
@@ -92,7 +93,10 @@ function SuitRankGrid({
       {SUITS.map((suitData) => (
         <div key={suitData.suit}>
           <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <suitData.Icon className="size-3" style={{ color: suitData.color }} />
+            <suitData.Icon
+              className={cn("size-3", suitData.isDark && "card-suit-dark")}
+              style={{ color: suitData.color }}
+            />
             <span>{suitData.label}</span>
           </div>
           <div className="flex flex-wrap gap-1">
