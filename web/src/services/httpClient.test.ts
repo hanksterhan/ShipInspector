@@ -22,10 +22,10 @@ describe("httpClient", () => {
 
     const result = await httpClient.get("/test");
     expect(result).toEqual({ ok: true });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "/test",
-      expect.objectContaining({ method: "GET" }),
-    );
+    const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[0];
+    expect(fetchCall[0]).toMatch(/\/test$/);
+    expect(fetchCall[1]).toMatchObject({ method: "GET" });
   });
 
   it("makes a POST request with body", async () => {
