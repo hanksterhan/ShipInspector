@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Skip E2E tests unless CLERK_TESTING_TOKEN is set or running in CI
+// This prevents 401 errors when running without authentication
+const skipProject = !process.env.CLERK_TESTING_TOKEN && !process.env.CI;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -16,6 +20,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      skip: skipProject,
     },
   ],
   webServer: {
