@@ -2,37 +2,30 @@
 
 End-to-end tests for ShipInspector using Playwright. All tests require authentication via Clerk since they exercise protected routes.
 
-## Running Tests Locally
+## How Authentication Works
 
-### UI Mode (Recommended)
+Tests authenticate automatically using Clerk's Backend API:
 
-```bash
-# Start dev server
-npm run dev
+1. The **setup project** (`auth.setup.ts`) runs before all tests
+2. It creates a sign-in token for the test user via Clerk's Backend API (`CLERK_SECRET_KEY`)
+3. It signs in through the app's Clerk frontend SDK using the ticket strategy
+4. It saves the browser storage state (cookies, localStorage) to `e2e/.auth/storage-state.json`
+5. All test projects load this storage state, so Clerk recognizes the session
 
-# In another terminal, open Playwright Test UI
-npx playwright test --ui
+The test user is `playwright-test@sipoker.club` (ID: `user_39OwkE873fI5GYnqYefsQHBcI7v`).
 
-# Sign in via browser when prompted
-# Tests will execute with your authenticated session
-```
+## Prerequisites
 
-### Headless Mode with Stored Session
+`CLERK_SECRET_KEY` must be set in `web/.env`. Tests are skipped if it's not available.
 
-```bash
-# First time: establish your session
-npx playwright test --ui
-# Sign in and let tests run
-
-# Subsequent runs (if session persists):
-npx playwright test
-```
-
-### With Clerk Testing Token (CI/Automation)
+## Running Tests
 
 ```bash
-export CLERK_TESTING_TOKEN="your-testing-token"
-npx playwright test
+# Headless (runs auth setup automatically)
+npm run test:e2e
+
+# Interactive UI mode
+npm run test:e2e:ui
 ```
 
 ## Test Coverage
@@ -51,15 +44,4 @@ npx playwright show-report
 
 # Screenshots on failure
 open test-results/
-
-# Video recordings
-open playwright-report/
 ```
-
-## Important Notes
-
-- Tests navigate to protected routes and will see auth redirect without a valid session
-- Screenshots are auto-captured on failure for debugging
-- Use `--ui` mode for development and iteration
-- All 9 tests should pass with valid authentication
-

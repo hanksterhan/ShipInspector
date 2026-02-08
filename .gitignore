@@ -12,6 +12,7 @@ otel-collector-logs/
 test-results/
 playwright-report/
 .playwright/
+web/e2e/.auth/
 
 # TypeScript build artifacts
 *.tsbuildinfo
