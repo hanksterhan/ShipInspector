@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { handService } from "@/services";
 import { MemoryRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import AuthGuard from "./app/AuthGuard";
 import AppLayout from "./app/AppLayout";
@@ -20,6 +21,31 @@ vi.mock("@clerk/clerk-react", () => ({
   SignIn: () => <div>Clerk Sign In</div>,
   ClerkProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+
+// Mock handService (HandReplayerPage needs getHand; other pages may use listHands, etc.)
+vi.mock("@/services", () => ({
+  handService: {
+    getHand: vi.fn(),
+    listHands: vi.fn().mockResolvedValue({ hands: [], nextCursor: null }),
+    createHand: vi.fn(),
+    deleteHand: vi.fn(),
+  },
+  httpClient: {},
+  pokerService: {},
+  authService: {},
+}));
+
+// Mock hand-replayer components to avoid Radix/Zustand selector issues in routing tests
+vi.mock("@/components/hand-replayer", async () => {
+  const React = await import("react");
+  return {
+    ReplayPlayer: () => null,
+    ReplayBoardCards: () => null,
+    ReplayControls: () => null,
+    ReplayTable: ({ hand }: { hand: { hand: { id: string } } }) =>
+      React.createElement("div", { "data-testid": "replay-table" }, "Replay table for ", hand.hand.id),
+  };
+});
 
 function LegacyReplayRedirect() {
   const { handId } = useParams<{ handId: string }>();
@@ -70,22 +96,48 @@ describe("Routing (authenticated)", () => {
     expect(screen.getByRole("heading", { name: "Hand Library" })).toBeInTheDocument();
   });
 
-  it("renders HandReplayerPage with handId param", () => {
+  it("renders HandReplayerPage with handId param", async () => {
+    const mockHand = {
+      hand: {
+        id: "abc123",
+        owner_user_id: "u1",
+        table_size: 2,
+        button_seat: 0,
+        small_blind: 100,
+        big_blind: 200,
+        ante: 0,
+        board_flop_1: null,
+        board_flop_2: null,
+        board_flop_3: null,
+        board_turn: null,
+        board_river: null,
+        created_at: 0,
+        updated_at: null,
+        deleted_at: null,
+      },
+      players: [
+        { id: "p1", hand_id: "abc123", seat_index: 0, display_name: "P1", stack_at_start: 10000, is_hero: true, showdown_card_1: null, showdown_card_2: null, created_at: 0, updated_at: null, deleted_at: null },
+        { id: "p2", hand_id: "abc123", seat_index: 1, display_name: "P2", stack_at_start: 10000, is_hero: false, showdown_card_1: null, showdown_card_2: null, created_at: 0, updated_at: null, deleted_at: null },
+      ],
+      actions: [],
+    };
+    vi.mocked(handService.getHand).mockResolvedValue(mockHand);
+
     renderWithRouter(["/hands/replay/abc123"]);
-    expect(screen.getByText("Replaying hand: abc123")).toBeInTheDocument();
+    expect(await screen.findByTestId("replay-table")).toHaveTextContent("Replay table for abc123");
   });
 
   it("renders HandReplayerPage without handId", () => {
     renderWithRouter(["/hands/replay"]);
-    expect(screen.getByText("Select a hand to replay")).toBeInTheDocument();
+    expect(screen.getByText("Select a hand from the Hand Library to replay it.")).toBeInTheDocument();
   });
 
   it("renders AppLayout sidebar with nav links and sign out", () => {
     renderWithRouter(["/equity-calculator"]);
-    expect(screen.getByText("ShipInspector")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Equity Calculator" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Record Hand" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Hand Library" })).toBeInTheDocument();
+    expect(screen.getAllByText(/ShipInspector|SI/).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /Equity Calculator/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Record Hand/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Hand Library/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign Out" })).toBeInTheDocument();
   });
 
@@ -146,9 +198,35 @@ describe("Legacy redirects", () => {
     expect(screen.getByRole("heading", { name: "Hand Library" })).toBeInTheDocument();
   });
 
-  it("redirects /replay/:handId to /hands/replay/:handId", () => {
+  it("redirects /replay/:handId to /hands/replay/:handId", async () => {
+    const mockHand = {
+      hand: {
+        id: "xyz789",
+        owner_user_id: "u1",
+        table_size: 2,
+        button_seat: 0,
+        small_blind: 100,
+        big_blind: 200,
+        ante: 0,
+        board_flop_1: null,
+        board_flop_2: null,
+        board_flop_3: null,
+        board_turn: null,
+        board_river: null,
+        created_at: 0,
+        updated_at: null,
+        deleted_at: null,
+      },
+      players: [
+        { id: "p1", hand_id: "xyz789", seat_index: 0, display_name: "P1", stack_at_start: 10000, is_hero: true, showdown_card_1: null, showdown_card_2: null, created_at: 0, updated_at: null, deleted_at: null },
+        { id: "p2", hand_id: "xyz789", seat_index: 1, display_name: "P2", stack_at_start: 10000, is_hero: false, showdown_card_1: null, showdown_card_2: null, created_at: 0, updated_at: null, deleted_at: null },
+      ],
+      actions: [],
+    };
+    vi.mocked(handService.getHand).mockResolvedValue(mockHand);
+
     renderWithRouter(["/replay/xyz789"]);
-    expect(screen.getByText("Replaying hand: xyz789")).toBeInTheDocument();
+    expect(await screen.findByTestId("replay-table")).toHaveTextContent("Replay table for xyz789");
   });
 
   it("redirects unknown routes to /", () => {
