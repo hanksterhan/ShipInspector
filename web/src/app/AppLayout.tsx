@@ -1,16 +1,8 @@
 import { useClerk } from "@clerk/clerk-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSettingsStore } from "@/stores";
-import { useEquityCalculatorStore } from "@/stores/useEquityCalculatorStore";
-import { useHandRecorderStore } from "@/stores/useHandRecorderStore";
 import { PokerOptions } from "@/components/settings";
-import {
-  Percent,
-  Table2,
-  FolderOpen,
-  Settings,
-  RotateCcw,
-} from "@/assets/icons";
+import { Percent, Table2, FolderOpen, Settings } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,11 +21,6 @@ export default function AppLayout() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
-  };
-
-  const handleNewHand = () => {
-    useEquityCalculatorStore.getState().resetAll();
-    useHandRecorderStore.getState().resetAll();
   };
 
   return (
@@ -79,16 +66,6 @@ export default function AppLayout() {
       <div className="relative flex flex-1 flex-col">
         {/* Global actions bar (SI-71) */}
         <header className="flex shrink-0 items-center justify-end gap-2 border-b border-border bg-background px-4 py-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleNewHand}
-            className="gap-1"
-            aria-label="New hand"
-          >
-            <RotateCcw className="size-4" />
-            <span className="hidden sm:inline">New Hand</span>
-          </Button>
           <Button
             variant="ghost"
             size="sm"

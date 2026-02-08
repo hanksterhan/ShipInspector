@@ -97,7 +97,7 @@ function HandLibrarySkeleton() {
 
 export function HandLibraryList() {
   const navigate = useNavigate();
-  const hands = useHandLibraryStore((s) => s.hands);
+  const hands = useHandLibraryStore((s) => s.hands ?? []);
   const nextCursor = useHandLibraryStore((s) => s.nextCursor);
   const isLoading = useHandLibraryStore((s) => s.isLoading);
   const error = useHandLibraryStore((s) => s.error);

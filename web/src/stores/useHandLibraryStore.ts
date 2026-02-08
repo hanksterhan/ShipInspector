@@ -62,8 +62,9 @@ export const useHandLibraryStore = create<
         limit: DEFAULT_PAGE_SIZE,
         ...get().filters,
       });
+      const nextHands = Array.isArray(response.hands) ? response.hands : [];
       set({
-        hands: response.hands,
+        hands: nextHands,
         nextCursor: response.nextCursor,
         isLoading: false,
       });
@@ -86,8 +87,9 @@ export const useHandLibraryStore = create<
         cursor: nextCursor,
         ...get().filters,
       });
+      const nextHands = Array.isArray(response.hands) ? response.hands : [];
       set({
-        hands: [...previousHands, ...response.hands],
+        hands: [...previousHands, ...nextHands],
         nextCursor: response.nextCursor,
         isLoading: false,
       });
