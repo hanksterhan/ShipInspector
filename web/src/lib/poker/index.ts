@@ -18,3 +18,5 @@ export {
 
 export { nextScope } from "./scopeNavigation";
 export type { Scope } from "./scopeNavigation";
+
+export { formatActionDescription } from "./actionFormatting";
