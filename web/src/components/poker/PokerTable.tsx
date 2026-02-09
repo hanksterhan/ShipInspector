@@ -21,7 +21,7 @@ export function PokerTable() {
   const isPlayerActive = useEquityCalculatorStore((s) => s.isPlayerActive);
 
   return (
-    <div className="relative mx-auto aspect-[16/10] w-full max-w-[90vw] xl:max-w-[1200px] 2xl:max-w-[1400px]">
+    <div className="relative aspect-[16/10] h-full max-w-full">
       {/* Table background */}
       <div className="absolute inset-[8%] rounded-[50%] border-2 border-border bg-card shadow-inner" />
       <div className="absolute inset-[10%] rounded-[50%] border border-border/50 bg-muted/30" />

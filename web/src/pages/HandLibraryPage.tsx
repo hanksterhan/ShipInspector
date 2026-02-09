@@ -15,7 +15,7 @@ export default function HandLibraryPage() {
   }, [fetchHands, location.key]);
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex-1 overflow-auto flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold">Hand Library</h1>

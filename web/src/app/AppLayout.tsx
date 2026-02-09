@@ -20,6 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { PageHeaderProvider, usePageHeader } from "./PageHeaderContext";
 
 const navItems = [
   { to: "/equity-calculator", label: "Equity Calculator", icon: Percent },
@@ -106,7 +107,8 @@ export default function AppLayout() {
   }, [toggleSidebar]);
 
   return (
-    <div className="flex min-h-screen">
+    <PageHeaderProvider>
+    <div className="flex h-screen overflow-hidden">
       {/* Mobile sidebar (Sheet overlay, below md) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
@@ -166,35 +168,15 @@ export default function AppLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="relative flex flex-1 flex-col">
+      <div className="relative flex flex-1 flex-col overflow-hidden">
         {/* Global actions bar */}
-        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4 py-2">
-          {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation"
-          >
-            <Menu className="size-4" />
-          </Button>
+        <HeaderBar
+          onMobileMenuOpen={() => setMobileOpen(true)}
+          onSettingsToggle={() => setTrayOpen(!trayOpen)}
+          trayOpen={trayOpen}
+        />
 
-          {/* Spacer for desktop (no menu button) */}
-          <div className="hidden md:block" />
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setTrayOpen(!trayOpen)}
-            aria-label="Settings"
-            aria-pressed={trayOpen}
-          >
-            <Settings className="size-4" />
-          </Button>
-        </header>
-
-        <main className="flex-1 overflow-auto">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <Outlet />
         </main>
 
@@ -221,5 +203,48 @@ export default function AppLayout() {
         )}
       </div>
     </div>
+    </PageHeaderProvider>
+  );
+}
+
+function HeaderBar({
+  onMobileMenuOpen,
+  onSettingsToggle,
+  trayOpen,
+}: {
+  onMobileMenuOpen: () => void;
+  onSettingsToggle: () => void;
+  trayOpen: boolean;
+}) {
+  const { headerContent } = usePageHeader();
+
+  return (
+    <header className="flex shrink-0 items-center gap-2 border-b border-border bg-background px-4 py-2">
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="md:hidden"
+        onClick={onMobileMenuOpen}
+        aria-label="Open navigation"
+      >
+        <Menu className="size-4" />
+      </Button>
+
+      {/* Page-specific header content */}
+      <div className="flex flex-1 items-center gap-3 overflow-hidden">
+        {headerContent}
+      </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onSettingsToggle}
+        aria-label="Settings"
+        aria-pressed={trayOpen}
+      >
+        <Settings className="size-4" />
+      </Button>
+    </header>
   );
 }
