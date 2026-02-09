@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { clerkClient } from "../../api-utils/auth";
-import { getUserById, syncClerkUser } from "../../../../server/src/services/userService";
 import { createHandler } from "../../api-utils/createHandler";
 
 /**
@@ -33,9 +32,16 @@ export const handler = createHandler(
         // Get or create local user for role management
         let localUser = null;
         try {
-            localUser = await getUserById(userId);
+            const sql = (await import("@lib/database")).default;
 
-            if (localUser) {
+            // Get user from local database
+            const rows = await sql`SELECT * FROM users WHERE user_id = ${userId}`;
+            if (rows && rows.length > 0) {
+                localUser = {
+                    userId: rows[0].user_id,
+                    email: rows[0].email,
+                    role: (rows[0].role || "user").trim().toLowerCase(),
+                };
                 console.log(
                     `[getCurrentUser] Found local user with role: ${localUser.role}`
                 );
@@ -54,7 +60,12 @@ export const handler = createHandler(
                 }
 
                 // Create user in local DB with default "user" role
-                localUser = await syncClerkUser(userId, email, "user");
+                const now = Date.now();
+                await sql`
+                    INSERT INTO users (user_id, email, password_hash, role, created_at)
+                    VALUES (${userId}, ${email}, ${""}, ${"user"}, ${now})
+                `;
+                localUser = { userId, email, role: "user" };
                 console.log(
                     `[getCurrentUser] User synced to local DB with role: ${localUser.role}`
                 );
