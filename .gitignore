@@ -3,9 +3,11 @@ dist/
 server/.env
 web/.env
 admin/.env
-server/src/data/
 .DS_Store
 .claude/
+
+# WASM build output preserved in server/wasm-equity/pkg/ (tracked)
+# server/dist/ is a build artifact rebuilt by Vercel during deployment
 
 # Playwright E2E testing
 test-results/

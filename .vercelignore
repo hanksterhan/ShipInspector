@@ -8,18 +8,11 @@ api/**/*.spec.ts
 .gitignore
 
 # Server files that are not needed for build
-server/data/
-server/nodemon.json
 server/node_modules/
 
-# Keep server/src/ - needed for TypeScript compilation during build
-# Keep server/dist/ - compiled server code used by API function
-# Keep server/package.json - needed for dependencies
+# Keep server/src/config/ and server/src/services/ - needed by API handlers
 # Keep server/wasm-equity/ - needed for equity calculations
 # Keep server/wasm-equity/pkg/ - pre-built WASM (saves 2-3 min per build)
-
-# Development configs
-nodemon.json
 
 # Environment files (will be set in Vercel dashboard)
 .env
@@ -38,10 +31,10 @@ server/wasm-equity/target/
 
 # IMPORTANT: Source files and configs are NEEDED for build
 # We explicitly include them by NOT excluding them
-# - web/src/ (needed for webpack)
-# - web/public/ (needed for webpack to copy index.html)
+# - web/src/ (needed for Vite)
+# - web/public/ (needed for Vite)
 # - common/src/ (needed for TypeScript compilation)
+# - lib/src/ (needed for shared utilities)
 # - tsconfig.json files (needed for TypeScript)
-# - webpack.config.cjs (needed for webpack)
 # - package.json files (needed for npm install)
 # - server/wasm-equity/pkg/ (pre-built WASM - CRITICAL for fast builds)
