@@ -10,9 +10,9 @@ const PLAYER_POSITIONS: Array<{ left: string; top: string }> = [
   { left: "50%", top: "88%" }, // 0: bottom-center (hero)
   { left: "15%", top: "75%" }, // 1: bottom-left
   { left: "3%", top: "45%" }, // 2: left
-  { left: "15%", top: "15%" }, // 3: top-left
-  { left: "50%", top: "2%" }, // 4: top-center
-  { left: "85%", top: "15%" }, // 5: top-right
+  { left: "15%", top: "18%" }, // 3: top-left
+  { left: "50%", top: "8%" }, // 4: top-center
+  { left: "85%", top: "18%" }, // 5: top-right
   { left: "97%", top: "45%" }, // 6: right
   { left: "85%", top: "75%" }, // 7: bottom-right
 ];
