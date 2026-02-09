@@ -1,6 +1,16 @@
 import { Card, Hole, Board, EquityResult } from "@common/interfaces";
 import { initWasmModule } from "../wasm/loader";
 
+export interface EquityTimings {
+    wasmLoadTimeMs: number;
+    computeTimeMs: number;
+}
+
+export interface EquityWithTimings {
+    result: EquityResult;
+    timings: EquityTimings;
+}
+
 /**
  * Convert suit string to number: "c"=0, "d"=1, "h"=2, "s"=3
  */
@@ -27,7 +37,7 @@ export async function calculateEquityRust(
     players: readonly Hole[],
     board: Board,
     remainingDeck: Card[]
-): Promise<EquityResult> {
+): Promise<EquityWithTimings> {
     // Only support preflop (empty board) for now
     if (board.cards.length !== 0) {
         throw new Error(
@@ -59,9 +69,10 @@ export async function calculateEquityRust(
     }
 
     // Initialize WASM module
-    const wasm = await initWasmModule();
+    const { module: wasm, loadTimeMs: wasmLoadTimeMs } = await initWasmModule();
 
     // Call WASM function
+    const computeStart = Date.now();
     const resultJson = wasm.calculate_preflop_equity(
         new Uint8Array(playerRanks),
         new Uint8Array(playerSuits),
@@ -70,11 +81,12 @@ export async function calculateEquityRust(
         numPlayers,
         missing
     );
+    const computeTimeMs = Date.now() - computeStart;
 
     // Parse JSON result
     const result = JSON.parse(resultJson) as EquityResult;
 
-    return result;
+    return { result, timings: { wasmLoadTimeMs, computeTimeMs } };
 }
 
 /**
@@ -112,9 +124,10 @@ export async function calculateTurnOuts(
     const boardSuits: number[] = board.cards.map((c) => suitToNumber(c.suit));
 
     // Initialize WASM module
-    const wasm = await initWasmModule();
+    const { module: wasm, loadTimeMs: wasmLoadTimeMs } = await initWasmModule();
 
     // Call WASM function
+    const computeStart = Date.now();
     const resultJson = wasm.compute_turn_outs(
         new Uint8Array(heroRanks),
         new Uint8Array(heroSuits),
@@ -123,6 +136,8 @@ export async function calculateTurnOuts(
         new Uint8Array(boardRanks),
         new Uint8Array(boardSuits)
     );
+
+    const computeTimeMs = Date.now() - computeStart;
 
     // Parse JSON result
     const result = JSON.parse(resultJson);
@@ -157,6 +172,8 @@ export async function calculateTurnOuts(
         rank: out.rank,
         suit: numberToSuit(out.suit),
     }));
+
+    result.timings = { wasmLoadTimeMs, computeTimeMs };
 
     return result;
 }

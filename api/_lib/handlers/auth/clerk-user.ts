@@ -12,7 +12,7 @@ export const handler = createHandler(
         // Use Clerk's JavaScript Backend SDK to get the user's User object
         const user = await clerkClient.users.getUser(userId);
 
-        logger?.logComplete();
+        logger.logComplete(200);
         res.json({ user });
     }
 );

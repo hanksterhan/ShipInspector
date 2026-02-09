@@ -51,14 +51,17 @@ const handler_POST = createHandler(
         }
 
         // computeEquity validates duplicates internally
-        const equityResult = await computeEquity(
+        const { equity: equityResult, timings } = await computeEquity(
             players,
             board,
             body.options || {},
             dead
         );
 
-        logger?.logComplete();
+        logger.logComplete(200, {
+            wasmLoadTimeMs: timings?.wasmLoadTimeMs,
+            computeTimeMs: timings?.computeTimeMs,
+        });
         res.status(200).json({
             equity: {
                 win: equityResult.win,

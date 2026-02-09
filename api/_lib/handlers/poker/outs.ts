@@ -86,8 +86,12 @@ const handler_POST = createHandler(
         // Calculate outs
         const outsResult = await calculateTurnOuts(hero, villain, board);
 
-        logger?.logComplete();
-        res.status(200).json(outsResult);
+        const { timings, ...outsData } = outsResult;
+        logger.logComplete(200, {
+            wasmLoadTimeMs: timings?.wasmLoadTimeMs,
+            computeTimeMs: timings?.computeTimeMs,
+        });
+        res.status(200).json(outsData);
     }
 );
 

@@ -10,7 +10,7 @@ import {
 } from "@common/interfaces";
 import { hand } from "./evaluate";
 import { compareRanks } from "./compare";
-import { calculateEquityRust } from "./outs";
+import { calculateEquityRust, EquityTimings } from "./outs";
 
 /**
  * Create a full 52-card deck
@@ -290,12 +290,17 @@ function enumeratePartialBoard(
  * Compute equity for given players, board, and options
  * Uses Rust WASM implementation for high-performance calculations
  */
+export interface ComputeEquityResult {
+    equity: EquityResult;
+    timings?: EquityTimings;
+}
+
 export async function computeEquity(
     players: readonly Hole[],
     board: Board,
     opts: EquityOptions = {},
     dead: readonly Card[] = []
-): Promise<EquityResult> {
+): Promise<ComputeEquityResult> {
     // Validate inputs
     validateInputs(players, board, dead);
 
@@ -335,7 +340,7 @@ export async function computeEquity(
             }
         }
 
-        return result;
+        return { equity: result };
     }
 
     // For incomplete boards, calculate equity
@@ -350,8 +355,8 @@ export async function computeEquity(
 
     // Preflop: use optimized Rust WASM implementation
     if (boardLength === 0) {
-        const result = await calculateEquityRust(players, board, remainingDeck);
-        return result;
+        const { result, timings } = await calculateEquityRust(players, board, remainingDeck);
+        return { equity: result, timings };
     }
 
     // Postflop (3 cards) or Turn (4 cards): use TypeScript enumeration
@@ -362,5 +367,5 @@ export async function computeEquity(
         remainingDeck,
         missing
     );
-    return result;
+    return { equity: result };
 }

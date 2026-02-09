@@ -114,6 +114,7 @@ const createHandler_POST = createHandler(
             return;
         }
 
+        const dbStart = Date.now();
         await sql.transaction([
             sql`
                 INSERT INTO hands (
@@ -156,8 +157,9 @@ const createHandler_POST = createHandler(
                 `
             ),
         ]);
+        const dbQueryTimeMs = Date.now() - dbStart;
 
-        logger?.logComplete();
+        logger.logComplete(201, { dbQueryTimeMs });
         res.status(201).json({ hand_id: handId });
     }
 );

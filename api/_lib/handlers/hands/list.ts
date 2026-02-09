@@ -127,7 +127,9 @@ export const listHandler = createHandler(
         query = sql`${query} ORDER BY created_at DESC, id DESC LIMIT ${limit + 1}`;
 
         // Fetch limit + 1 to detect if there are more results
+        const dbStart = Date.now();
         const rows = await query;
+        const dbQueryTimeMs = Date.now() - dbStart;
 
         // Determine if there are more results
         const hasMore = rows.length > limit;
@@ -140,7 +142,7 @@ export const listHandler = createHandler(
             nextCursor = encodeCursor(lastHand.created_at, lastHand.id);
         }
 
-        logger?.logComplete();
+        logger.logComplete(200, { dbQueryTimeMs, handCount: hands.length });
         res.status(200).json({
             hands,
             nextCursor,

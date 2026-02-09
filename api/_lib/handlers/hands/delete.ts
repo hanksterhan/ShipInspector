@@ -20,6 +20,7 @@ export const deleteHandler = createHandler(
         const sql = (await import("@lib/database")).default;
         const now = Date.now();
 
+        const dbStart = Date.now();
         const rows = await sql`
             UPDATE hands
             SET deleted_at = ${now}, updated_at = ${now}
@@ -28,6 +29,7 @@ export const deleteHandler = createHandler(
               AND deleted_at IS NULL
             RETURNING id
         `;
+        const dbQueryTimeMs = Date.now() - dbStart;
 
         if (rows.length === 0) {
             res.status(404).json({
@@ -36,7 +38,7 @@ export const deleteHandler = createHandler(
             return;
         }
 
-        logger?.logComplete();
+        logger.logComplete(204, { dbQueryTimeMs });
         res.status(204).end();
     }
 );

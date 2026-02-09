@@ -2,22 +2,29 @@ import { WasmModule } from "./types";
 import * as path from "path";
 import * as fs from "fs";
 
+export interface WasmLoadResult {
+    module: WasmModule;
+    loadTimeMs: number;
+}
+
 let wasmModule: WasmModule | null = null;
-let wasmModulePromise: Promise<WasmModule> | null = null;
+let wasmModulePromise: Promise<WasmLoadResult> | null = null;
 
 /**
- * Initialize the WASM module (lazy loading)
+ * Initialize the WASM module (lazy loading).
+ * Returns the module and the time spent loading it (0 if already cached).
  */
-export async function initWasmModule(): Promise<WasmModule> {
+export async function initWasmModule(): Promise<WasmLoadResult> {
     if (wasmModule) {
-        return wasmModule;
+        return { module: wasmModule, loadTimeMs: 0 };
     }
 
     if (wasmModulePromise) {
         return wasmModulePromise;
     }
 
-    wasmModulePromise = (async (): Promise<WasmModule> => {
+    wasmModulePromise = (async (): Promise<WasmLoadResult> => {
+        const loadStart = Date.now();
         try {
             // Try to load WASM module from the wasm-equity/pkg directory
             // This will be built using wasm-pack build --target nodejs
@@ -48,7 +55,8 @@ export async function initWasmModule(): Promise<WasmModule> {
                 );
             }
             wasmModule = wasmInstance;
-            return wasmInstance;
+            const loadTimeMs = Date.now() - loadStart;
+            return { module: wasmInstance, loadTimeMs };
         } catch (error: any) {
             throw new Error(
                 `Failed to load WASM equity module: ${error.message || error}. Make sure to run 'wasm-pack build --target nodejs' in the wasm-equity directory.`

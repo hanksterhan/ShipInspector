@@ -9,17 +9,17 @@ import { createHandler } from "../../api-utils/createHandler";
 export const handler = createHandler(
     { method: "GET", rateLimit: "global" },
     async (req, res, { userId, logger }) => {
-        console.log(`[getCurrentUser] Getting user info for userId: ${userId}`);
+        logger.info("Getting user info", { userId });
 
         // Get Clerk user information
         let clerkUser;
         try {
             clerkUser = await clerkClient.users.getUser(userId);
-            console.log(
-                `[getCurrentUser] Got Clerk user: ${clerkUser.emailAddresses[0]?.emailAddress}`
-            );
+            logger.info("Got Clerk user", {
+                email: clerkUser.emailAddresses[0]?.emailAddress,
+            });
         } catch (clerkError: any) {
-            console.error(`[getCurrentUser] Clerk API error:`, clerkError);
+            logger.error("Clerk API error", clerkError);
             if (clerkError.status === 401 || clerkError.status === 403) {
                 res.status(401).json({
                     error: "Invalid Clerk token",
@@ -34,6 +34,7 @@ export const handler = createHandler(
         try {
             const sql = (await import("@lib/database")).default;
 
+            const dbStart = Date.now();
             // Get user from local database
             const rows = await sql`SELECT * FROM users WHERE user_id = ${userId}`;
             if (rows && rows.length > 0) {
@@ -42,20 +43,14 @@ export const handler = createHandler(
                     email: rows[0].email,
                     role: (rows[0].role || "user").trim().toLowerCase(),
                 };
-                console.log(
-                    `[getCurrentUser] Found local user with role: ${localUser.role}`
-                );
+                logger.info("Found local user", { role: localUser.role });
             } else {
                 // User doesn't exist in local DB - sync from Clerk
-                console.log(
-                    `[getCurrentUser] User not in local DB, syncing from Clerk...`
-                );
+                logger.info("User not in local DB, syncing from Clerk");
                 const email = clerkUser.emailAddresses[0]?.emailAddress;
 
                 if (!email) {
-                    console.error(
-                        `[getCurrentUser] No email address found for Clerk user`
-                    );
+                    logger.error("No email address found for Clerk user");
                     throw new Error("User has no email address");
                 }
 
@@ -66,20 +61,19 @@ export const handler = createHandler(
                     VALUES (${userId}, ${email}, ${""}, ${"user"}, ${now})
                 `;
                 localUser = { userId, email, role: "user" };
-                console.log(
-                    `[getCurrentUser] User synced to local DB with role: ${localUser.role}`
-                );
+                logger.info("User synced to local DB", { role: localUser.role });
             }
+            const dbQueryTimeMs = Date.now() - dbStart;
+
+            logger.logComplete(200, { dbQueryTimeMs });
         } catch (dbError) {
-            console.error(`[getCurrentUser] Database error:`, dbError);
+            logger.error("Database error", dbError);
             if (!localUser) {
-                console.warn(
-                    `[getCurrentUser] Using fallback: defaulting to "user" role`
-                );
+                logger.warn("Using fallback: defaulting to user role");
             }
+            logger.logComplete(200);
         }
 
-        logger?.logComplete();
         res.json({
             user: {
                 userId: clerkUser.id,
