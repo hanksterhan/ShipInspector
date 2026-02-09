@@ -8,7 +8,8 @@ import {
   selectWinnerSeats,
   selectCurrentAction,
 } from "@/stores/useHandReplayStore";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { cn } from "@/lib/utils";
 import { Crown, CardBackIcon } from "@/assets/icons";
 
@@ -23,10 +24,12 @@ function CardDisplay({
   card: Card | null;
   faceDown: boolean;
 }) {
+  const resolveSuit = useSuitData();
+
   if (faceDown || !card) {
     return (
       <div
-        className="flex items-center justify-center rounded border border-border bg-muted/50 p-1 min-w-[2rem] min-h-[2.5rem]"
+        className="flex items-center justify-center rounded border border-border bg-muted/50 p-1 min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem]"
         aria-label="Card face down"
       >
         <CardBackIcon className="size-5 text-muted-foreground" />
@@ -34,21 +37,20 @@ function CardDisplay({
     );
   }
 
-  const suitData = SUIT_MAP[card.suit];
+  const suitData = resolveSuit(card.suit);
   const Icon = suitData.Icon;
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded border p-1 min-w-[2rem] min-h-[2.5rem]",
-        suitData.isDark && "card-suit-dark",
+        "flex flex-col items-center justify-center rounded border p-1 min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem]",
       )}
       style={{ color: suitData.color, borderColor: suitData.color }}
     >
-      <span className="text-xs font-bold leading-none">
+      <span className="text-sm font-black leading-none md:text-base xl:text-lg">
         {getRankLabel(card.rank)}
       </span>
-      <Icon className="size-3" />
+      <Icon className="size-3.5 md:size-4 xl:size-5" />
     </div>
   );
 }
@@ -124,7 +126,7 @@ export function ReplayPlayer({ seatIndex }: ReplayPlayerProps) {
         />
       </div>
 
-      <div className="flex flex-col items-center text-[10px]">
+      <div className="flex flex-col items-center text-[10px] tabular-nums">
         <span className="font-medium">${(stack / 100).toFixed(2)}</span>
         {streetBet > 0 && (
           <span className="text-muted-foreground">bet: ${(streetBet / 100).toFixed(2)}</span>

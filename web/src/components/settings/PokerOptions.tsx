@@ -17,11 +17,13 @@ interface PokerOptionsProps {
 export function PokerOptions({ onClose }: PokerOptionsProps) {
   const cardSelectionMode = useSettingsStore((s) => s.cardSelectionMode);
   const setCardSelectionMode = useSettingsStore((s) => s.setCardSelectionMode);
+  const fourColorDeck = useSettingsStore((s) => s.fourColorDeck);
+  const setFourColorDeck = useSettingsStore((s) => s.setFourColorDeck);
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-6 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Card Selection</h3>
+        <h3 className="font-semibold">Settings</h3>
         {onClose && (
           <Button
             variant="ghost"
@@ -34,6 +36,7 @@ export function PokerOptions({ onClose }: PokerOptionsProps) {
         )}
       </div>
 
+      {/* Card Selection Mode */}
       <div className="space-y-3">
         <Label className="text-xs text-muted-foreground">
           Card selection mode
@@ -55,6 +58,41 @@ export function PokerOptions({ onClose }: PokerOptionsProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Display Options */}
+      <div className="space-y-3">
+        <Label className="text-xs text-muted-foreground">
+          Display
+        </Label>
+        <button
+          type="button"
+          onClick={() => setFourColorDeck(!fourColorDeck)}
+          className={cn(
+            "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
+            fourColorDeck
+              ? "border-primary bg-primary/10"
+              : "border-border hover:bg-muted/50",
+          )}
+          role="switch"
+          aria-checked={fourColorDeck}
+          aria-label="4-color deck"
+        >
+          <span>4-color deck</span>
+          <span
+            className={cn(
+              "flex h-5 w-9 items-center rounded-full px-0.5 transition-colors",
+              fourColorDeck ? "bg-primary" : "bg-muted",
+            )}
+          >
+            <span
+              className={cn(
+                "size-4 rounded-full bg-background shadow transition-transform",
+                fourColorDeck && "translate-x-4",
+              )}
+            />
+          </span>
+        </button>
       </div>
     </div>
   );

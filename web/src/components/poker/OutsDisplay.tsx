@@ -1,5 +1,7 @@
-import type { Card, CalculateOutsResponse } from "@common/interfaces";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import type { Card, CardSuit, CalculateOutsResponse } from "@common/interfaces";
+import type { SuitData } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { Loader2 } from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +14,13 @@ interface OutsDisplayProps {
 function OutCard({
   card,
   variant,
+  resolveSuit,
 }: {
   card: Card;
   variant: "win" | "tie";
+  resolveSuit: (suit: CardSuit) => SuitData;
 }) {
-  const suitData = SUIT_MAP[card.suit];
+  const suitData = resolveSuit(card.suit);
   const Icon = suitData.Icon;
 
   return (
@@ -27,7 +31,6 @@ function OutCard({
         variant === "win"
           ? "border-green-500/50 bg-green-500/10"
           : "border-yellow-500/50 bg-yellow-500/10",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color }}
     >
@@ -40,6 +43,8 @@ function OutCard({
 }
 
 export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
+  const resolveSuit = useSuitData();
+
   if (loading) {
     return (
       <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -96,6 +101,7 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
                 key={`${card.rank}${card.suit}`}
                 card={card}
                 variant="win"
+                resolveSuit={resolveSuit}
               />
             ))}
           </div>
@@ -114,6 +120,7 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
                 key={`${card.rank}${card.suit}`}
                 card={card}
                 variant="tie"
+                resolveSuit={resolveSuit}
               />
             ))}
           </div>

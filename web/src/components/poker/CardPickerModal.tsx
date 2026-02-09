@@ -1,7 +1,8 @@
 import { useCallback } from "react";
-import type { Card, CardRank, CardSuit } from "@common/interfaces";
+import type { Card, CardRank } from "@common/interfaces";
 import { useSettingsStore, type CardSelectionMode } from "@/stores";
-import { SUITS, RANKS, SUIT_MAP } from "@/lib/poker";
+import type { SuitData } from "@/lib/poker";
+import { SUITS, RANKS, getSuitData } from "@/lib/poker";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -19,16 +20,15 @@ interface CardPickerModalProps {
 
 function CardButton({
   rank,
-  suit,
   disabled,
   onClick,
+  suitData,
 }: {
   rank: CardRank;
-  suit: CardSuit;
   disabled: boolean;
   onClick: () => void;
+  suitData: SuitData;
 }) {
-  const suitData = SUIT_MAP[suit];
   const rankData = RANKS.find((r) => r.rank === rank);
   const Icon = suitData.Icon;
 
@@ -41,18 +41,17 @@ function CardButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "flex flex-col items-center justify-center rounded-md border border-border p-1 transition-colors",
+        "flex flex-col items-center justify-center rounded-md border border-border p-1.5 md:p-2 transition-colors",
         "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        "min-w-[2.25rem] min-h-[2.75rem]",
-        suitData.isDark && "card-suit-dark",
+        "min-w-[2.75rem] min-h-[3.75rem] md:min-w-[3rem] md:min-h-[4rem] xl:min-w-[3.5rem] xl:min-h-[4.5rem]",
         disabled && "opacity-25 pointer-events-none",
       )}
       style={{ color: suitData.color }}
     >
-      <span className="text-xs font-bold leading-none">
+      <span className="text-sm font-bold leading-none md:text-base xl:text-lg">
         {rankData?.label}
       </span>
-      <Icon className="size-3" />
+      <Icon className="size-4 md:size-5 xl:size-6" />
     </button>
   );
 }
@@ -60,22 +59,25 @@ function CardButton({
 function Grid52Cards({
   isCardUsed,
   onSelect,
+  fourColorDeck,
 }: {
   isCardUsed: (card: Card) => boolean;
   onSelect: (card: Card) => void;
+  fourColorDeck: boolean;
 }) {
   return (
-    <div className="grid grid-cols-13 gap-1">
-      {SUITS.map((suitData) =>
+    <div className="grid grid-cols-13 gap-1.5 md:gap-2">
+      {SUITS.map((baseSuit) =>
         RANKS.map((rankData) => {
-          const card: Card = { rank: rankData.rank, suit: suitData.suit };
+          const card: Card = { rank: rankData.rank, suit: baseSuit.suit };
           return (
             <CardButton
-              key={`${rankData.rank}${suitData.suit}`}
+              key={`${rankData.rank}${baseSuit.suit}`}
               rank={rankData.rank}
-              suit={suitData.suit}
+
               disabled={isCardUsed(card)}
               onClick={() => onSelect(card)}
+              suitData={getSuitData(baseSuit.suit, fourColorDeck)}
             />
           );
         }),
@@ -87,37 +89,46 @@ function Grid52Cards({
 function SuitRankGrid({
   isCardUsed,
   onSelect,
+  fourColorDeck,
 }: {
   isCardUsed: (card: Card) => boolean;
   onSelect: (card: Card) => void;
+  fourColorDeck: boolean;
 }) {
   return (
     <div className="space-y-3">
-      {SUITS.map((suitData) => (
-        <div key={suitData.suit}>
-          <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <suitData.Icon
-              className={cn("size-3", suitData.isDark && "card-suit-dark")}
-              style={{ color: suitData.color }}
-            />
-            <span>{suitData.label}</span>
+      {SUITS.map((baseSuit) => {
+        const resolved = getSuitData(baseSuit.suit, fourColorDeck);
+        return (
+          <div key={baseSuit.suit}>
+            <div className="mb-1 flex items-center gap-1 text-sm text-muted-foreground md:text-base">
+              <resolved.Icon
+                className="size-4 md:size-5"
+                style={{ color: resolved.color }}
+              />
+              <span>{resolved.label}</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
+              {RANKS.map((rankData) => {
+                const card: Card = {
+                  rank: rankData.rank,
+                  suit: baseSuit.suit,
+                };
+                return (
+                  <CardButton
+                    key={`${rankData.rank}${baseSuit.suit}`}
+                    rank={rankData.rank}
+      
+                    disabled={isCardUsed(card)}
+                    onClick={() => onSelect(card)}
+                    suitData={resolved}
+                  />
+                );
+              })}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {RANKS.map((rankData) => {
-              const card: Card = { rank: rankData.rank, suit: suitData.suit };
-              return (
-                <CardButton
-                  key={`${rankData.rank}${suitData.suit}`}
-                  rank={rankData.rank}
-                  suit={suitData.suit}
-                  disabled={isCardUsed(card)}
-                  onClick={() => onSelect(card)}
-                />
-              );
-            })}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -125,9 +136,11 @@ function SuitRankGrid({
 function RankSuitGrid({
   isCardUsed,
   onSelect,
+  fourColorDeck,
 }: {
   isCardUsed: (card: Card) => boolean;
   onSelect: (card: Card) => void;
+  fourColorDeck: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -136,16 +149,20 @@ function RankSuitGrid({
           <div className="mb-1 text-xs font-bold text-muted-foreground">
             {rankData.label}
           </div>
-          <div className="flex gap-1">
-            {SUITS.map((suitData) => {
-              const card: Card = { rank: rankData.rank, suit: suitData.suit };
+          <div className="flex gap-1.5 md:gap-2">
+            {SUITS.map((baseSuit) => {
+              const card: Card = {
+                rank: rankData.rank,
+                suit: baseSuit.suit,
+              };
               return (
                 <CardButton
-                  key={`${rankData.rank}${suitData.suit}`}
+                  key={`${rankData.rank}${baseSuit.suit}`}
                   rank={rankData.rank}
-                  suit={suitData.suit}
+    
                   disabled={isCardUsed(card)}
                   onClick={() => onSelect(card)}
+                  suitData={getSuitData(baseSuit.suit, fourColorDeck)}
                 />
               );
             })}
@@ -160,19 +177,39 @@ function CardGrid({
   mode,
   isCardUsed,
   onSelect,
+  fourColorDeck,
 }: {
   mode: CardSelectionMode;
   isCardUsed: (card: Card) => boolean;
   onSelect: (card: Card) => void;
+  fourColorDeck: boolean;
 }) {
   switch (mode) {
     case "Suit - Rank Selection":
-      return <SuitRankGrid isCardUsed={isCardUsed} onSelect={onSelect} />;
+      return (
+        <SuitRankGrid
+          isCardUsed={isCardUsed}
+          onSelect={onSelect}
+          fourColorDeck={fourColorDeck}
+        />
+      );
     case "Rank - Suit Selection":
-      return <RankSuitGrid isCardUsed={isCardUsed} onSelect={onSelect} />;
+      return (
+        <RankSuitGrid
+          isCardUsed={isCardUsed}
+          onSelect={onSelect}
+          fourColorDeck={fourColorDeck}
+        />
+      );
     case "52 Cards":
     default:
-      return <Grid52Cards isCardUsed={isCardUsed} onSelect={onSelect} />;
+      return (
+        <Grid52Cards
+          isCardUsed={isCardUsed}
+          onSelect={onSelect}
+          fourColorDeck={fourColorDeck}
+        />
+      );
   }
 }
 
@@ -183,6 +220,7 @@ export function CardPickerModal({
   isCardUsed,
 }: CardPickerModalProps) {
   const cardSelectionMode = useSettingsStore((s) => s.cardSelectionMode);
+  const fourColorDeck = useSettingsStore((s) => s.fourColorDeck);
 
   const handleSelect = useCallback(
     (card: Card) => {
@@ -194,7 +232,7 @@ export function CardPickerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-fit">
+      <DialogContent className="max-w-[95vw] sm:max-w-[680px] xl:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Select a Card</DialogTitle>
         </DialogHeader>
@@ -202,6 +240,7 @@ export function CardPickerModal({
           mode={cardSelectionMode}
           isCardUsed={isCardUsed}
           onSelect={handleSelect}
+          fourColorDeck={fourColorDeck}
         />
       </DialogContent>
     </Dialog>

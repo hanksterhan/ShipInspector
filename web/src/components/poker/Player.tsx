@@ -1,6 +1,8 @@
-import type { Card } from "@common/interfaces";
+import type { Card, CardSuit } from "@common/interfaces";
 import { useEquityCalculatorStore, type Scope } from "@/stores";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import type { SuitData } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { cn } from "@/lib/utils";
 import { Crown, X } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
@@ -14,14 +16,16 @@ function CardSlot({
   isActive,
   onClick,
   onClear,
+  resolveSuit,
 }: {
   card: Card | null;
   isActive: boolean;
   onClick: () => void;
   onClear: () => void;
+  resolveSuit: (suit: CardSuit) => SuitData;
 }) {
   if (card) {
-    const suitData = SUIT_MAP[card.suit];
+    const suitData = resolveSuit(card.suit);
     const Icon = suitData.Icon;
     return (
       <button
@@ -29,18 +33,17 @@ function CardSlot({
         onClick={onClick}
         className={cn(
           "relative flex flex-col items-center justify-center rounded-md border p-1",
-          "min-w-[2rem] min-h-[2.5rem] transition-all",
+          "min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem] transition-all",
           isActive
             ? "border-primary ring-2 ring-primary/50"
             : "border-border hover:border-muted-foreground",
-          suitData.isDark && "card-suit-dark",
         )}
         style={{ color: suitData.color }}
       >
-        <span className="text-xs font-bold leading-none">
+        <span className="text-sm font-black leading-none md:text-base xl:text-lg">
           {getRankLabel(card.rank)}
         </span>
-        <Icon className="size-3" />
+        <Icon className="size-3.5 md:size-4 xl:size-5" />
         <button
           type="button"
           onClick={(e) => {
@@ -62,13 +65,13 @@ function CardSlot({
       onClick={onClick}
       className={cn(
         "flex items-center justify-center rounded-md border border-dashed p-1",
-        "min-w-[2rem] min-h-[2.5rem] transition-all",
+        "min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem] transition-all",
         isActive
           ? "border-primary ring-2 ring-primary/50 bg-primary/10"
           : "border-border hover:border-muted-foreground text-muted-foreground",
       )}
     >
-      <span className="text-[10px]">?</span>
+      <span className="text-xs md:text-sm xl:text-base">?</span>
     </button>
   );
 }
@@ -90,6 +93,7 @@ export function Player({ playerIndex }: PlayerProps) {
   const winningHandName = useEquityCalculatorStore((s) =>
     s.getWinningHandName(),
   );
+  const resolveSuit = useSuitData();
 
   const isScopeActive = (cardIndex: 0 | 1) =>
     scope.kind === "player" &&
@@ -139,19 +143,21 @@ export function Player({ playerIndex }: PlayerProps) {
           isActive={isScopeActive(0)}
           onClick={() => handleSlotClick(0)}
           onClear={() => handleClearCard(0)}
+          resolveSuit={resolveSuit}
         />
         <CardSlot
           card={cards[1]}
           isActive={isScopeActive(1)}
           onClick={() => handleSlotClick(1)}
           onClear={() => handleClearCard(1)}
+          resolveSuit={resolveSuit}
         />
       </div>
 
       {/* Equity display */}
       {equity !== null && (
         <div className="w-full space-y-0.5">
-          <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center justify-between text-[10px] tabular-nums">
             <span
               className={cn(
                 "font-bold",

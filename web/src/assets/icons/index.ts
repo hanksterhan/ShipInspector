@@ -29,4 +29,8 @@ export {
   ChevronRight,
   Trash2,
   Loader2,
+  PanelLeft,
+  PanelLeftClose,
+  Menu,
+  LogOut,
 } from "lucide-react";

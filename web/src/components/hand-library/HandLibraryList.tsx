@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CardRank, CardSuit } from "@common/interfaces";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { cn } from "@/lib/utils";
 import { useHandLibraryStore } from "@/stores";
 import {
@@ -28,13 +29,14 @@ interface BoardCardPreviewProps {
 }
 
 function BoardCardPreview({ card }: BoardCardPreviewProps) {
+  const resolveSuit = useSuitData();
   const suit = card.slice(-1) as CardSuit;
   const rankToken = card.slice(0, -1);
   const rankValue = Number(rankToken);
   const rankLabel = Number.isNaN(rankValue)
     ? rankToken
     : getRankLabel(rankValue as CardRank);
-  const suitData = SUIT_MAP[suit];
+  const suitData = resolveSuit(suit);
 
   if (!suitData) {
     return (
@@ -50,7 +52,6 @@ function BoardCardPreview({ card }: BoardCardPreviewProps) {
     <span
       className={cn(
         "flex items-center gap-1 rounded border border-border/70 px-1.5 py-0.5 text-xs font-semibold",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color }}
     >

@@ -132,7 +132,7 @@ export default function HandRecorderPage() {
   };
 
   return (
-    <div className="relative flex flex-col gap-4 p-4">
+    <div className="relative flex-1 overflow-auto flex flex-col gap-4 p-4">
       {toast ? (
         <div
           role="alert"
