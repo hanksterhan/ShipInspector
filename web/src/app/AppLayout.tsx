@@ -142,25 +142,24 @@ export default function AppLayout() {
           )}
         </div>
 
-        {/* Toggle button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "mb-2 text-sidebar-foreground",
-            collapsed && "mx-auto",
-          )}
-        >
-          {collapsed ? (
-            <PanelLeft className="size-4" />
-          ) : (
-            <PanelLeftClose className="size-4" />
-          )}
-        </Button>
-
         <SidebarNav collapsed={collapsed} onSignOut={handleSignOut} />
+
+        {/* Toggle button - bottom right */}
+        <div className={cn("mt-2 flex", collapsed ? "justify-center" : "justify-end")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="text-sidebar-foreground"
+          >
+            {collapsed ? (
+              <PanelLeft className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
+          </Button>
+        </div>
       </aside>
 
       {/* Main content */}
