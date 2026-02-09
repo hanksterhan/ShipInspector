@@ -15,6 +15,12 @@ import { handler as authClerkUserHandler } from "./auth/clerk-user";
 import { handler as handsCreateHandler } from "./hands";
 import { handler as handsSingleHandler } from "./hands/single";
 
+// Poker calculator handlers
+import { handler as pokerEvaluateHandler } from "./poker/evaluate";
+import { handler as pokerCompareHandler } from "./poker/compare";
+import { handler as pokerEquityHandler } from "./poker/equity";
+import { handler as pokerOutsHandler } from "./poker/outs";
+
 export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
 /**
@@ -22,13 +28,14 @@ export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<
  *
  * The router will match against normalized paths (without /api prefix, without trailing slash).
  * Example: "/auth/me" matches requests to "/api/auth/me" or "/auth/me"
- *
- * Note: Poker calculator endpoints (evaluate, compare, equity, outs) have been removed
- * as they are not needed for the SI-4 Hand Replayer Epic.
  */
 export const routes: Record<string, RouteHandler> = {
     "/auth/me": authMeHandler,
     "/auth/clerk-user": authClerkUserHandler,
     "/hands": handsCreateHandler,
     "/hands/:id": handsSingleHandler,
+    "/poker/hand/evaluate": pokerEvaluateHandler,
+    "/poker/hand/compare": pokerCompareHandler,
+    "/poker/equity/calculate": pokerEquityHandler,
+    "/poker/outs/calculate": pokerOutsHandler,
 };
