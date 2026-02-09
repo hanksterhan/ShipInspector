@@ -1,5 +1,6 @@
 import type { Card } from "@common/interfaces";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { cn } from "@/lib/utils";
 import { X } from "@/assets/icons";
 
@@ -29,8 +30,10 @@ export function CardSlot({
   size = "md",
   ariaLabel,
 }: CardSlotProps) {
+  const resolveSuit = useSuitData();
+
   if (card) {
-    const suitData = SUIT_MAP[card.suit];
+    const suitData = resolveSuit(card.suit);
     const Icon = suitData.Icon;
     return (
       <button

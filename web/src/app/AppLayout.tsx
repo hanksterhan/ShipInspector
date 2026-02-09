@@ -1,9 +1,23 @@
+import { useEffect, useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSettingsStore } from "@/stores";
 import { PokerOptions } from "@/components/settings";
-import { Percent, Table2, FolderOpen, Settings } from "@/assets/icons";
+import {
+  Percent,
+  Table2,
+  FolderOpen,
+  Settings,
+  PanelLeft,
+  PanelLeftClose,
+  Menu,
+} from "@/assets/icons";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -12,60 +26,161 @@ const navItems = [
   { to: "/hands/library", label: "Hand Library", icon: FolderOpen },
 ];
 
+function SidebarNav({
+  collapsed,
+  onSignOut,
+  onNavClick,
+}: {
+  collapsed: boolean;
+  onSignOut: () => void;
+  onNavClick?: () => void;
+}) {
+  return (
+    <>
+      <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1">
+        {navItems.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={onNavClick}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                collapsed ? "justify-center" : "px-3",
+              )
+            }
+            title={label}
+          >
+            <Icon className="size-4 shrink-0" />
+            {!collapsed && <span>{label}</span>}
+          </NavLink>
+        ))}
+      </nav>
+      <button
+        onClick={onSignOut}
+        className={cn(
+          "rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50",
+          !collapsed && "px-3",
+        )}
+      >
+        {collapsed ? "Out" : "Sign Out"}
+      </button>
+    </>
+  );
+}
+
 export default function AppLayout() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const trayOpen = useSettingsStore((s) => s.trayOpen);
   const setTrayOpen = useSettingsStore((s) => s.setTrayOpen);
+  const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
+  // Keyboard shortcut: Ctrl+B / Cmd+B toggles sidebar
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+          return;
+        }
+        e.preventDefault();
+        toggleSidebar();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [toggleSidebar]);
+
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar - Menu (SI-70) */}
-      <aside className="flex w-16 flex-col border-r border-border bg-sidebar p-2 md:w-64 md:p-4">
-        <h2 className="mb-4 hidden truncate text-lg font-semibold text-sidebar-foreground md:block">
-          ShipInspector
-        </h2>
-        <h2 className="mb-4 truncate text-center text-sm font-semibold text-sidebar-foreground md:hidden">
-          SI
-        </h2>
-        <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors md:px-3",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                  "justify-center md:justify-start",
-                )
-              }
-              title={label}
-            >
-              <Icon className="size-4 shrink-0" />
-              <span className="hidden md:inline">{label}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <button
-          onClick={handleSignOut}
-          className="rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50 md:px-3"
+      {/* Mobile sidebar (Sheet overlay, below md) */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="flex w-64 flex-col p-4"
         >
-          Sign Out
-        </button>
+          <SheetTitle className="mb-4 text-lg font-semibold">
+            ShipInspector
+          </SheetTitle>
+          <SidebarNav
+            collapsed={false}
+            onSignOut={handleSignOut}
+            onNavClick={() => setMobileOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop sidebar (md and above) */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col border-r border-border bg-sidebar p-2 transition-all duration-200",
+          collapsed ? "md:w-16" : "md:w-64 md:p-4",
+        )}
+      >
+        {/* Sidebar header */}
+        <div className="mb-4 flex items-center justify-between">
+          {collapsed ? (
+            <h2 className="w-full truncate text-center text-sm font-semibold text-sidebar-foreground">
+              SI
+            </h2>
+          ) : (
+            <h2 className="truncate text-lg font-semibold text-sidebar-foreground">
+              ShipInspector
+            </h2>
+          )}
+        </div>
+
+        {/* Toggle button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleSidebar}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "mb-2 text-sidebar-foreground",
+            collapsed && "mx-auto",
+          )}
+        >
+          {collapsed ? (
+            <PanelLeft className="size-4" />
+          ) : (
+            <PanelLeftClose className="size-4" />
+          )}
+        </Button>
+
+        <SidebarNav collapsed={collapsed} onSignOut={handleSignOut} />
       </aside>
 
       {/* Main content */}
       <div className="relative flex flex-1 flex-col">
-        {/* Global actions bar (SI-71) */}
-        <header className="flex shrink-0 items-center justify-end gap-2 border-b border-border bg-background px-4 py-2">
+        {/* Global actions bar */}
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4 py-2">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu className="size-4" />
+          </Button>
+
+          {/* Spacer for desktop (no menu button) */}
+          <div className="hidden md:block" />
+
           <Button
             variant="ghost"
             size="sm"
@@ -81,7 +196,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
 
-        {/* Settings tray - slide-out panel (SI-71, SI-72) */}
+        {/* Settings tray - slide-out panel */}
         <div
           className={cn(
             "fixed right-0 top-0 z-50 h-full w-72 border-l border-border bg-background shadow-lg transition-transform duration-200 md:w-80",
