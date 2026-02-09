@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { CardSlot } from "./CardSlot";
 import type { CardPickerTarget } from "./BoardCardsSection";
+import { getPositionLabel } from "@/lib/poker/positions";
 
 interface PlayerSetupSectionProps {
   activeTarget: CardPickerTarget;
@@ -34,6 +36,7 @@ export function PlayerSetupSection({
   onClearCard,
 }: PlayerSetupSectionProps) {
   const players = useHandRecorderStore((s) => s.players);
+  const gameSettings = useHandRecorderStore((s) => s.gameSettings);
   const setPlayerActive = useHandRecorderStore((s) => s.setPlayerActive);
   const updatePlayer = useHandRecorderStore((s) => s.updatePlayer);
   const setHero = useHandRecorderStore((s) => s.setHero);
@@ -74,17 +77,30 @@ export function PlayerSetupSection({
         {players.map((player) => {
           const seatLabel = `Seat ${player.seatIndex + 1}`;
           const seatErrors = errorsBySeat[player.seatIndex];
+          const positionLabel =
+            player.isActive
+              ? getPositionLabel(
+                  player.seatIndex,
+                  gameSettings.buttonSeat,
+                  gameSettings.tableSize,
+                )
+              : null;
           return (
             <div
               key={player.seatIndex}
               className="rounded-lg border border-border bg-card p-4"
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">{seatLabel}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {player.isActive ? "Active" : "Inactive"}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">{seatLabel}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {player.isActive ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                  {positionLabel && (
+                    <Badge variant="secondary">{positionLabel}</Badge>
+                  )}
                 </div>
                 <Button
                   size="sm"

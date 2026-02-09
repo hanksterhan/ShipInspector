@@ -44,7 +44,7 @@ describe("HandLibraryList", () => {
       hands: [],
     });
 
-    const { container } = renderWithRouter(<HandLibraryList />);
+    const { container } = renderWithRouter(<HandLibraryList hands={[]} />);
 
     const skeletonElements = container.querySelectorAll(".animate-pulse");
     expect(skeletonElements.length).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe("HandLibraryList", () => {
       fetchHands,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={[]} />);
 
     expect(screen.getByText("Failed to load hands")).toBeInTheDocument();
 
@@ -81,10 +81,10 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={[]} />);
 
     expect(
-      screen.getByText("No hands saved yet. Record a hand to see it here."),
+      screen.getByText("No hands match your filters."),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByText("Date")).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("HandLibraryList", () => {
       loadMore,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     const loadMoreButton = screen.getByRole("button", { name: /load more/i });
     expect(loadMoreButton).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     expect(
       screen.queryByRole("button", { name: /load more/i }),
@@ -161,7 +161,7 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     const loadMoreButton = screen.getByRole("button", { name: /loading/i });
     expect(loadMoreButton).toBeDisabled();
@@ -176,7 +176,7 @@ describe("HandLibraryList", () => {
       isLoading: false,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     expect(screen.getByText("Failed to load more hands")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     const deleteButton = screen.getByLabelText("Delete hand");
     expect(deleteButton).toBeInTheDocument();
@@ -206,7 +206,7 @@ describe("HandLibraryList", () => {
       error: null,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     const deleteButton = screen.getByLabelText("Delete hand");
     fireEvent.click(deleteButton);
@@ -228,7 +228,7 @@ describe("HandLibraryList", () => {
       deleteHand,
     });
 
-    renderWithRouter(<HandLibraryList />);
+    renderWithRouter(<HandLibraryList hands={mockHands} />);
 
     const deleteButton = screen.getByLabelText("Delete hand");
     fireEvent.click(deleteButton);
