@@ -11,8 +11,8 @@ api/**/*.spec.ts
 server/node_modules/
 
 # Keep server/src/config/ and server/src/services/ - needed by API handlers
-# Keep server/wasm-equity/ - needed for equity calculations
-# Keep server/wasm-equity/pkg/ - pre-built WASM (saves 2-3 min per build)
+# Keep lib/wasm-equity/ - needed for equity calculations
+# Keep lib/wasm-equity/pkg/ - pre-built WASM (saves 2-3 min per build)
 
 # Environment files (will be set in Vercel dashboard)
 .env
@@ -27,7 +27,7 @@ web/plopfile.js
 web/plop/
 
 # Rust build artifacts (cached by Vercel if present, but not needed in deployment)
-server/wasm-equity/target/
+lib/wasm-equity/target/
 
 # IMPORTANT: Source files and configs are NEEDED for build
 # We explicitly include them by NOT excluding them
@@ -37,4 +37,4 @@ server/wasm-equity/target/
 # - lib/src/ (needed for shared utilities)
 # - tsconfig.json files (needed for TypeScript)
 # - package.json files (needed for npm install)
-# - server/wasm-equity/pkg/ (pre-built WASM - CRITICAL for fast builds)
+# - lib/wasm-equity/pkg/ (pre-built WASM - CRITICAL for fast builds)

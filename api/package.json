@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc && tsc-alias -p tsconfig.json",
+    "build": "tsc && tsc-alias -p tsconfig.json && npm run copy-wasm",
+    "copy-wasm": "mkdir -p dist/lib/wasm-equity/pkg && cp ../lib/wasm-equity/pkg/wasm_equity_bg.wasm ../lib/wasm-equity/pkg/wasm_equity.js ../lib/wasm-equity/pkg/wasm_equity.d.ts ../lib/wasm-equity/pkg/wasm_equity_bg.wasm.d.ts dist/lib/wasm-equity/pkg/",
     "test": "jest"
   },
   "dependencies": {

@@ -6,7 +6,7 @@ admin/.env
 .DS_Store
 .claude/
 
-# WASM build output preserved in server/wasm-equity/pkg/ (tracked)
+# WASM build output preserved in lib/wasm-equity/pkg/ (tracked)
 # server/dist/ is a build artifact rebuilt by Vercel during deployment
 
 # Playwright E2E testing
@@ -24,3 +24,5 @@ web/e2e/.auth/
 **/target/
 **/*.rs.bk
 Cargo.lock
+.vercel
+.env*.local

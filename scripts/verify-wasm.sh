@@ -4,7 +4,7 @@
 
 set -e
 
-WASM_PKG_DIR="server/wasm-equity/pkg"
+WASM_PKG_DIR="lib/wasm-equity/pkg"
 REQUIRED_FILES=(
     "wasm_equity.js"
     "wasm_equity_bg.wasm"

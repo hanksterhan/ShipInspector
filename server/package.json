@@ -4,11 +4,11 @@
     "main": "index.js",
     "scripts": {
         "build": "npm run build:wasm && npm run verify:wasm && tsc && tsc-alias -p tsconfig.json && tsc -p ../common/tsconfig.json && npm run copy-assets",
-        "verify:wasm": "bash ../../scripts/verify-wasm.sh || echo 'WASM verification skipped'",
+        "verify:wasm": "bash ../scripts/verify-wasm.sh || echo 'WASM verification skipped'",
         "lint": "prettier --write \"src/**/*.ts\"",
         "test": "jest",
-        "copy-assets": "mkdir -p dist/server/wasm-equity/pkg && cp -r wasm-equity/pkg/* dist/server/wasm-equity/pkg/ 2>/dev/null || true",
-        "build:wasm": "cd wasm-equity && bash build.sh || echo 'WASM build failed or skipped, continuing with existing package if available...'"
+        "copy-assets": "mkdir -p dist/lib/wasm-equity/pkg && cp -r ../lib/wasm-equity/pkg/* dist/lib/wasm-equity/pkg/ 2>/dev/null || true",
+        "build:wasm": "cd ../lib/wasm-equity && bash build.sh || echo 'WASM build failed or skipped, continuing with existing package if available...'"
     },
     "keywords": [],
     "author": "",
