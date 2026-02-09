@@ -28,3 +28,10 @@ export type { VisibleCardsState } from "./useHandReplayStore";
 
 export { useEquityCalculatorStore } from "./useEquityCalculatorStore";
 export type { EquityState, Scope } from "./useEquityCalculatorStore";
+
+export { useHandLibraryFiltersStore } from "./useHandLibraryFiltersStore";
+export type {
+  SortField,
+  SortDirection,
+  ViewMode,
+} from "./useHandLibraryFiltersStore";

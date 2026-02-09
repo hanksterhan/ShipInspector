@@ -223,6 +223,7 @@ interface HandRecorderActions {
   setBoardCard: (index: number, card: Card | null) => void;
   isCardUsed: (card: Card) => boolean;
   setStreet: (street: Street) => void;
+  autoPostBlinds: () => void;
   clearValidationErrors: () => void;
   validateSetup: () => boolean;
   submitHand: () => Promise<string | null>;
@@ -444,6 +445,61 @@ export const useHandRecorderStore = create<
 
       setStreet: (street) => {
         set({ currentStreet: street });
+        scheduleDraftSave();
+      },
+
+      autoPostBlinds: () => {
+        const { gameSettings, actions, players } = get();
+        const { buttonSeat, tableSize, smallBlind, bigBlind } = gameSettings;
+
+        const hasBlinds = actions.some(
+          (action) =>
+            action.actionType === "POST_SB" || action.actionType === "POST_BB",
+        );
+
+        if (hasBlinds) return;
+
+        const activePlayers = players.filter((p) => p.isActive);
+        if (activePlayers.length < 2) return;
+
+        let sbSeat: number;
+        let bbSeat: number;
+
+        if (tableSize === 2) {
+          sbSeat = buttonSeat;
+          bbSeat = (buttonSeat + 1) % tableSize;
+        } else {
+          sbSeat = (buttonSeat + 1) % tableSize;
+          bbSeat = (buttonSeat + 2) % tableSize;
+        }
+
+        const sbPlayer = players.find((p) => p.seatIndex === sbSeat && p.isActive);
+        const bbPlayer = players.find((p) => p.seatIndex === bbSeat && p.isActive);
+
+        if (!sbPlayer || !bbPlayer) return;
+
+        const newActions: HandRecorderAction[] = [
+          {
+            street: "preflop",
+            actionType: "POST_SB",
+            actorSeat: sbSeat,
+            amount: smallBlind,
+            raiseTo: null,
+            decisionMs: null,
+            tags: [],
+          },
+          {
+            street: "preflop",
+            actionType: "POST_BB",
+            actorSeat: bbSeat,
+            amount: bigBlind,
+            raiseTo: null,
+            decisionMs: null,
+            tags: [],
+          },
+        ];
+
+        set({ actions: newActions });
         scheduleDraftSave();
       },
 

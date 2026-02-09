@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Card } from "@common/interfaces";
-import { useHandRecorderStore } from "@/stores";
+import { useHandRecorderStore, useSettingsStore } from "@/stores";
 import { CardPickerModal } from "@/components/poker/CardPickerModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ActionRecorder,
   BoardCardsSection,
@@ -30,6 +31,9 @@ export default function HandRecorderPage() {
   const clearValidationErrors = useHandRecorderStore(
     (s) => s.clearValidationErrors,
   );
+
+  const wizardMode = useSettingsStore((s) => s.wizardMode);
+  const toggleWizardMode = useSettingsStore((s) => s.toggleWizardMode);
 
   const [pickerTarget, setPickerTarget] = useState<CardPickerTarget>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +159,16 @@ export default function HandRecorderPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={toggleWizardMode}
+            title={
+              wizardMode ? "Switch to All-in-One mode" : "Switch to Wizard mode"
+            }
+          >
+            {wizardMode ? "Wizard" : "All-in-One"}
+          </Button>
           {isDraft && <Badge variant="secondary">Draft saved</Badge>}
           <Button
             onClick={handleSave}
@@ -165,20 +179,70 @@ export default function HandRecorderPage() {
         </div>
       </div>
 
-      <GameSettingsForm />
-      <PlayerSetupSection
-        activeTarget={pickerTarget}
-        onPickCard={(target) => setPickerTarget(target)}
-        onClearCard={(seatIndex, cardIndex) =>
-          setPlayerHoleCard(seatIndex, cardIndex, null)
-        }
-      />
-      <BoardCardsSection
-        activeTarget={pickerTarget}
-        onPickCard={(target) => setPickerTarget(target)}
-        onClearCard={(index) => setBoardCard(index, null)}
-      />
-      <ActionRecorder />
+      {wizardMode ? (
+        <Tabs defaultValue="game-context" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="game-context">Game Context</TabsTrigger>
+            <TabsTrigger value="players">Players</TabsTrigger>
+            <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="board-review">Board & Review</TabsTrigger>
+          </TabsList>
+          <TabsContent value="game-context">
+            <GameSettingsForm />
+          </TabsContent>
+          <TabsContent value="players">
+            <PlayerSetupSection
+              activeTarget={pickerTarget}
+              onPickCard={(target) => setPickerTarget(target)}
+              onClearCard={(seatIndex, cardIndex) =>
+                setPlayerHoleCard(seatIndex, cardIndex, null)
+              }
+            />
+          </TabsContent>
+          <TabsContent value="actions">
+            <ActionRecorder />
+          </TabsContent>
+          <TabsContent value="board-review">
+            <div className="space-y-4">
+              <BoardCardsSection
+                activeTarget={pickerTarget}
+                onPickCard={(target) => setPickerTarget(target)}
+                onClearCard={(index) => setBoardCard(index, null)}
+              />
+              <div className="rounded-lg border border-border bg-card p-4">
+                <h3 className="mb-2 text-sm font-semibold">Hand Summary</h3>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p>
+                    Players: {players.filter((p) => p.isActive).length} active
+                  </p>
+                  <p>Actions: {actions.length} recorded</p>
+                  <p>
+                    Board:{" "}
+                    {gameSettings.board.filter((c) => c !== null).length} cards
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          <GameSettingsForm />
+          <PlayerSetupSection
+            activeTarget={pickerTarget}
+            onPickCard={(target) => setPickerTarget(target)}
+            onClearCard={(seatIndex, cardIndex) =>
+              setPlayerHoleCard(seatIndex, cardIndex, null)
+            }
+          />
+          <BoardCardsSection
+            activeTarget={pickerTarget}
+            onPickCard={(target) => setPickerTarget(target)}
+            onClearCard={(index) => setBoardCard(index, null)}
+          />
+          <ActionRecorder />
+        </>
+      )}
 
       <CardPickerModal
         isOpen={pickerTarget !== null}
