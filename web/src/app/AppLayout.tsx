@@ -11,6 +11,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Menu,
+  LogOut,
 } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,12 +62,14 @@ function SidebarNav({
       </nav>
       <button
         onClick={onSignOut}
+        title="Sign Out"
         className={cn(
-          "rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50",
-          !collapsed && "px-3",
+          "flex items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50",
+          collapsed ? "justify-center" : "px-3",
         )}
       >
-        {collapsed ? "Out" : "Sign Out"}
+        <LogOut className="size-4 shrink-0" />
+        {!collapsed && <span>Sign Out</span>}
       </button>
     </>
   );

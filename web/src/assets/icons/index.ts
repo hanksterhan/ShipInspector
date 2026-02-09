@@ -32,4 +32,5 @@ export {
   PanelLeft,
   PanelLeftClose,
   Menu,
+  LogOut,
 } from "lucide-react";
