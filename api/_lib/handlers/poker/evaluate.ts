@@ -84,7 +84,7 @@ const handler_POST = createHandler(
         // Evaluate the hand
         const handRank = hand.evaluate7(allCards);
 
-        logger?.logComplete();
+        logger.logComplete(200);
         res.status(200).json({
             handRank,
             hole: holeCards.cards,

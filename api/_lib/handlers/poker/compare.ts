@@ -106,7 +106,7 @@ const handler_POST = createHandler(
             result = "tie";
         }
 
-        logger?.logComplete();
+        logger.logComplete(200);
         res.status(200).json({
             hand1: {
                 hole: hole1Cards.cards,

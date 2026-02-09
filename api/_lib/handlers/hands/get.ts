@@ -30,6 +30,7 @@ export const getHandler = createHandler(
         const sql = (await import("@lib/database")).default;
 
         // Execute 3 parallel queries
+        const dbStart = Date.now();
         const [handRows, playerRows, actionRows] = await Promise.all([
             // Query 1: Get hand record
             sql`
@@ -53,6 +54,7 @@ export const getHandler = createHandler(
                 ORDER BY sequence_index ASC
             `,
         ]);
+        const dbQueryTimeMs = Date.now() - dbStart;
 
         // Return 404 if hand not found (covers ownership, soft-delete, non-existent)
         if (handRows.length === 0) {
@@ -69,7 +71,7 @@ export const getHandler = createHandler(
             actions: actionRows as HandActionRecord[],
         };
 
-        logger?.logComplete();
+        logger.logComplete(200, { dbQueryTimeMs });
         res.status(200).json(result);
     }
 );

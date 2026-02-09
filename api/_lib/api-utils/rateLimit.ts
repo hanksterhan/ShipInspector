@@ -1,11 +1,10 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
+import { getRedisClient } from "./redisClient";
+import type { StructuredLogger } from "./structuredLogger";
 
 /**
- * Simple in-memory rate limiter for serverless functions
- * Note: This is a basic implementation. For production, consider using
- * Vercel's Edge Config, Redis, or another distributed rate limiting solution
+ * In-memory fallback store (cleared on cold start)
  */
-
 interface RateLimitStore {
     [key: string]: {
         count: number;
@@ -13,19 +12,19 @@ interface RateLimitStore {
     };
 }
 
-// In-memory store (cleared on cold start)
-// In production, use a distributed cache like Redis or Vercel Edge Config
 const store: RateLimitStore = {};
 
 /**
  * Get client IP from request
  */
-function getClientIp(req: VercelRequest): string {
+export function getClientIp(req: VercelRequest): string {
     const forwarded = req.headers["x-forwarded-for"];
     const realIp = req.headers["x-real-ip"];
-    
+
     if (forwarded) {
-        return Array.isArray(forwarded) ? forwarded[0] : forwarded.split(",")[0].trim();
+        return Array.isArray(forwarded)
+            ? forwarded[0]
+            : forwarded.split(",")[0].trim();
     }
     if (realIp) {
         return Array.isArray(realIp) ? realIp[0] : realIp;
@@ -34,41 +33,153 @@ function getClientIp(req: VercelRequest): string {
 }
 
 /**
- * Create a rate limiter middleware
+ * Set rate limit response headers
+ */
+function setRateLimitHeaders(
+    res: VercelResponse,
+    max: number,
+    remaining: number,
+    resetTime: number
+): void {
+    res.setHeader("X-RateLimit-Limit", max);
+    res.setHeader("X-RateLimit-Remaining", Math.max(0, remaining));
+    res.setHeader(
+        "X-RateLimit-Reset",
+        Math.ceil(resetTime / 1000)
+    );
+}
+
+/**
+ * Redis-backed rate limiting using sliding window sorted sets.
+ * Returns true if request is allowed, false if rate-limited.
+ */
+async function checkRedis(
+    ip: string,
+    windowMs: number,
+    max: number,
+    res: VercelResponse,
+    message: string,
+    logger?: StructuredLogger
+): Promise<boolean> {
+    const redis = getRedisClient();
+    if (!redis) return null as any; // Signal fallback
+
+    const key = `rl:${ip}`;
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    try {
+        const pipeline = redis.pipeline();
+        // Remove expired entries
+        pipeline.zremrangebyscore(key, 0, windowStart);
+        // Add current request
+        pipeline.zadd(key, { score: now, member: `${now}:${crypto.randomUUID()}` });
+        // Count entries in window
+        pipeline.zcard(key);
+        // Set TTL to auto-cleanup
+        pipeline.expire(key, Math.ceil(windowMs / 1000));
+
+        const results = await pipeline.exec();
+        const count = results[2] as number;
+
+        const remaining = max - count;
+        const resetTime = now + windowMs;
+
+        setRateLimitHeaders(res, max, remaining, resetTime);
+
+        if (count > max) {
+            const retryAfter = Math.ceil(windowMs / 1000);
+            res.setHeader("Retry-After", retryAfter);
+            res.status(429).json({
+                error: message,
+                retryAfter,
+            });
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        logger?.warn("Redis rate limiting failed, falling back to in-memory", {
+            error: err instanceof Error ? err.message : String(err),
+        });
+        return null as any; // Signal fallback
+    }
+}
+
+/**
+ * In-memory rate limiting (fallback when Redis unavailable)
+ */
+function checkInMemory(
+    ip: string,
+    windowMs: number,
+    max: number,
+    res: VercelResponse,
+    message: string
+): boolean {
+    const now = Date.now();
+    const key = `rate_limit_${ip}`;
+
+    const record = store[key];
+
+    // Reset if window expired
+    if (!record || now > record.resetTime) {
+        store[key] = {
+            count: 1,
+            resetTime: now + windowMs,
+        };
+        setRateLimitHeaders(res, max, max - 1, now + windowMs);
+        return true;
+    }
+
+    // Check if limit exceeded
+    if (record.count >= max) {
+        const retryAfter = Math.ceil((record.resetTime - now) / 1000);
+        setRateLimitHeaders(res, max, 0, record.resetTime);
+        res.setHeader("Retry-After", retryAfter);
+        res.status(429).json({
+            error: message,
+            retryAfter,
+        });
+        return false;
+    }
+
+    // Increment count
+    record.count++;
+    setRateLimitHeaders(res, max, max - record.count, record.resetTime);
+    return true;
+}
+
+/**
+ * Create a rate limiter that uses Redis when available, falling back to in-memory.
  */
 export function createRateLimiter(
     windowMs: number,
     max: number,
     message?: string
 ) {
-    return (req: VercelRequest, res: VercelResponse): boolean => {
+    const msg = message || "Too many requests, please try again later.";
+
+    return async (
+        req: VercelRequest,
+        res: VercelResponse,
+        logger?: StructuredLogger
+    ): Promise<boolean> => {
         const ip = getClientIp(req);
-        const now = Date.now();
-        const key = `rate_limit_${ip}`;
-        
-        const record = store[key];
-        
-        // Reset if window expired
-        if (!record || now > record.resetTime) {
-            store[key] = {
-                count: 1,
-                resetTime: now + windowMs,
-            };
-            return true;
-        }
-        
-        // Check if limit exceeded
-        if (record.count >= max) {
-            res.status(429).json({
-                error: message || "Too many requests, please try again later.",
-                retryAfter: Math.ceil((record.resetTime - now) / 1000),
-            });
-            return false;
-        }
-        
-        // Increment count
-        record.count++;
-        return true;
+
+        // Try Redis first
+        const redisResult = await checkRedis(
+            ip,
+            windowMs,
+            max,
+            res,
+            msg,
+            logger
+        );
+
+        // null signals Redis unavailable, fall back to in-memory
+        if (redisResult !== null) return redisResult;
+
+        return checkInMemory(ip, windowMs, max, res, msg);
     };
 }
 
@@ -76,7 +187,7 @@ export function createRateLimiter(
  * Global rate limiter - 100 requests per 15 minutes
  */
 export const globalRateLimiter = createRateLimiter(
-    parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 minutes
+    parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
     parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
     "Too many requests from this IP, please try again later."
 );
@@ -85,8 +196,7 @@ export const globalRateLimiter = createRateLimiter(
  * Strict rate limiter for expensive operations - 500 requests per 15 minutes
  */
 export const strictRateLimiter = createRateLimiter(
-    parseInt(process.env.RATE_LIMIT_STRICT_WINDOW_MS || "900000", 10), // 15 minutes
+    parseInt(process.env.RATE_LIMIT_STRICT_WINDOW_MS || "900000", 10),
     parseInt(process.env.RATE_LIMIT_STRICT_MAX || "500", 10),
     "Rate limit exceeded for this endpoint. Please try again later."
 );
-

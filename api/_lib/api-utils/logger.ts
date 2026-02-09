@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use StructuredLogger from ./structuredLogger.ts instead.
+ * This module is retained for backward compatibility but will be removed in a future release.
+ */
 import { VercelRequest } from "@vercel/node";
 import { sanitizeObject } from "../../../lib/src/utils/sanitize";
 

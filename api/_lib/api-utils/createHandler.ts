@@ -2,8 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { handleCors } from "./cors";
 import { globalRateLimiter, strictRateLimiter } from "./rateLimit";
 import { requireAuth } from "./auth";
-import { logRequest } from "./logger";
-import { handleError } from "./errorHandler";
+import { StructuredLogger } from "./structuredLogger";
 
 /**
  * Handler configuration options
@@ -18,7 +17,8 @@ export interface HandlerOptions {
  */
 export interface HandlerContext {
     userId: string;
-    logger: { logComplete: () => void } | undefined;
+    logger: StructuredLogger;
+    requestId: string;
     startTime: number;
 }
 
@@ -33,29 +33,12 @@ export type BusinessLogic = (
 
 /**
  * Creates a standardized handler wrapper that applies common middleware:
- * - Request logging
+ * - Structured request logging
  * - CORS handling
  * - HTTP method validation
- * - Rate limiting
+ * - Rate limiting (Redis with in-memory fallback)
  * - Authentication
  * - Error handling
- *
- * This eliminates ~20 lines of boilerplate from each handler.
- *
- * @param options - Handler configuration (method, rateLimit)
- * @param businessLogic - The actual endpoint logic to execute
- * @returns A Vercel serverless function handler
- *
- * @example
- * ```typescript
- * export default createHandler(
- *   { method: "POST", rateLimit: "strict" },
- *   async (req, res, { userId, logger }) => {
- *     // Your business logic here
- *     logger?.logComplete();
- *   }
- * );
- * ```
  */
 export function createHandler(
     options: HandlerOptions,
@@ -63,45 +46,59 @@ export function createHandler(
 ): (req: VercelRequest, res: VercelResponse) => Promise<void> {
     return async (req: VercelRequest, res: VercelResponse): Promise<void> => {
         const startTime = Date.now();
-        const logger = logRequest(req, startTime);
+        const logger = new StructuredLogger(req, startTime);
 
         // Handle CORS (returns false for OPTIONS requests)
         if (!handleCors(req, res)) {
+            logger.logComplete(200);
             return;
         }
 
         // Validate HTTP method
         if (req.method !== options.method) {
+            logger.logComplete(405);
             res.status(405).json({ error: "Method not allowed" });
             return;
         }
 
-        // Apply rate limiting
+        // Apply rate limiting (async - uses Redis when available)
         const rateLimiter =
             options.rateLimit === "strict" ? strictRateLimiter : globalRateLimiter;
-        if (!rateLimiter(req, res)) {
+        if (!(await rateLimiter(req, res, logger))) {
+            logger.logComplete(429);
             return;
         }
 
         try {
             // Require authentication
             const { userId } = requireAuth(req);
+            logger.setUserId(userId);
 
             // Execute business logic with context
             await businessLogic(req, res, {
                 userId,
                 logger,
+                requestId: logger.requestId,
                 startTime,
             });
         } catch (error: any) {
             // Handle authentication errors with 401
             if (error.message === "Not authenticated") {
+                logger.logComplete(401);
                 res.status(401).json({ error: "Not authenticated" });
                 return;
             }
 
             // Handle all other errors with 500
-            handleError(error, res, 500);
+            logger.error("Unhandled error in handler", error);
+            logger.logComplete(500);
+            res.status(500).json({
+                error: error.message || "Internal server error",
+                details:
+                    process.env.NODE_ENV === "development"
+                        ? error.stack
+                        : undefined,
+            });
         }
     };
 }
