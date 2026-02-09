@@ -44,7 +44,6 @@ function CardDisplay({
     <div
       className={cn(
         "flex flex-col items-center justify-center rounded border p-1 min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem]",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color, borderColor: suitData.color }}
     >

@@ -31,7 +31,6 @@ function OutCard({
         variant === "win"
           ? "border-green-500/50 bg-green-500/10"
           : "border-yellow-500/50 bg-yellow-500/10",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color }}
     >

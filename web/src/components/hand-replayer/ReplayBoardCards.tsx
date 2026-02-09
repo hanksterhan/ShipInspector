@@ -18,7 +18,6 @@ function BoardCardSlot({ card }: { card: Card }) {
     <div
       className={cn(
         "flex flex-col items-center justify-center rounded border p-1.5 min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-200",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color, borderColor: suitData.color }}
     >

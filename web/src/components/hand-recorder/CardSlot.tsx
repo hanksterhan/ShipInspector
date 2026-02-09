@@ -47,7 +47,6 @@ export function CardSlot({
           isActive
             ? "border-primary ring-2 ring-primary/50"
             : "border-border hover:border-muted-foreground",
-          suitData.isDark && "card-suit-dark",
           disabled && "opacity-50 pointer-events-none",
         )}
         style={{ color: suitData.color }}

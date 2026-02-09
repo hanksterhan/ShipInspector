@@ -21,13 +21,14 @@ export interface RankData {
 }
 
 // Standard 2-color palette (WCAG AA compliant against dark backgrounds)
+// Black suits use slate-400 (#94a3b8) for ~6.8:1 contrast on dark bg
 export const SUITS: SuitData[] = [
   {
     suit: "c",
     Icon: ClubsIcon,
     label: "Clubs",
-    color: "#64748b",
-    isDark: true,
+    color: "#94a3b8",
+    isDark: false,
   },
   {
     suit: "d",
@@ -47,8 +48,8 @@ export const SUITS: SuitData[] = [
     suit: "s",
     Icon: SpadesIcon,
     label: "Spades",
-    color: "#334155",
-    isDark: true,
+    color: "#94a3b8",
+    isDark: false,
   },
 ];
 

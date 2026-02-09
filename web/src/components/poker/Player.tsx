@@ -37,7 +37,6 @@ function CardSlot({
           isActive
             ? "border-primary ring-2 ring-primary/50"
             : "border-border hover:border-muted-foreground",
-          suitData.isDark && "card-suit-dark",
         )}
         style={{ color: suitData.color }}
       >
@@ -72,7 +71,7 @@ function CardSlot({
           : "border-border hover:border-muted-foreground text-muted-foreground",
       )}
     >
-      <span className="text-[10px]">?</span>
+      <span className="text-xs md:text-sm xl:text-base">?</span>
     </button>
   );
 }

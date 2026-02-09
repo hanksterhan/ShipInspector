@@ -52,7 +52,6 @@ function BoardCardPreview({ card }: BoardCardPreviewProps) {
     <span
       className={cn(
         "flex items-center gap-1 rounded border border-border/70 px-1.5 py-0.5 text-xs font-semibold",
-        suitData.isDark && "card-suit-dark",
       )}
       style={{ color: suitData.color }}
     >
