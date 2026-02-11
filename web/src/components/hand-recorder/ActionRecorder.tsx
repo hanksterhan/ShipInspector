@@ -276,6 +276,7 @@ export function ActionRecorder() {
   const addAction = useHandRecorderStore((s) => s.addAction);
   const updateAction = useHandRecorderStore((s) => s.updateAction);
   const removeAction = useHandRecorderStore((s) => s.removeAction);
+  const autoPostBlinds = useHandRecorderStore((s) => s.autoPostBlinds);
   const tableSize = useHandRecorderStore((s) => s.gameSettings.tableSize);
   const validationErrors = useHandRecorderStore((s) => s.validationErrors);
 
@@ -297,6 +298,12 @@ export function ActionRecorder() {
   useEffect(() => {
     setForm((prev) => ({ ...prev, street: currentStreet }));
   }, [currentStreet]);
+
+  useEffect(() => {
+    if (actions.length === 0) {
+      autoPostBlinds();
+    }
+  }, [actions.length, autoPostBlinds]);
 
   const showAmount = AMOUNT_ACTIONS.has(form.actionType);
   const showRaiseTo = RAISE_ACTIONS.has(form.actionType);

@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import type { CardRank, CardSuit } from "@common/interfaces";
-import { getRankLabel } from "@/lib/poker";
-import { useSuitData } from "@/hooks/useSuitData";
-import { cn } from "@/lib/utils";
-import { useHandLibraryStore } from "@/stores";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { HandListItem } from '@/services/handService';
+import { useHandLibraryStore } from '@/stores';
+import { useHandLibraryFiltersStore } from '@/stores/useHandLibraryFiltersStore';
+import type { SortField } from '@/stores/useHandLibraryFiltersStore';
 import {
   Table,
   TableBody,
@@ -12,8 +11,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -21,62 +20,43 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Play, Trash2 } from "@/assets/icons";
+} from '@/components/ui/dialog';
+import { Loader2, Play, Trash2, ArrowUp, ArrowDown } from '@/assets/icons';
+import { BoardPreview } from './BoardPreview';
 
-interface BoardCardPreviewProps {
-  card: string;
+interface SortableHeaderProps {
+  field: SortField;
+  label: string;
+  currentField: SortField;
+  currentDirection: 'asc' | 'desc';
+  onToggle: (field: SortField) => void;
 }
 
-function BoardCardPreview({ card }: BoardCardPreviewProps) {
-  const resolveSuit = useSuitData();
-  const suit = card.slice(-1) as CardSuit;
-  const rankToken = card.slice(0, -1);
-  const rankValue = Number(rankToken);
-  const rankLabel = Number.isNaN(rankValue)
-    ? rankToken
-    : getRankLabel(rankValue as CardRank);
-  const suitData = resolveSuit(suit);
-
-  if (!suitData) {
-    return (
-      <span className="rounded border border-border/70 px-1.5 py-0.5 text-xs">
-        {card}
-      </span>
-    );
-  }
-
-  const Icon = suitData.Icon;
+function SortableHeader({
+  field,
+  label,
+  currentField,
+  currentDirection,
+  onToggle,
+}: SortableHeaderProps) {
+  const isActive = currentField === field;
 
   return (
-    <span
-      className={cn(
-        "flex items-center gap-1 rounded border border-border/70 px-1.5 py-0.5 text-xs font-semibold",
-      )}
-      style={{ color: suitData.color }}
-    >
-      <span>{rankLabel}</span>
-      <Icon className="size-3" />
-    </span>
-  );
-}
-
-function BoardPreview({ cards }: { cards: Array<string | null> }) {
-  const visibleCards = useMemo(
-    () => cards.filter((card): card is string => Boolean(card)),
-    [cards],
-  );
-
-  if (visibleCards.length === 0) {
-    return <span className="text-xs text-muted-foreground">No board</span>;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-1">
-      {visibleCards.map((card, index) => (
-        <BoardCardPreview key={`${card}-${index}`} card={card} />
-      ))}
-    </div>
+    <TableHead>
+      <button
+        onClick={() => onToggle(field)}
+        className="flex items-center gap-1 hover:text-foreground transition-colors"
+      >
+        {label}
+        {isActive && (
+          currentDirection === 'asc' ? (
+            <ArrowUp className="size-3.5" />
+          ) : (
+            <ArrowDown className="size-3.5" />
+          )
+        )}
+      </button>
+    </TableHead>
   );
 }
 
@@ -96,9 +76,12 @@ function HandLibrarySkeleton() {
   );
 }
 
-export function HandLibraryList() {
+interface HandLibraryListProps {
+  hands: HandListItem[];
+}
+
+export function HandLibraryList({ hands }: HandLibraryListProps) {
   const navigate = useNavigate();
-  const hands = useHandLibraryStore((s) => s.hands ?? []);
   const nextCursor = useHandLibraryStore((s) => s.nextCursor);
   const isLoading = useHandLibraryStore((s) => s.isLoading);
   const error = useHandLibraryStore((s) => s.error);
@@ -107,6 +90,10 @@ export function HandLibraryList() {
   const fetchHands = useHandLibraryStore((s) => s.fetchHands);
   const loadMore = useHandLibraryStore((s) => s.loadMore);
   const deleteHand = useHandLibraryStore((s) => s.deleteHand);
+
+  const sortField = useHandLibraryFiltersStore((s) => s.sortField);
+  const sortDirection = useHandLibraryFiltersStore((s) => s.sortDirection);
+  const toggleSort = useHandLibraryFiltersStore((s) => s.toggleSort);
 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -142,16 +129,34 @@ export function HandLibraryList() {
 
       {hands.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No hands saved yet. Record a hand to see it here.
+          No hands match your filters.
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Stakes</TableHead>
-                <TableHead>Table Size</TableHead>
+                <SortableHeader
+                  field="date"
+                  label="Date"
+                  currentField={sortField}
+                  currentDirection={sortDirection}
+                  onToggle={toggleSort}
+                />
+                <SortableHeader
+                  field="stakes"
+                  label="Stakes"
+                  currentField={sortField}
+                  currentDirection={sortDirection}
+                  onToggle={toggleSort}
+                />
+                <SortableHeader
+                  field="tableSize"
+                  label="Table Size"
+                  currentField={sortField}
+                  currentDirection={sortDirection}
+                  onToggle={toggleSort}
+                />
                 <TableHead>Board</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

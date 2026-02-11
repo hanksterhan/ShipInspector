@@ -11,6 +11,7 @@ interface SettingsState {
   cardSelectionMode: CardSelectionMode;
   fourColorDeck: boolean;
   sidebarCollapsed: boolean;
+  wizardMode: boolean;
 }
 
 interface SettingsActions {
@@ -20,6 +21,8 @@ interface SettingsActions {
   setFourColorDeck: (enabled: boolean) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setWizardMode: (enabled: boolean) => void;
+  toggleWizardMode: () => void;
   resetSettings: () => void;
 }
 
@@ -28,6 +31,7 @@ const DEFAULT_SETTINGS: SettingsState = {
   cardSelectionMode: "52 Cards",
   fourColorDeck: false,
   sidebarCollapsed: false,
+  wizardMode: true,
 };
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
@@ -43,6 +47,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) =>
         set({ sidebarCollapsed: collapsed }),
+      setWizardMode: (enabled) => set({ wizardMode: enabled }),
+      toggleWizardMode: () => set((s) => ({ wizardMode: !s.wizardMode })),
       resetSettings: () => set(DEFAULT_SETTINGS),
     }),
     {
@@ -51,6 +57,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         cardSelectionMode: s.cardSelectionMode,
         fourColorDeck: s.fourColorDeck,
         sidebarCollapsed: s.sidebarCollapsed,
+        wizardMode: s.wizardMode,
       }),
     },
   ),
