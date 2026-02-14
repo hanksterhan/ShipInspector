@@ -11,6 +11,7 @@ import AuthGuard from "./app/AuthGuard";
 import AppLayout from "./app/AppLayout";
 import TokenProviderInit from "./app/TokenProviderInit";
 import LoadingSpinner from "./components/layout/LoadingSpinner";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 const EquityCalculatorPage = lazy(() => import("./pages/EquityCalculatorPage"));
 const HandRecorderPage = lazy(() => import("./pages/HandRecorderPage"));
@@ -27,6 +28,68 @@ function LegacyReplayRedirect() {
   return <Navigate to={`/hands/replay/${handId}`} replace />;
 }
 
+function AppRoutes() {
+  // Initialize global keyboard shortcuts
+  useKeyboardShortcuts();
+
+  return (
+    <>
+      <TokenProviderInit />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen">
+            <LoadingSpinner />
+          </div>
+        }
+      >
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<SignInPage />} />
+          <Route path="/signin" element={<SignInPage />} />
+
+          {/* Protected routes */}
+          <Route element={<AuthGuard />}>
+            <Route element={<AppLayout />}>
+              <Route
+                path="/equity-calculator"
+                element={<EquityCalculatorPage />}
+              />
+              <Route path="/hands/record" element={<HandRecorderPage />} />
+              <Route path="/hands/library" element={<HandLibraryPage />} />
+              <Route
+                path="/hands/replay/:handId?"
+                element={<HandReplayerPage />}
+              />
+              <Route
+                path="/utilities/pot-odds"
+                element={<PotOddsCalculatorPage />}
+              />
+              <Route
+                path="/utilities/spr"
+                element={<SPRCalculatorPage />}
+              />
+            </Route>
+          </Route>
+
+          {/* Legacy redirects */}
+          <Route
+            path="/hand-replayer"
+            element={<Navigate to="/hands/record" replace />}
+          />
+          <Route
+            path="/hand-library"
+            element={<Navigate to="/hands/library" replace />}
+          />
+          <Route path="/replay/:handId" element={<LegacyReplayRedirect />} />
+
+          {/* 404 fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </>
+  );
+}
+
 function App() {
   if (!CLERK_PUBLISHABLE_KEY) {
     throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY environment variable");
@@ -34,59 +97,8 @@ function App() {
 
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <TokenProviderInit />
       <BrowserRouter>
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-screen">
-              <LoadingSpinner />
-            </div>
-          }
-        >
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<SignInPage />} />
-            <Route path="/signin" element={<SignInPage />} />
-
-            {/* Protected routes */}
-            <Route element={<AuthGuard />}>
-              <Route element={<AppLayout />}>
-                <Route
-                  path="/equity-calculator"
-                  element={<EquityCalculatorPage />}
-                />
-                <Route path="/hands/record" element={<HandRecorderPage />} />
-                <Route path="/hands/library" element={<HandLibraryPage />} />
-                <Route
-                  path="/hands/replay/:handId?"
-                  element={<HandReplayerPage />}
-                />
-                <Route
-                  path="/utilities/pot-odds"
-                  element={<PotOddsCalculatorPage />}
-                />
-                <Route
-                  path="/utilities/spr"
-                  element={<SPRCalculatorPage />}
-                />
-              </Route>
-            </Route>
-
-            {/* Legacy redirects */}
-            <Route
-              path="/hand-replayer"
-              element={<Navigate to="/hands/record" replace />}
-            />
-            <Route
-              path="/hand-library"
-              element={<Navigate to="/hands/library" replace />}
-            />
-            <Route path="/replay/:handId" element={<LegacyReplayRedirect />} />
-
-            {/* 404 fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <AppRoutes />
       </BrowserRouter>
     </ClerkProvider>
   );
