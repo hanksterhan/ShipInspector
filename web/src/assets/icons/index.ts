@@ -42,4 +42,5 @@ export {
   Filter,
   Calendar,
   XCircle,
+  Calculator,
 } from "lucide-react";
