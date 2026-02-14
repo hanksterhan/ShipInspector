@@ -8,14 +8,52 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   calculatePotOdds,
   validatePotOddsInput,
 } from "@/lib/poker/potOddsCalculator";
+import { pokerService } from "@/services/pokerService";
+import type { CalculateEquityResponse } from "@common/interfaces";
 
 export default function PotOddsCalculatorPage() {
   const [potSize, setPotSize] = useState<string>("");
   const [betToCall, setBetToCall] = useState<string>("");
+
+  // Board runout simulator state
+  const [heroHand, setHeroHand] = useState<string>("");
+  const [villainHand, setVillainHand] = useState<string>("");
+  const [board, setBoard] = useState<string>("");
+  const [equityResult, setEquityResult] = useState<CalculateEquityResponse | null>(null);
+  const [equityError, setEquityError] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  // Board runout equity calculation
+  const handleCalculateEquity = async () => {
+    setEquityError(null);
+    setEquityResult(null);
+
+    // Basic validation
+    if (!heroHand.trim() || !villainHand.trim()) {
+      setEquityError("Hero and villain hands are required");
+      return;
+    }
+
+    setIsCalculating(true);
+
+    try {
+      const result = await pokerService.getHandEquity(
+        [heroHand.trim(), villainHand.trim()],
+        board.trim(),
+      );
+      setEquityResult(result);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to calculate equity";
+      setEquityError(errorMessage);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   // Calculate results in real-time
   const { result, error } = useMemo(() => {
@@ -139,6 +177,104 @@ export default function PotOddsCalculatorPage() {
                 Enter pot size and bet to calculate pot odds.
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Board Runout Simulator - spans both columns on desktop */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Board Runout Simulator</CardTitle>
+            <CardDescription>
+              Calculate your equity against an opponent's hand on the current board
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <Label htmlFor="heroHand">Hero Hand</Label>
+                  <Input
+                    id="heroHand"
+                    type="text"
+                    value={heroHand}
+                    onChange={(e) => setHeroHand(e.target.value.toUpperCase())}
+                    placeholder="AhKh"
+                    className="mt-1"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    e.g., AhKh, QdQc
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="villainHand">Villain Hand</Label>
+                  <Input
+                    id="villainHand"
+                    type="text"
+                    value={villainHand}
+                    onChange={(e) => setVillainHand(e.target.value.toUpperCase())}
+                    placeholder="QdQc"
+                    className="mt-1"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    e.g., JsTs, 9h8h
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="board">Board (optional)</Label>
+                  <Input
+                    id="board"
+                    type="text"
+                    value={board}
+                    onChange={(e) => setBoard(e.target.value.toUpperCase())}
+                    placeholder="Ad2h3c"
+                    className="mt-1"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    e.g., Ad2h3c, Ad2h3c4s
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleCalculateEquity}
+                disabled={isCalculating}
+                className="w-full md:w-auto"
+              >
+                {isCalculating ? "Calculating..." : "Calculate Equity"}
+              </Button>
+
+              {equityError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {equityError}
+                </p>
+              )}
+
+              {equityResult && (
+                <div className="mt-4 space-y-4 rounded-md border p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Hero Equity</p>
+                      <p className="text-3xl font-bold">
+                        {(equityResult.equity.win[0] * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Villain Equity
+                      </p>
+                      <p className="text-3xl font-bold">
+                        {(equityResult.equity.win[1] * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Win: {(equityResult.equity.win[0] * 100).toFixed(1)}% | Tie:{" "}
+                    {(equityResult.equity.tie[0] * 100).toFixed(1)}% |
+                    Simulations: {equityResult.equity.samples.toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
