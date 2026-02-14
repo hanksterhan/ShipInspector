@@ -34,6 +34,7 @@ function CardSlot({
         className={cn(
           "relative flex flex-col items-center justify-center rounded-md border p-1",
           "min-w-[3rem] min-h-[4rem] md:min-w-[3.5rem] md:min-h-[4.5rem] xl:min-w-[4.5rem] xl:min-h-[5.5rem] transition-all",
+          "motion-safe:hover:-translate-y-1",
           isActive
             ? "border-primary ring-2 ring-primary/50"
             : "border-border hover:border-muted-foreground",
@@ -124,7 +125,7 @@ export function Player({ playerIndex }: PlayerProps) {
         <span className="text-[10px] font-medium text-muted-foreground">
           P{playerIndex + 1}
         </span>
-        {isWinner && <Crown className="size-3 text-yellow-400" />}
+        {isWinner && <Crown className="size-3 text-amber-400" />}
         <Button
           variant="ghost"
           size="icon-xs"
