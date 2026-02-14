@@ -17,6 +17,7 @@ const HandRecorderPage = lazy(() => import("./pages/HandRecorderPage"));
 const HandLibraryPage = lazy(() => import("./pages/HandLibraryPage"));
 const HandReplayerPage = lazy(() => import("./pages/HandReplayerPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
+const PotOddsCalculatorPage = lazy(() => import("./pages/utilities/PotOddsCalculatorPage"));
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -58,6 +59,10 @@ function App() {
                 <Route
                   path="/hands/replay/:handId?"
                   element={<HandReplayerPage />}
+                />
+                <Route
+                  path="/utilities/pot-odds"
+                  element={<PotOddsCalculatorPage />}
                 />
               </Route>
             </Route>
