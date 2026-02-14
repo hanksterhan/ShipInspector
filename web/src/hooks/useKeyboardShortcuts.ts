@@ -2,9 +2,13 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSettingsStore } from "@/stores";
 
+// NOTE: Keyboard shortcuts are optimized for QWERTY keyboard layouts.
+// Navigation shortcuts (Cmd/Ctrl+1-4) are disabled when modals are open.
+// Escape key closes modals (handled by Radix UI Dialog/Sheet components).
+
 /**
  * Global keyboard shortcuts hook
- * - Ctrl+B / Cmd+B: Toggle sidebar
+ * - Ctrl+B / Cmd+B: Toggle sidebar (works even with modal open)
  * - Ctrl+1 / Cmd+1: Navigate to Equity Calculator
  * - Ctrl+2 / Cmd+2: Navigate to Record Hand
  * - Ctrl+3 / Cmd+3: Navigate to Hand Library
@@ -35,11 +39,19 @@ export function useKeyboardShortcuts() {
     function handleKeyDown(e: KeyboardEvent) {
       if (isTextInput(e.target)) return;
 
+      // Check if a modal/dialog is open
+      const hasOpenModal = document.querySelector('[role="dialog"]') !== null;
+
       const isMeta = e.metaKey || e.ctrlKey;
 
       if (isMeta && e.key === "b") {
+        // Sidebar toggle always works, even with modal open
         e.preventDefault();
         toggleSidebar();
+      } else if (hasOpenModal) {
+        // Block navigation shortcuts when modal is open
+        // Escape key (handled by Radix UI) will close the modal
+        return;
       } else if (isMeta && e.key === "1") {
         e.preventDefault();
         navigate("/equity-calculator");
