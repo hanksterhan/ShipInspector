@@ -35,8 +35,7 @@ const mainNavItems = [
 ];
 
 const utilityItems: Array<{ to: string; label: string; icon: typeof Calculator }> = [
-  // Utility items will be added by SI-93, SI-99, etc.
-  // Example: { to: "/utilities/pot-odds", label: "Pot Odds Calculator", icon: Calculator }
+  { to: "/utilities/pot-odds", label: "Pot Odds Calculator", icon: Calculator },
 ];
 
 function SidebarNav({
