@@ -23,10 +23,10 @@ export function AddPlayerButton({ playerIndex }: AddPlayerButtonProps) {
             variant="ghost"
             size="icon-xs"
             onClick={() => addPlayer(playerIndex)}
-            className="text-muted-foreground hover:text-foreground"
+            className="size-7 md:size-8 xl:size-9 text-muted-foreground hover:text-foreground"
             aria-label={`Add Player ${playerIndex + 1}`}
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-4 md:size-5 xl:size-6" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Add Player</TooltipContent>

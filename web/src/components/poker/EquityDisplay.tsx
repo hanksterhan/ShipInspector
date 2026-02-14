@@ -23,7 +23,7 @@ export function EquityDisplay() {
 
   if (equityState.status === "success" && equityState.data) {
     return (
-      <div className="text-xs text-muted-foreground">
+      <div className="text-xs tabular-nums text-muted-foreground">
         {equityState.data.samples.toLocaleString()} samples
       </div>
     );

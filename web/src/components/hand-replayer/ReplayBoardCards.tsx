@@ -5,25 +5,26 @@ import { useHandReplayStore } from "@/stores/useHandReplayStore";
 import {
   selectCurrentPot,
 } from "@/stores/useHandReplayStore";
-import { SUIT_MAP, getRankLabel } from "@/lib/poker";
+import { getRankLabel } from "@/lib/poker";
+import { useSuitData } from "@/hooks/useSuitData";
 import { cn } from "@/lib/utils";
 
 function BoardCardSlot({ card }: { card: Card }) {
-  const suitData = SUIT_MAP[card.suit];
+  const resolveSuit = useSuitData();
+  const suitData = resolveSuit(card.suit);
   const Icon = suitData.Icon;
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded border p-1.5 min-w-[2.5rem] min-h-[3rem] animate-in fade-in zoom-in-95 duration-200",
-        suitData.isDark && "card-suit-dark",
+        "flex flex-col items-center justify-center rounded border p-1.5 min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-200",
       )}
       style={{ color: suitData.color, borderColor: suitData.color }}
     >
-      <span className="text-sm font-bold leading-none">
+      <span className="text-base font-black leading-none md:text-lg xl:text-xl">
         {getRankLabel(card.rank)}
       </span>
-      <Icon className="size-3.5" />
+      <Icon className="size-4 md:size-5 xl:size-6" />
     </div>
   );
 }
@@ -68,7 +69,7 @@ export function ReplayBoardCards() {
                 ) : (
                   <div
                     key={i}
-                    className="flex min-w-[2.5rem] min-h-[3rem] items-center justify-center rounded border border-dashed border-border/50"
+                    className="flex min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] items-center justify-center rounded border border-dashed border-border/50"
                   >
                     <span className="text-xs text-muted-foreground/50">?</span>
                   </div>
@@ -85,7 +86,7 @@ export function ReplayBoardCards() {
             {board[3] ? (
               <BoardCardSlot card={board[3]} />
             ) : (
-              <div className="flex min-w-[2.5rem] min-h-[3rem] items-center justify-center rounded border border-dashed border-border/50">
+              <div className="flex min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] items-center justify-center rounded border border-dashed border-border/50">
                 <span className="text-xs text-muted-foreground/50">?</span>
               </div>
             )}
@@ -99,7 +100,7 @@ export function ReplayBoardCards() {
             {board[4] ? (
               <BoardCardSlot card={board[4]} />
             ) : (
-              <div className="flex min-w-[2.5rem] min-h-[3rem] items-center justify-center rounded border border-dashed border-border/50">
+              <div className="flex min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] items-center justify-center rounded border border-dashed border-border/50">
                 <span className="text-xs text-muted-foreground/50">?</span>
               </div>
             )}
@@ -108,7 +109,7 @@ export function ReplayBoardCards() {
       </div>
 
       {pot > 0 && (
-        <div className="rounded-md bg-muted/60 px-3 py-1 text-sm font-semibold">
+        <div className="rounded-md bg-muted/60 px-3 py-1 text-sm font-semibold tabular-nums">
           Pot: ${(pot / 100).toFixed(2)}
         </div>
       )}

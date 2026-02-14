@@ -1,4 +1,11 @@
-export { SUITS, RANKS, SUIT_MAP, ALL_SUITS, ALL_RANKS } from "./constants";
+export {
+  SUITS,
+  RANKS,
+  SUIT_MAP,
+  ALL_SUITS,
+  ALL_RANKS,
+  getSuitData,
+} from "./constants";
 export type { SuitData, RankData } from "./constants";
 
 export {
