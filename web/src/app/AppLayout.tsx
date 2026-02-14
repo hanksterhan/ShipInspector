@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSettingsStore } from "@/stores";
@@ -25,13 +25,29 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { PageHeaderProvider, usePageHeader } from "./PageHeaderContext";
 
 const mainNavItems = [
-  { to: "/equity-calculator", label: "Equity Calculator", icon: Percent },
-  { to: "/hands/record", label: "Record Hand", icon: Table2 },
-  { to: "/hands/library", label: "Hand Library", icon: FolderOpen },
+  {
+    to: "/equity-calculator",
+    label: "Equity Calculator",
+    icon: Percent,
+    shortcut: "1",
+  },
+  { to: "/hands/record", label: "Record Hand", icon: Table2, shortcut: "2" },
+  {
+    to: "/hands/library",
+    label: "Hand Library",
+    icon: FolderOpen,
+    shortcut: "3",
+  },
 ];
 
 const utilityItems: Array<{ to: string; label: string; icon: typeof Calculator }> = [
@@ -48,29 +64,41 @@ function SidebarNav({
   onSignOut: () => void;
   onNavClick?: () => void;
 }) {
+  // Detect platform for keyboard shortcut display
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const modKey = isMac ? "⌘" : "Ctrl+";
+
   return (
-    <>
+    <TooltipProvider delayDuration={300}>
       <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1">
         {/* Main nav items */}
-        {mainNavItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            onClick={onNavClick}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                collapsed ? "justify-center" : "px-3",
-              )
-            }
-            title={label}
-          >
-            <Icon className="size-4 shrink-0" />
-            {!collapsed && <span>{label}</span>}
-          </NavLink>
+        {mainNavItems.map(({ to, label, icon: Icon, shortcut }) => (
+          <Tooltip key={to}>
+            <TooltipTrigger asChild>
+              <NavLink
+                to={to}
+                onClick={onNavClick}
+                className={({ isActive }) =>
+                  cn(
+                    "w-full flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    collapsed ? "justify-center" : "px-3",
+                  )
+                }
+              >
+                <Icon className="size-4 shrink-0" />
+                {!collapsed && <span>{label}</span>}
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side={collapsed ? "right" : "bottom"}>
+              <p>
+                {label} ({modKey}
+                {shortcut})
+              </p>
+            </TooltipContent>
+          </Tooltip>
         ))}
 
         {/* Utilities section */}
@@ -151,7 +179,7 @@ function SidebarNav({
         <LogOut className="size-4 shrink-0" />
         {!collapsed && <span>Sign Out</span>}
       </button>
-    </>
+    </TooltipProvider>
   );
 }
 
@@ -164,26 +192,14 @@ export default function AppLayout() {
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Detect platform for keyboard shortcut display
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const modKey = isMac ? "⌘" : "Ctrl+";
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
-
-  // Keyboard shortcut: Ctrl+B / Cmd+B toggles sidebar
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
-          return;
-        }
-        e.preventDefault();
-        toggleSidebar();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
 
   return (
     <PageHeaderProvider>
@@ -230,19 +246,30 @@ export default function AppLayout() {
 
         {/* Toggle button - bottom right */}
         <div className={cn("mt-2 flex", collapsed ? "justify-center" : "justify-end")}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="text-sidebar-foreground"
-          >
-            {collapsed ? (
-              <PanelLeft className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
-            )}
-          </Button>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleSidebar}
+                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  className="text-sidebar-foreground"
+                >
+                  {collapsed ? (
+                    <PanelLeft className="size-4" />
+                  ) : (
+                    <PanelLeftClose className="size-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>
+                  {collapsed ? "Expand" : "Collapse"} ({modKey}B)
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </aside>
 
