@@ -124,7 +124,7 @@ export function Player({ playerIndex }: PlayerProps) {
         <span className="text-[10px] font-medium text-muted-foreground">
           P{playerIndex + 1}
         </span>
-        {isWinner && <Crown className="size-3 text-yellow-400" />}
+        {isWinner && <Crown className="size-3 text-amber-400" />}
         <Button
           variant="ghost"
           size="icon-xs"

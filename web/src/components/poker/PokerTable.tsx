@@ -23,8 +23,8 @@ export function PokerTable() {
   return (
     <div className="relative aspect-[16/10] h-full max-w-full">
       {/* Table background */}
-      <div className="absolute inset-[8%] rounded-[50%] border-2 border-border bg-card shadow-inner" />
-      <div className="absolute inset-[10%] rounded-[50%] border border-border/50 bg-muted/30" />
+      <div className="absolute inset-[8%] rounded-[50%] border-2 border-amber-900/30 bg-emerald-950/20 shadow-inner" />
+      <div className="absolute inset-[10%] rounded-[50%] border border-amber-900/30 bg-emerald-950/20" />
 
       {/* Board cards - centered */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">

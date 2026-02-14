@@ -141,7 +141,7 @@ export function BoardCards() {
 
       {/* Winning hand name */}
       {winningHandName && (
-        <span className="text-xs font-medium text-yellow-400">
+        <span className="text-xs font-medium text-amber-400">
           {winningHandName}
         </span>
       )}
