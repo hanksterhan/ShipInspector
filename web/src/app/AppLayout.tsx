@@ -80,7 +80,7 @@ function SidebarNav({
                 onClick={onNavClick}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                    "w-full flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50",
