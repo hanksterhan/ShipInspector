@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   Menu,
   LogOut,
+  Calculator,
 } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,13 +20,23 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PageHeaderProvider, usePageHeader } from "./PageHeaderContext";
 
-const navItems = [
+const mainNavItems = [
   { to: "/equity-calculator", label: "Equity Calculator", icon: Percent },
   { to: "/hands/record", label: "Record Hand", icon: Table2 },
   { to: "/hands/library", label: "Hand Library", icon: FolderOpen },
+];
+
+const utilityItems: Array<{ to: string; label: string; icon: typeof Calculator }> = [
+  // Utility items will be added by SI-93, SI-99, etc.
+  // Example: { to: "/utilities/pot-odds", label: "Pot Odds Calculator", icon: Calculator }
 ];
 
 function SidebarNav({
@@ -40,7 +51,8 @@ function SidebarNav({
   return (
     <>
       <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1">
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {/* Main nav items */}
+        {mainNavItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -60,6 +72,73 @@ function SidebarNav({
             {!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
+
+        {/* Utilities section */}
+        {collapsed ? (
+          // Collapsed mode: show Calculator icon with popover
+          utilityItems.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="flex items-center justify-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+                  title="Utilities"
+                  aria-label="Utilities"
+                >
+                  <Calculator className="size-4 shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" className="w-48">
+                <div className="flex flex-col gap-1">
+                  {utilityItems.map(({ to, label, icon: Icon }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={onNavClick}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                        )
+                      }
+                    >
+                      <Icon className="size-4 shrink-0" />
+                      <span>{label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )
+        ) : (
+          // Expanded mode: show section header with utility links
+          <>
+            <div className="mt-4 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              <Calculator className="mr-1.5 inline size-3" />
+              Utilities
+            </div>
+            {utilityItems.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={onNavClick}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                  )
+                }
+                title={label}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
       <button
         onClick={onSignOut}
