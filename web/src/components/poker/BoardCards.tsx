@@ -28,8 +28,10 @@ function BoardCardSlot({
         className={cn(
           "flex flex-col items-center justify-center rounded-md border p-1.5",
           "min-w-[3.75rem] min-h-[5rem] md:min-w-[4.25rem] md:min-h-[5.5rem] xl:min-w-[5.5rem] xl:min-h-[7rem] transition-all",
+          "motion-safe:hover:-translate-y-1",
+          isWinning && "motion-safe:animate-pulse",
           isWinning
-            ? "border-yellow-400 ring-2 ring-yellow-400/50 bg-yellow-400/10"
+            ? "border-amber-400 ring-2 ring-amber-400/50 bg-amber-400/10"
             : isActive
               ? "border-primary ring-2 ring-primary/50"
               : "border-border hover:border-muted-foreground",
