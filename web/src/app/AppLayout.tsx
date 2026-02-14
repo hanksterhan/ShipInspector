@@ -36,6 +36,7 @@ const mainNavItems = [
 
 const utilityItems: Array<{ to: string; label: string; icon: typeof Calculator }> = [
   { to: "/utilities/pot-odds", label: "Pot Odds Calculator", icon: Calculator },
+  { to: "/utilities/spr", label: "SPR Calculator", icon: Calculator },
 ];
 
 function SidebarNav({
