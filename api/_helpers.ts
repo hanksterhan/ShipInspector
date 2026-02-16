@@ -15,7 +15,7 @@ try {
     // Check if common source or dist exists
     const commonSrc = path.join(baseUrl, "common", "src");
     const commonDist = path.join(baseUrl, "common", "dist", "common", "src");
-    
+
     // Build paths array - prefer source if it exists, otherwise use dist
     const commonPaths: string[] = [];
     if (fs.existsSync(commonSrc)) {
@@ -28,16 +28,33 @@ try {
     if (commonPaths.length === 0) {
         commonPaths.push("common/src/*");
     }
-    
+
+    // Check if lib source or dist exists
+    const libSrc = path.join(baseUrl, "lib", "src");
+    const libDist = path.join(baseUrl, "lib", "dist", "lib", "src");
+
+    const libPaths: string[] = [];
+    if (fs.existsSync(libSrc)) {
+        libPaths.push("lib/src/*");
+    }
+    if (fs.existsSync(libDist)) {
+        libPaths.push("lib/dist/lib/src/*");
+    }
+    if (libPaths.length === 0) {
+        libPaths.push("lib/src/*");
+    }
+
     // Register path aliases for runtime resolution
     register({
         baseUrl: baseUrl,
         paths: {
             "@common/*": commonPaths,
+            "@lib/*": libPaths,
         },
     });
-    
+
     console.log(`[Path Resolver] Registered @common/* paths: ${commonPaths.join(", ")}`);
+    console.log(`[Path Resolver] Registered @lib/* paths: ${libPaths.join(", ")}`);
 } catch (error: any) {
     // If tsconfig-paths fails, log warning but continue
     // The build process should have resolved paths, but if not, imports will fail
