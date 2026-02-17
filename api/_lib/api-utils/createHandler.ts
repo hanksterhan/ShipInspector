@@ -36,7 +36,7 @@ export type BusinessLogic = (
  * - Structured request logging
  * - CORS handling
  * - HTTP method validation
- * - Rate limiting (Redis with in-memory fallback)
+ * - Rate limiting (in-memory; Redis paused)
  * - Authentication
  * - Error handling
  */

@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { getRedisClient } from "./redisClient";
+// import { getRedisClient } from "./redisClient"; // Redis paused - not enough traffic to justify
 import type { StructuredLogger } from "./structuredLogger";
 
 /**
@@ -49,62 +49,46 @@ function setRateLimitHeaders(
     );
 }
 
-/**
- * Redis-backed rate limiting using sliding window sorted sets.
- * Returns true if request is allowed, false if rate-limited.
- */
-async function checkRedis(
-    ip: string,
-    windowMs: number,
-    max: number,
-    res: VercelResponse,
-    message: string,
-    logger?: StructuredLogger
-): Promise<boolean> {
-    const redis = getRedisClient();
-    if (!redis) return null as any; // Signal fallback
-
-    const key = `rl:${ip}`;
-    const now = Date.now();
-    const windowStart = now - windowMs;
-
-    try {
-        const pipeline = redis.pipeline();
-        // Remove expired entries
-        pipeline.zremrangebyscore(key, 0, windowStart);
-        // Add current request
-        pipeline.zadd(key, { score: now, member: `${now}:${crypto.randomUUID()}` });
-        // Count entries in window
-        pipeline.zcard(key);
-        // Set TTL to auto-cleanup
-        pipeline.expire(key, Math.ceil(windowMs / 1000));
-
-        const results = await pipeline.exec();
-        const count = results[2] as number;
-
-        const remaining = max - count;
-        const resetTime = now + windowMs;
-
-        setRateLimitHeaders(res, max, remaining, resetTime);
-
-        if (count > max) {
-            const retryAfter = Math.ceil(windowMs / 1000);
-            res.setHeader("Retry-After", retryAfter);
-            res.status(429).json({
-                error: message,
-                retryAfter,
-            });
-            return false;
-        }
-
-        return true;
-    } catch (err) {
-        logger?.warn("Redis rate limiting failed, falling back to in-memory", {
-            error: err instanceof Error ? err.message : String(err),
-        });
-        return null as any; // Signal fallback
-    }
-}
+// Redis-backed rate limiting paused - not enough traffic to justify.
+// Uncomment checkRedis and re-enable in createRateLimiter when needed.
+// async function checkRedis(
+//     ip: string,
+//     windowMs: number,
+//     max: number,
+//     res: VercelResponse,
+//     message: string,
+//     logger?: StructuredLogger
+// ): Promise<boolean> {
+//     const redis = getRedisClient();
+//     if (!redis) return null as any;
+//     const key = `rl:${ip}`;
+//     const now = Date.now();
+//     const windowStart = now - windowMs;
+//     try {
+//         const pipeline = redis.pipeline();
+//         pipeline.zremrangebyscore(key, 0, windowStart);
+//         pipeline.zadd(key, { score: now, member: `${now}:${crypto.randomUUID()}` });
+//         pipeline.zcard(key);
+//         pipeline.expire(key, Math.ceil(windowMs / 1000));
+//         const results = await pipeline.exec();
+//         const count = results[2] as number;
+//         const remaining = max - count;
+//         const resetTime = now + windowMs;
+//         setRateLimitHeaders(res, max, remaining, resetTime);
+//         if (count > max) {
+//             const retryAfter = Math.ceil(windowMs / 1000);
+//             res.setHeader("Retry-After", retryAfter);
+//             res.status(429).json({ error: message, retryAfter });
+//             return false;
+//         }
+//         return true;
+//     } catch (err) {
+//         logger?.warn("Redis rate limiting failed, falling back to in-memory", {
+//             error: err instanceof Error ? err.message : String(err),
+//         });
+//         return null as any;
+//     }
+// }
 
 /**
  * In-memory rate limiting (fallback when Redis unavailable)
@@ -162,22 +146,14 @@ export function createRateLimiter(
     return async (
         req: VercelRequest,
         res: VercelResponse,
-        logger?: StructuredLogger
+        _logger?: StructuredLogger
     ): Promise<boolean> => {
         const ip = getClientIp(req);
 
-        // Try Redis first
-        const redisResult = await checkRedis(
-            ip,
-            windowMs,
-            max,
-            res,
-            msg,
-            logger
-        );
-
-        // null signals Redis unavailable, fall back to in-memory
-        if (redisResult !== null) return redisResult;
+        // Redis paused - using in-memory only for now.
+        // To re-enable, uncomment checkRedis above and restore:
+        // const redisResult = await checkRedis(ip, windowMs, max, res, msg, logger);
+        // if (redisResult !== null) return redisResult;
 
         return checkInMemory(ip, windowMs, max, res, msg);
     };
