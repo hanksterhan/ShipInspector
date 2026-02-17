@@ -1,0 +1,11 @@
+{
+  "name": "wasm-equity",
+  "version": "0.1.0",
+  "files": [
+    "wasm_equity_bg.wasm",
+    "wasm_equity.js",
+    "wasm_equity.d.ts"
+  ],
+  "main": "wasm_equity.js",
+  "types": "wasm_equity.d.ts"
+}

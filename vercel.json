@@ -8,7 +8,7 @@
         "api/index.ts": {
             "memory": 1024,
             "maxDuration": 10,
-            "includeFiles": "api/dist/lib/**"
+            "includeFiles": "lib/wasm-equity/pkg/**"
         }
     },
     "rewrites": [
