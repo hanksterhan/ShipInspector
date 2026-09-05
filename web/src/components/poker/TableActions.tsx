@@ -5,13 +5,17 @@ import type {
   TableView,
 } from "@common/interfaces/tableInterfaces";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { TurnTimer } from "./TurnTimer";
 
 export function TableActions({
   table,
+  remaining = null,
   disabled,
   send,
 }: {
   table: TableView;
+  remaining?: number | null;
   disabled: boolean;
   send: (command: TableCommand) => void;
 }) {
@@ -20,6 +24,18 @@ export function TableActions({
   const [amount, setAmount] = useState(legal?.minRaiseTo || 0);
   const you = table.seats.find((s) => s.isYou);
   const between = ["waiting", "complete"].includes(table.street);
+  const actor = table.seats.find((s) => s.seat === table.actor);
+  const timer =
+    remaining !== null && actor && !between && !table.closed ? (
+      <TurnTimer
+        remaining={remaining}
+        duration={table.settings.turnSeconds}
+        name={actor.name}
+        isYou={actor.isYou}
+      />
+    ) : null;
+  const warning = remaining !== null && remaining <= 10;
+  const critical = remaining !== null && remaining <= 5;
   const clamp = (n: number) =>
     Math.max(
       legal?.minRaiseTo || 0,
@@ -34,7 +50,8 @@ export function TableActions({
   if (between || you?.status === "waiting")
     return (
       <div className="table-action-bar between-hands">
-        <div>
+        {timer}
+        <div className="between-hands-summary">
           <strong>
             {you
               ? you.ready
@@ -97,20 +114,43 @@ export function TableActions({
   if (!legal)
     return (
       <div className="table-action-bar waiting-action">
-        <span className="turn-dot" />
-        <strong>
-          {table.seats.find((s) => s.seat === table.actor)?.name || "The table"}{" "}
-          {table.seats.find((s) => s.seat === table.actor)?.kind === "cpu"
-            ? "is thinking"
-            : "to act"}
-        </strong>
+        {timer || (
+          <>
+            <span className="turn-dot" />
+            <strong>
+              {actor?.name || "The table"}{" "}
+              {actor?.kind === "cpu" ? "is thinking" : "to act"}
+            </strong>
+          </>
+        )}
         {you?.status === "folded" && <span>You folded this hand</span>}
       </div>
     );
   return (
-    <div className="table-action-bar your-action">
+    <div
+      className={cn(
+        "table-action-bar your-action",
+        warning && "has-turn-warning",
+        critical && "has-turn-critical",
+        remaining === 0 && "has-turn-expired",
+      )}
+    >
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        {remaining === 0
+          ? "Time expired. Waiting for the table."
+          : critical
+            ? "Five seconds or less. Act now."
+            : warning
+              ? "Ten seconds or less. Time running out."
+              : ""}
+      </span>
       <div className="action-row">
-        <strong>Your turn</strong>
+        {timer || <strong>Your turn</strong>}
         <div className="live-button-group">
           <Button
             variant="outline"

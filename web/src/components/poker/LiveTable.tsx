@@ -5,8 +5,15 @@ import { BotIcon } from "./CpuPlayers";
 import { PlayingCard } from "./PlayingCard";
 import { cn } from "@/lib/utils";
 import { useCardDeal } from "@/hooks/useCardDeal";
+import { TurnTimer } from "./TurnTimer";
 
-export function LiveTable({ table }: { table: TableView }) {
+export function LiveTable({
+  table,
+  remaining = null,
+}: {
+  table: TableView;
+  remaining?: number | null;
+}) {
   const felt = useCardDeal(table);
   const betting = !["waiting", "complete"].includes(table.street);
   const street =
@@ -39,6 +46,15 @@ export function LiveTable({ table }: { table: TableView }) {
           s.isYou && "is-you",
           s.kind === "cpu" && `cpu-${s.botStyle || "balanced"}`,
           s.seat === table.actor && "is-acting",
+          s.seat === table.actor &&
+            remaining !== null &&
+            remaining <= 10 &&
+            "has-turn-warning",
+          s.seat === table.actor &&
+            remaining !== null &&
+            remaining <= 5 &&
+            "has-turn-critical",
+          s.seat === table.actor && remaining === 0 && "has-turn-expired",
           s.status === "folded" && table.street !== "complete" && "is-folded",
           paid.has(s.seat) && "is-winner",
         )}
@@ -156,15 +172,25 @@ export function LiveTable({ table }: { table: TableView }) {
         <div className="live-seat-stack">
           <span>Stack</span> {s.stack.toLocaleString()}
         </div>
-        <div className="live-seat-action">
-          {paid.has(s.seat) ? (
-            <span className="chip-award">
-              +{paid.get(s.seat)?.toLocaleString()}
-            </span>
-          ) : (
-            s.lastAction || (s.seat === table.actor ? "To act" : " ")
-          )}
-        </div>
+        {s.seat === table.actor && remaining !== null ? (
+          <TurnTimer
+            remaining={remaining}
+            duration={table.settings.turnSeconds}
+            name={s.name}
+            isYou={s.isYou}
+            compact
+          />
+        ) : (
+          <div className="live-seat-action">
+            {paid.has(s.seat) ? (
+              <span className="chip-award">
+                +{paid.get(s.seat)?.toLocaleString()}
+              </span>
+            ) : (
+              s.lastAction || (s.seat === table.actor ? "To act" : " ")
+            )}
+          </div>
+        )}
       </div>
     ) : (
       <div key={`empty-${index}`} className="live-seat live-seat-empty">

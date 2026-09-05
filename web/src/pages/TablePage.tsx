@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import {
@@ -18,12 +18,14 @@ import { TableActions } from "@/components/poker/TableActions";
 import { CpuPlayers } from "@/components/poker/CpuPlayers";
 import { AgentSeats } from "@/components/poker/AgentSeats";
 import { useLiveTable } from "@/hooks/useLiveTable";
+import { useTurnCountdown } from "@/hooks/useTurnCountdown";
 
 export default function TablePage() {
   const { tableId = "" } = useParams();
   const { user } = useUser();
   const live = useLiveTable(tableId);
   const { table } = live;
+  const remaining = useTurnCountdown(table, live.receivedAt.current);
   const [name, setName] = useState(
     user?.firstName || user?.username || "Player",
   );
@@ -33,11 +35,6 @@ export default function TablePage() {
   const agentTrigger = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
   if (live.loading)
     return (
       <div className="live-empty">
@@ -85,18 +82,6 @@ export default function TablePage() {
         </div>
       </div>
     );
-  const remaining =
-    table.deadline === null
-      ? null
-      : Math.max(
-          0,
-          Math.ceil(
-            (table.deadline -
-              table.serverTime -
-              (now - live.receivedAt.current)) /
-              1000,
-          ),
-        );
   const disabled =
     live.busy ||
     !!live.retry ||
@@ -192,18 +177,8 @@ export default function TablePage() {
                     ? "Hand complete"
                     : table.street[0].toUpperCase() + table.street.slice(1)}
             </strong>
-            {remaining !== null && (
-              <span
-                className={
-                  remaining <= 10 ? "turn-clock is-urgent" : "turn-clock"
-                }
-                aria-label={`${remaining} seconds left`}
-              >
-                {remaining}s
-              </span>
-            )}
           </div>
-          <LiveTable table={table} />
+          <LiveTable table={table} remaining={remaining} />
           {table.street === "complete" && (
             <div className="live-result" key={table.handNumber} role="status">
               <Crown size={26} />
@@ -233,6 +208,7 @@ export default function TablePage() {
           <TableActions
             key={`${table.handNumber}:${table.street}:${table.currentBet}:${table.actor}`}
             table={table}
+            remaining={remaining}
             disabled={disabled}
             send={(command) => void live.send(command)}
           />
