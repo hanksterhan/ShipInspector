@@ -76,4 +76,16 @@ describe("CPU policy and lifecycle", () => {
     act(t, "owner", "fold", undefined, 1); applyCommand(t, "owner", { type: "remove-bot", seat: 1 }, 2);
     expect(t.seats).toHaveLength(1); expect(t.awards).toEqual([]); expect(t.members).toEqual(["owner"]);
   });
+  it("fills all eight open seats when the host chooses to watch, without exposing CPU cards", () => {
+    const t = makeTable("cpu-spectator", "owner", settings);
+    applyCommand(t, "owner", { type: "add-bots", styles: Array.from({ length: 8 }, (_, i) => BOT_STYLES[i % 4]) }, 0);
+    expect(t.seats).toHaveLength(8); expect(tableView(t, "owner", 0).canDeal).toBe(true);
+    deal(t, 0);
+    const view = tableView(t, "owner", 0);
+    expect(view.yourSeat).toBeNull(); expect(view.seats.every(s => s.cards.length === 0)).toBe(true);
+    let turns = 0;
+    while (t.street !== "complete" && turns++ < 120) expect(progressTable(t, turns * 2000)).toBe(true);
+    expect(t.street).toBe("complete"); expect(t.seats.reduce((sum, s) => sum + s.stack, 0)).toBe(8000);
+  });
+
 });

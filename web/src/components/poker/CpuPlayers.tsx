@@ -96,7 +96,7 @@ export function CpuPlayers({
           send({
             type: "add-bots",
             styles: Array.from(
-              { length: Math.min(7, openSeats) },
+              { length: Math.min(8, openSeats) },
               (_, i) => BOT_STYLES[i % BOT_STYLES.length],
             ),
           })

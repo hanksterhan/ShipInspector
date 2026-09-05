@@ -14,7 +14,7 @@ const settings = z.object({ name, maxPlayers: integer.min(2).max(8), smallBlind:
   .refine(s => s.bigBlind >= 2 * s.smallBlind && s.startingStack >= 20 * s.bigBlind, "Use a big blind of at least twice the small blind and a stack of at least 20 big blinds.");
 const command = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name }).strict(),
-  z.object({ type: z.literal("add-bots"), styles: z.array(z.enum(["aggressive", "passive", "balanced", "random"])).min(1).max(7) }).strict(),
+  z.object({ type: z.literal("add-bots"), styles: z.array(z.enum(["aggressive", "passive", "balanced", "random"])).min(1).max(8) }).strict(),
   z.object({ type: z.literal("remove-bot"), seat: integer.min(0).max(7) }).strict(),
   z.object({ type: z.literal("ready"), ready: z.boolean() }).strict(),
   z.object({ type: z.literal("deal") }).strict(),

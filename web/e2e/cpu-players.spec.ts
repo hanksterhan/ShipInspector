@@ -35,12 +35,18 @@ async function close(page: Page) {
   ).toBeVisible();
 }
 async function playHand(page: Page, id: string, reconnect = false) {
+  const refill = page.getByRole("button", {
+    name: "Refill play chips",
+    exact: true,
+  });
+  if (await refill.isVisible()) await refill.click();
   await page.getByRole("button", { name: "I’m ready", exact: true }).click();
   await page.getByRole("button", { name: "Deal hand", exact: true }).click();
   const streets = new Set<string>();
   let current = await snapshot(page, id);
   const total = current.seats.reduce(
-    (sum, seat) => sum + seat.stack + seat.committed,
+    (sum, seat) =>
+      sum + seat.stack + (current.street === "complete" ? 0 : seat.committed),
     0,
   );
   for (
@@ -73,13 +79,6 @@ async function playHand(page: Page, id: string, reconnect = false) {
     await action.click();
     // Wait for the submitted human version to commit before another decision.
     const before = current.version;
-    if (reconnect) {
-      await page.reload();
-      await expect(
-        page.getByRole("button", { name: "CPU players", exact: true }),
-      ).toBeVisible();
-      reconnect = false;
-    }
     await expect
       .poll(
         async () => {
@@ -89,6 +88,13 @@ async function playHand(page: Page, id: string, reconnect = false) {
         { timeout: 12000 },
       )
       .toBeGreaterThan(before);
+    if (reconnect) {
+      await page.reload();
+      await expect(
+        page.getByRole("button", { name: "CPU players", exact: true }),
+      ).toBeVisible();
+      reconnect = false;
+    }
   }
   expect(current.street).toBe("complete");
   expect(current.seats.reduce((sum, seat) => sum + seat.stack, 0)).toBe(total);
@@ -116,10 +122,8 @@ test("one human can play repeated hands against a CPU and reconnect", async ({
   let reachedRiver = false;
   for (let i = 0; i < 4; i++) {
     const { current } = await playHand(page, id, i === 0);
-    if (current.board.length === 5) {
-      reachedRiver = true;
-      break;
-    }
+    reachedRiver ||= current.board.length === 5;
+    if (i >= 1 && reachedRiver) break;
   }
   expect(reachedRiver).toBe(true);
   await page.screenshot({

@@ -67,7 +67,7 @@ The local API stores games in `.local/poker` with PGlite. Keep one local API pro
 
 ## CPU practice players
 
-Open a private table, choose **CPU players**, and add a named opponent or fill the open seats with mixed styles. A table supports one human and up to seven CPUs. Mark yourself ready, then choose **Deal hand**. CPUs stay ready between hands; empty CPU stacks refill with free play chips on the next deal. The host can add or remove CPUs between hands.
+Open a private table, choose **CPU players**, and add a named opponent or fill the open seats with mixed styles. A table supports one human and up to seven CPUs. A host who takes no seat can watch eight CPUs. Mark yourself ready, then choose **Deal hand**. CPUs stay ready between hands; empty CPU stacks refill with free play chips on the next deal. The host can add or remove CPUs between hands.
 
 - **Rico — Aggressive:** wider starting hands, frequent raises, and more bluffs.
 - **Marina — Passive:** wider starting hands, with more checks and calls.

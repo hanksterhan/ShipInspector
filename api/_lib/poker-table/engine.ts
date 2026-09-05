@@ -247,7 +247,7 @@ export function applyCommand(t: TableState, principal: string, command: TableCom
       applyCommand(t, bot.principal, { type: "leave" }, now);
       t.members = t.members.filter(member => member !== bot.principal);
     } else {
-      if (!command.styles.length || command.styles.length > 7 || command.styles.some(style => !Object.prototype.hasOwnProperty.call(BOT_PROFILES, style))) throw new TableError("Choose one to seven CPU players.");
+      if (!command.styles.length || command.styles.length > 8 || command.styles.some(style => !Object.prototype.hasOwnProperty.call(BOT_PROFILES, style))) throw new TableError("Choose one to eight CPU players.");
       if (t.seats.length + command.styles.length > t.settings.maxPlayers) throw new TableError("There are not enough open seats.", 409);
       for (const style of command.styles) {
         const base = BOT_PROFILES[style].name;
