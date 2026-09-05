@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./tables.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -985,6 +986,13 @@
 }
 .skip-link:focus {
   top: 12px;
+}
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
 }
 /* Shared work surfaces keep the secondary tools in the same visual system. */
 .workspace-main > div:not(.equity-page) {

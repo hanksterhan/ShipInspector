@@ -1,18 +1,23 @@
 import { SignIn, useAuth } from "@clerk/clerk-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Ship, ArrowUpRight } from "lucide-react";
 import LoadingSpinner from "../components/layout/LoadingSpinner";
 import { PlayingCard } from "@/components/poker/PlayingCard";
 
 export default function SignInPage() {
   const { isLoaded, isSignedIn } = useAuth();
+  const [params] = useSearchParams();
+  const requested = params.get("returnTo") || "";
+  const destination = /^\/tables\/[0-9a-f-]{36}$/i.test(requested)
+    ? requested
+    : "/equity-calculator";
   if (!isLoaded)
     return (
       <div className="auth-loading">
         <LoadingSpinner />
       </div>
     );
-  if (isSignedIn) return <Navigate to="/equity-calculator" replace />;
+  if (isSignedIn) return <Navigate to={destination} replace />;
   return (
     <div className="signin-page">
       <section className="signin-intro">
@@ -54,6 +59,7 @@ export default function SignInPage() {
       </section>
       <section className="signin-form" aria-label="Account sign in">
         <SignIn
+          forceRedirectUrl={destination}
           routing="hash"
           appearance={{
             variables: {

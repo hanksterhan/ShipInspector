@@ -18,8 +18,14 @@ const HandRecorderPage = lazy(() => import("./pages/HandRecorderPage"));
 const HandLibraryPage = lazy(() => import("./pages/HandLibraryPage"));
 const HandReplayerPage = lazy(() => import("./pages/HandReplayerPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
-const PotOddsCalculatorPage = lazy(() => import("./pages/utilities/PotOddsCalculatorPage"));
-const SPRCalculatorPage = lazy(() => import("./pages/utilities/SPRCalculatorPage"));
+const TablesPage = lazy(() => import("./pages/TablesPage"));
+const TablePage = lazy(() => import("./pages/TablePage"));
+const PotOddsCalculatorPage = lazy(
+  () => import("./pages/utilities/PotOddsCalculatorPage"),
+);
+const SPRCalculatorPage = lazy(
+  () => import("./pages/utilities/SPRCalculatorPage"),
+);
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -50,6 +56,8 @@ function AppRoutes() {
           {/* Protected routes */}
           <Route element={<AuthGuard />}>
             <Route element={<AppLayout />}>
+              <Route path="/tables" element={<TablesPage />} />
+              <Route path="/tables/:tableId" element={<TablePage />} />
               <Route
                 path="/equity-calculator"
                 element={<EquityCalculatorPage />}
@@ -64,10 +72,7 @@ function AppRoutes() {
                 path="/utilities/pot-odds"
                 element={<PotOddsCalculatorPage />}
               />
-              <Route
-                path="/utilities/spr"
-                element={<SPRCalculatorPage />}
-              />
+              <Route path="/utilities/spr" element={<SPRCalculatorPage />} />
             </Route>
           </Route>
 

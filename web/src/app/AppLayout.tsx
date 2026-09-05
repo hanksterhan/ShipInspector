@@ -15,7 +15,6 @@ import {
   Calculator,
   Ship,
   Users,
-  Bot,
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,10 @@ import { cn } from "@/lib/utils";
 import { PageHeaderProvider } from "./PageHeaderContext";
 
 const navGroups = [
+  {
+    label: "PLAY",
+    items: [{ to: "/tables", label: "Private tables", icon: Users, key: "" }],
+  },
   {
     label: "WORKSPACE",
     items: [
@@ -99,21 +102,6 @@ function SidebarNav({
           ))}
         </div>
       ))}
-      {!collapsed && (
-        <div className="nav-group future-nav">
-          <div className="nav-label">NEXT AT THE TABLE</div>
-          <div>
-            <Users size={17} />
-            <span>Private tables</span>
-            <small>Planned</small>
-          </div>
-          <div>
-            <Bot size={17} />
-            <span>Agent tables</span>
-            <small>Planned</small>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
@@ -147,7 +135,9 @@ export default function AppLayout() {
   }, []);
   const section = location.pathname.startsWith("/utilities")
     ? "Quick tools"
-    : "Study room";
+    : location.pathname.startsWith("/tables")
+      ? "Private tables"
+      : "Study room";
 
   return (
     <PageHeaderProvider>
@@ -245,7 +235,9 @@ export default function AppLayout() {
             <div className="topbar-actions">
               <span className="mode-badge">
                 <span className="status-dot" />
-                Study mode
+                {location.pathname.startsWith("/tables")
+                  ? "Play chips"
+                  : "Study mode"}
               </span>
               <Button
                 variant="ghost"
