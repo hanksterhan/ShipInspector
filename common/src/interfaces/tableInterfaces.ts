@@ -62,7 +62,7 @@ export interface TableView {
   events: TableEvent[];
   canDeal: boolean;
   closed: boolean;
-  agents: { id: string; name: string; seat: number; expiresAt: number; revoked: boolean }[];
+  agents: { id: string; name: string; seat: number; expiresAt: number; revoked: boolean; seated: boolean }[];
 }
 export interface TableSummary {
   id: string;

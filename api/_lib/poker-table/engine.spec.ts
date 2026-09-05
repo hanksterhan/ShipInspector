@@ -27,6 +27,12 @@ describe("no-limit hold'em table engine", () => {
     for (const id of ["u3", "u0", "u1"]) act(t, id, "call", undefined, 1);
     expect(t.actor).toBe(2); expect(legalActions(t, "u2")?.check).toBe(true);
   });
+  it("does not ask for extra chips against a heads-up blind that is all-in", () => {
+    const t = table(); t.seats[1].stack = 3; deal(t, 0);
+    expect(t.street).toBe("complete");
+    expect(t.awards.reduce((sum, p) => sum + p.amount, 0)).toBe(6);
+    expect(t.seats.reduce((sum, s) => sum + s.stack, 0)).toBe(1003);
+  });
   it("rejects out-of-turn checks and undersized raises", () => {
     const t = table(); deal(t, 0);
     expect(() => act(t, "u1", "fold", undefined, 1)).toThrow("turn");

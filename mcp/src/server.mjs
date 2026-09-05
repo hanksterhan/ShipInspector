@@ -11,7 +11,8 @@ export function createPokerServer({ apiUrl, token, fetchImpl = fetch }) {
   const match = /^si_agent_([0-9a-f-]{36})\.[0-9a-f]{64}$/.exec(token || "");
   if (!match) throw new Error("Set SHIPINSPECTOR_AGENT_TOKEN to the credential from your table host.");
   const tableId = match[1];
-  const endpoint = `${base.href.replace(/\/$/, "")}/tables/${tableId}`;
+  const root = base.href.replace(/\/$/, "");
+  const endpoint = `${root.endsWith("/api") ? root : `${root}/api`}/tables/${tableId}`;
   const server = new McpServer({ name: "shipinspector-poker", version: "1.0.0" });
   async function request(path, body, signal) {
     const timeout = AbortSignal.timeout(15000);

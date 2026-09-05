@@ -15,7 +15,7 @@ A utility to help track poker hands that have been played.
 
 ### Prerequisites
 
-- Node.js (v18+)
+- Node.js (v20+)
 - npm (comes with Node.js)
 
 ### Quick Start

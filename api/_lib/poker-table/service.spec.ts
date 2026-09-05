@@ -1,5 +1,8 @@
 import { PGlite } from "@electric-sql/pglite";
 import { randomUUID } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { TableStore } from "./store";
 import { Identity, TableService } from "./service";
 import type { TableCommand, TableView } from "@common/interfaces/tableInterfaces";
@@ -21,6 +24,20 @@ describe("persistent tables and shared human/agent authorization", () => {
     expect((await restarted.get(v.id, { userId: "owner-a" })).seats[0].name).toBe("Alice");
     expect(await restarted.list("stranger")).toEqual([]);
     await expect(restarted.get(v.id, { userId: "stranger" })).rejects.toThrow("Join this private table");
+  });
+  it("recovers a game after closing and reopening a disk database", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ship-poker-persistence-"));
+    let disk = await PGlite.create(directory);
+    try {
+      const firstStore = new TableStore(async (sql, params) => (await disk.query(sql, params)).rows);
+      const first = new TableService(firstStore);
+      const saved = await first.create("disk-player", settings, "Alice");
+      await first.command(saved.id, { userId: "disk-player" }, { version: saved.version, requestId: randomUUID(), command: { type: "ready", ready: true } });
+      await disk.close();
+      disk = await PGlite.create(directory);
+      const restored = await new TableService(new TableStore(async (sql, params) => (await disk.query(sql, params)).rows)).get(saved.id, { userId: "disk-player" });
+      expect(restored.version).toBe(1); expect(restored.seats[0].ready).toBe(true);
+    } finally { await disk.close(); await rm(directory, { recursive: true, force: true }); }
   });
   it("commits one of two simultaneous writes and accepts an exact retry once", async () => {
     const v = await service.create("race-owner", settings, "Alice");
@@ -61,6 +78,13 @@ describe("persistent tables and shared human/agent authorization", () => {
     clock = 1000;
     await service.revokeAgent(first.id, "token-owner", grant.table.version, randomUUID(), grant.agentId);
     await expect(service.get(first.id, { token: grant.token })).rejects.toThrow("revoked");
+  });
+  it("distinguishes a revoked seat from a new agent with the same name", async () => {
+    const t = await service.create("replacement-owner", settings);
+    const first = await service.issueAgent(t.id, "replacement-owner", t.version, randomUUID(), "Bot");
+    const revoked = await service.revokeAgent(t.id, "replacement-owner", first.table.version, randomUUID(), first.agentId);
+    const replacement = await service.issueAgent(t.id, "replacement-owner", revoked.version, randomUUID(), "Bot");
+    expect(replacement.table.agents.map(a => ({ revoked: a.revoked, seated: a.seated }))).toEqual([{ revoked: true, seated: false }, { revoked: false, seated: true }]);
   });
   it("rejects stale actions and saves a timeout before a reconnect", async () => {
     let v = await service.create("timeout-owner", settings, "Alice");

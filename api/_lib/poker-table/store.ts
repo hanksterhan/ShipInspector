@@ -40,7 +40,11 @@ export function getTableStore(): Promise<TableStore> {
   if (!store) store = (async () => {
     if (process.env.POKER_STORE_DIR && !process.env.VERCEL && process.env.NODE_ENV !== "production") {
       const { PGlite } = await import("@electric-sql/pglite");
-      const db = new PGlite(process.env.POKER_STORE_DIR);
+      if (!process.env.POKER_STORE_DIR.startsWith("memory://")) {
+        const { mkdir } = await import("node:fs/promises");
+        await mkdir(process.env.POKER_STORE_DIR, { recursive: true });
+      }
+      const db = await PGlite.create(process.env.POKER_STORE_DIR);
       return new TableStore(async (sql, params) => (await db.query(sql, params)).rows);
     }
     if (!process.env.DATABASE_URL) throw new Error("Set DATABASE_URL for multiplayer tables.");

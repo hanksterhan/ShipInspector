@@ -162,6 +162,7 @@ function dealBoard(t: TableState) {
 function advance(t: TableState, after: number, now: number) {
   if (contenders(t).length === 1) { settle(t, false); return; }
   const players = active(t);
+  if (players.length <= 1) t.currentBet = Math.max(...t.seats.map(s => s.bet));
   const needs = players.filter(s => s.bet < t.currentBet || (s.actedAtBet === null && players.length > 1));
   if (needs.length) { setActor(t, next(t, after, needs).seat, now); return; }
   refundUncalled(t);
@@ -269,5 +270,5 @@ export function tableView(t: TableState, principal: string, now: number): TableV
       hasCards: s.cards.length > 0, lastAction: s.lastAction })),
     legal: legalActions(t, principal), awards: t.awards, events: t.events, closed: t.closed,
     canDeal: !t.closed && !inHand(t) && (principal === t.owner || !!you?.ready) && t.seats.filter(s => s.ready && !s.sittingOut && s.stack > 0).length >= 2,
-    agents: principal === t.owner ? t.agents.map(({ id, name, seat, expiresAt, revoked }) => ({ id, name, seat, expiresAt, revoked })) : [] };
+    agents: principal === t.owner ? t.agents.map(({ id, name, seat, expiresAt, revoked }) => ({ id, name, seat, expiresAt, revoked, seated: t.seats.some(s => s.principal === `agent:${id}`) })) : [] };
 }
