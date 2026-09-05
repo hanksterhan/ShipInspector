@@ -34,14 +34,101 @@ async function close(page: Page) {
     page.getByText("This table is closed", { exact: true }),
   ).toBeVisible();
 }
-async function playHand(page: Page, id: string, reconnect = false) {
+async function playHand(
+  page: Page,
+  id: string,
+  reconnect = false,
+  dealScreenshot?: string,
+) {
   const refill = page.getByRole("button", {
     name: "Refill play chips",
     exact: true,
   });
   if (await refill.isVisible()) await refill.click();
   await page.getByRole("button", { name: "I’m ready", exact: true }).click();
+  if (dealScreenshot) {
+    await page.evaluate(() => {
+      const capture = { animations: [] as Animation[] };
+      Object.assign(window, { dealCapture: capture });
+      const observer = new MutationObserver(() => {
+        const animations = document
+          .getAnimations()
+          .filter((a) => a.id === "live-hole-deal");
+        if (!animations.length) return;
+        capture.animations = animations;
+        animations.forEach((a) => {
+          a.pause();
+          a.currentTime = 0;
+        });
+        observer.disconnect();
+      });
+      observer.observe(document.querySelector(".live-felt")!, {
+        childList: true,
+        subtree: true,
+      });
+    });
+  }
   await page.getByRole("button", { name: "Deal hand", exact: true }).click();
+  if (dealScreenshot) {
+    await page.waitForFunction(
+      () =>
+        (window as unknown as { dealCapture: { animations: Animation[] } })
+          .dealCapture.animations.length > 0,
+    );
+    const flight = await page.evaluate(async () => {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      const { animations } = (
+        window as unknown as { dealCapture: { animations: Animation[] } }
+      ).dealCapture;
+      const felt = document
+        .querySelector(".live-felt")!
+        .getBoundingClientRect();
+      const samples = animations.map((animation) => {
+        const effect = animation.effect as KeyframeEffect;
+        const timing = effect.getTiming();
+        const card = effect.target as HTMLElement;
+        const start = card.getBoundingClientRect();
+        const from = new DOMMatrix(getComputedStyle(card).transform);
+        animation.currentTime =
+          Number(timing.delay) + Number(timing.duration) / 2;
+        const middle = new DOMMatrix(getComputedStyle(card).transform);
+        return {
+          playState: animation.playState,
+          sourceOffset: Math.hypot(
+            start.left + start.width / 2 - felt.left - felt.width / 2,
+            start.top + start.height / 2 - felt.top - felt.height / 2,
+          ),
+          startDistance: Math.hypot(from.m41, from.m42),
+          middleDistance: Math.hypot(middle.m41, middle.m42),
+          end: Number(timing.delay) + Number(timing.duration),
+        };
+      });
+      animations.forEach((a) => {
+        a.currentTime = 160;
+      });
+      return {
+        samples,
+        cardCount: document.querySelectorAll(".live-dealt-card").length,
+      };
+    });
+    expect(flight.samples).toHaveLength(flight.cardCount);
+    for (const sample of flight.samples) {
+      expect(sample.playState).toBe("paused");
+      expect(sample.sourceOffset).toBeLessThan(1);
+      expect(sample.startDistance).toBeGreaterThan(20);
+      expect(sample.middleDistance).toBeGreaterThan(0);
+      expect(sample.middleDistance).toBeLessThan(sample.startDistance);
+      expect(sample.end).toBeLessThan(1000);
+    }
+    await page.screenshot({ path: dealScreenshot, fullPage: false });
+    await page.evaluate(() => {
+      (
+        window as unknown as { dealCapture: { animations: Animation[] } }
+      ).dealCapture.animations.forEach((a) => a.finish());
+    });
+  }
   const streets = new Set<string>();
   let current = await snapshot(page, id);
   const total = current.seats.reduce(
@@ -121,7 +208,12 @@ test("one human can play repeated hands against a CPU and reconnect", async ({
   await expect(page.locator(".cpu-seat-tag")).toHaveText("CPU");
   let reachedRiver = false;
   for (let i = 0; i < 4; i++) {
-    const { current } = await playHand(page, id, i === 0);
+    const { current } = await playHand(
+      page,
+      id,
+      i === 0,
+      i === 0 ? info.outputPath("desktop-card-deal.png") : undefined,
+    );
     reachedRiver ||= current.board.length === 5;
     if (i >= 1 && reachedRiver) break;
   }
@@ -171,7 +263,12 @@ test("one human can fill seven CPU seats, play a full hand, and use phone contro
     path: info.outputPath("mobile-eight-cpu-seats.png"),
     fullPage: true,
   });
-  const { current } = await playHand(page, id);
+  const { current } = await playHand(
+    page,
+    id,
+    false,
+    info.outputPath("mobile-card-deal.png"),
+  );
   expect(
     current.events.some((e) =>
       /^(Rico|Marina|Vega|Ziggy).*: (Call|Check|Raise|Bet|Fold)/.test(e.text),

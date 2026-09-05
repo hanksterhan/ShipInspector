@@ -434,14 +434,16 @@
   place-items: center;
   color: var(--sidebar-foreground);
   font-size: 20px;
-  animation: live-card-deal 200ms var(--ease-out) both;
 }
-.live-hole-cards .card-wrap,
 .live-board .card-wrap {
   animation: live-card-deal 200ms var(--ease-out) both;
 }
-.live-hole-cards > :nth-child(2) {
-  animation-delay: 40ms;
+.live-dealt-card {
+  flex: 0 0 auto;
+}
+.live-hole-cards .card-face {
+  /* The measured deal moves the whole card; do not also animate its face. */
+  animation: none;
 }
 .seat-readiness {
   font-size: 11px;

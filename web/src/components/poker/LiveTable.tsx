@@ -4,8 +4,10 @@ import { BOT_PROFILES } from "@common/pokerBots";
 import { BotIcon } from "./CpuPlayers";
 import { PlayingCard } from "./PlayingCard";
 import { cn } from "@/lib/utils";
+import { useCardDeal } from "@/hooks/useCardDeal";
 
 export function LiveTable({ table }: { table: TableView }) {
+  const felt = useCardDeal(table);
   const paid = new Map<number, number>();
   table.awards.forEach((p) =>
     p.winners.forEach((w) =>
@@ -70,25 +72,30 @@ export function LiveTable({ table }: { table: TableView }) {
           )}
         </div>
         <div className="live-hole-cards">
-          {s.cards.length ? (
-            s.cards.map((card, i) => (
-              <PlayingCard
-                key={`${card.rank}${card.suit}`}
-                card={card}
-                label={`${s.name} card ${i + 1}`}
-                small
-                winning={paid.has(s.seat)}
-              />
-            ))
-          ) : s.hasCards ? (
+          {s.hasCards ? (
             [0, 1].map((i) => (
               <div
                 key={i}
-                className="live-card-back"
-                role="img"
-                aria-label={`${s.name} hidden card ${i + 1}`}
+                className="live-dealt-card"
+                data-seat={s.seat}
+                data-card={i}
               >
-                <span>♠</span>
+                {s.cards[i] ? (
+                  <PlayingCard
+                    card={s.cards[i]}
+                    label={`${s.name} card ${i + 1}`}
+                    small
+                    winning={paid.has(s.seat)}
+                  />
+                ) : (
+                  <div
+                    className="live-card-back"
+                    role="img"
+                    aria-label={`${s.name} hidden card ${i + 1}`}
+                  >
+                    <span>♠</span>
+                  </div>
+                )}
               </div>
             ))
           ) : (
@@ -126,7 +133,7 @@ export function LiveTable({ table }: { table: TableView }) {
       </div>
     );
   return (
-    <div className="live-felt" aria-label="Live poker table">
+    <div ref={felt} className="live-felt" aria-label="Live poker table">
       <div className="live-seat-row">
         {seats.slice(0, split).map(renderSeat)}
       </div>
