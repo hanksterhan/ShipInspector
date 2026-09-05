@@ -18,16 +18,16 @@ export interface PotOddsResult {
  *
  * @example
  * calculatePotOdds({ potSize: 100, betToCall: 50 })
- * // Returns: { potOddsRatio: "3:1", requiredEquity: 0.333, requiredEquityPercent: "33.3%", totalPot: 150 }
+ * // Returns: { potOddsRatio: "2:1", requiredEquity: 0.333, requiredEquityPercent: "33.3%", totalPot: 150 }
  */
 export function calculatePotOdds(input: PotOddsInput): PotOddsResult {
   const { potSize, betToCall } = input;
   const totalPot = potSize + betToCall;
   const requiredEquity = betToCall / totalPot;
 
-  // Calculate ratio (e.g., 150/50 = 3, so "3:1")
-  const ratio = totalPot / betToCall;
-  const potOddsRatio = `${Math.round(ratio)}:1`;
+  // Reward is the current pot, including the opponent’s bet, before our call.
+  const ratio = potSize / betToCall;
+  const potOddsRatio = `${Number(ratio.toFixed(2))}:1`;
 
   // Format percentage (e.g., 0.333 → "33.3%")
   const requiredEquityPercent = `${(requiredEquity * 100).toFixed(1)}%`;
@@ -52,14 +52,14 @@ export function validatePotOddsInput(
   if (input.potSize === undefined || input.potSize === null) {
     return "Pot size is required";
   }
-  if (input.potSize <= 0) {
+  if (!Number.isFinite(input.potSize) || input.potSize <= 0) {
     return "Pot size must be greater than 0";
   }
 
   if (input.betToCall === undefined || input.betToCall === null) {
     return "Bet to call is required";
   }
-  if (input.betToCall <= 0) {
+  if (!Number.isFinite(input.betToCall) || input.betToCall <= 0) {
     return "Bet to call must be greater than 0";
   }
 

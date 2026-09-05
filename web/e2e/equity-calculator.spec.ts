@@ -14,17 +14,13 @@ test.describe("Equity Calculator", () => {
   });
 
   test("can open card picker and see card grid", async ({ page }) => {
-    // Click on a card slot to open the picker
-    const cardSlot = page
-      .locator('[data-testid="card-slot"], [role="button"]')
-      .first();
-    if (await cardSlot.isVisible()) {
-      await cardSlot.click();
-      // Card picker modal should appear
-      await expect(
-        page.locator('[role="dialog"], [data-testid="card-picker"]'),
-      ).toBeVisible({ timeout: 5000 });
-    }
+    await page
+      .getByRole("button", { name: "Player 1 card 1: Empty", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "A of Spades", exact: true }),
+    ).toBeVisible();
   });
 
   test("page has no console errors on load", async ({ page }) => {

@@ -24,13 +24,15 @@ export function getRankLabel(rank: CardRank): string {
 
 export function formatHandRank(handRank: HandRank): string {
   const { category, tiebreak } = handRank;
+  const rankName = (rank: number) =>
+    ({ 11: "Jack", 12: "Queen", 13: "King", 14: "Ace" })[rank] ?? String(rank);
 
   switch (category) {
     case 9:
       return "Royal flush";
     case 8: {
       if (tiebreak.length > 0) {
-        return `${getRankLabel(tiebreak[0])} high straight flush`;
+        return `${rankName(tiebreak[0])}-high straight flush`;
       }
       return "Straight flush";
     }
@@ -48,13 +50,13 @@ export function formatHandRank(handRank: HandRank): string {
     }
     case 5: {
       if (tiebreak.length > 0) {
-        return `${getRankLabel(tiebreak[0])} high flush`;
+        return `${rankName(tiebreak[0])}-high flush`;
       }
       return "Flush";
     }
     case 4: {
       if (tiebreak.length > 0) {
-        return `${getRankLabel(tiebreak[0])} high straight`;
+        return `${rankName(tiebreak[0])}-high straight`;
       }
       return "Straight";
     }
@@ -78,7 +80,7 @@ export function formatHandRank(handRank: HandRank): string {
     }
     case 0: {
       if (tiebreak.length > 0) {
-        return `${getRankLabel(tiebreak[0])} high`;
+        return `${rankName(tiebreak[0])}-high`;
       }
       return "High card";
     }

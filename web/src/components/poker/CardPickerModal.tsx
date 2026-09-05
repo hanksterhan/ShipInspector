@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { Card, CardRank } from "@common/interfaces";
 import { useSettingsStore, type CardSelectionMode } from "@/stores";
 import type { SuitData } from "@/lib/poker";
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 
 interface CardPickerModalProps {
+  title?: string;
+  keepOpen?: boolean;
   isOpen: boolean;
   onClose: () => void;
   onSelectCard: (card: Card) => boolean;
@@ -43,7 +45,7 @@ function CardButton({
       className={cn(
         "flex flex-col items-center justify-center rounded-md border border-border p-1.5 md:p-2 transition-colors",
         "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        "min-w-[2.75rem] min-h-[3.75rem] md:min-w-[3rem] md:min-h-[4rem] xl:min-w-[3.5rem] xl:min-h-[4.5rem]",
+        "deck-card",
         disabled && "opacity-25 pointer-events-none",
       )}
       style={{ color: suitData.color }}
@@ -66,22 +68,26 @@ function Grid52Cards({
   fourColorDeck: boolean;
 }) {
   return (
-    <div className="grid grid-cols-13 gap-1.5 md:gap-2">
-      {SUITS.map((baseSuit) =>
-        RANKS.map((rankData) => {
-          const card: Card = { rank: rankData.rank, suit: baseSuit.suit };
-          return (
-            <CardButton
-              key={`${rankData.rank}${baseSuit.suit}`}
-              rank={rankData.rank}
-
-              disabled={isCardUsed(card)}
-              onClick={() => onSelect(card)}
-              suitData={getSuitData(baseSuit.suit, fourColorDeck)}
-            />
-          );
-        }),
-      )}
+    <div className="deck-suits">
+      {SUITS.map((baseSuit) => (
+        <div className="deck-suit-group" key={baseSuit.suit}>
+          <div className="deck-suit-name">{baseSuit.label}</div>
+          <div className="deck-grid">
+            {[...RANKS].reverse().map((rankData) => {
+              const card: Card = { rank: rankData.rank, suit: baseSuit.suit };
+              return (
+                <CardButton
+                  key={`${rankData.rank}${baseSuit.suit}`}
+                  rank={rankData.rank}
+                  disabled={isCardUsed(card)}
+                  onClick={() => onSelect(card)}
+                  suitData={getSuitData(baseSuit.suit, fourColorDeck)}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -118,7 +124,6 @@ function SuitRankGrid({
                   <CardButton
                     key={`${rankData.rank}${baseSuit.suit}`}
                     rank={rankData.rank}
-      
                     disabled={isCardUsed(card)}
                     onClick={() => onSelect(card)}
                     suitData={resolved}
@@ -159,7 +164,6 @@ function RankSuitGrid({
                 <CardButton
                   key={`${rankData.rank}${baseSuit.suit}`}
                   rank={rankData.rank}
-    
                   disabled={isCardUsed(card)}
                   onClick={() => onSelect(card)}
                   suitData={getSuitData(baseSuit.suit, fourColorDeck)}
@@ -214,27 +218,50 @@ function CardGrid({
 }
 
 export function CardPickerModal({
+  title = "Select a Card",
+  keepOpen = false,
   isOpen,
   onClose,
   onSelectCard,
   isCardUsed,
 }: CardPickerModalProps) {
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const cardSelectionMode = useSettingsStore((s) => s.cardSelectionMode);
   const fourColorDeck = useSettingsStore((s) => s.fourColorDeck);
 
   const handleSelect = useCallback(
     (card: Card) => {
-      onSelectCard(card);
-      onClose();
+      if (onSelectCard(card) && !keepOpen) onClose();
     },
-    [onSelectCard, onClose],
+    [onSelectCard, onClose, keepOpen],
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[680px] xl:max-w-[800px]">
+      <DialogContent
+        aria-describedby={undefined}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          previousFocus.current = document.activeElement as HTMLElement;
+          titleRef.current?.focus();
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (previousFocus.current?.isConnected) previousFocus.current.focus();
+          else document.getElementById("main-content")?.focus();
+        }}
+        className="card-picker max-w-[95vw] sm:max-w-[760px] xl:max-w-[850px]"
+      >
         <DialogHeader>
-          <DialogTitle>Select a Card</DialogTitle>
+          <DialogTitle
+            ref={titleRef}
+            tabIndex={-1}
+            className="outline-none"
+            aria-live="polite"
+          >
+            {title}
+          </DialogTitle>
         </DialogHeader>
         <CardGrid
           mode={cardSelectionMode}

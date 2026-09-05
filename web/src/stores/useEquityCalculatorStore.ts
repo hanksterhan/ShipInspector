@@ -9,6 +9,7 @@ import {
   findBest5CardHand,
   cardsEqual,
 } from "@/lib/poker";
+import { parseScenario, type StudyScenario } from "@/lib/poker/scenario";
 import { type Scope, nextScope } from "@/lib/poker/scopeNavigation";
 
 export type { Scope } from "@/lib/poker/scopeNavigation";
@@ -52,6 +53,7 @@ interface EquityCalculatorActions {
   openPicker: () => void;
   closePicker: () => void;
   resetAll: () => void;
+  loadScenario: (scenario: StudyScenario) => void;
   checkAndCalculateEquity: () => Promise<void>;
   getPlayerEquity: (playerIndex: number) => number | null;
   getPlayerTieEquity: (playerIndex: number) => number | null;
@@ -63,7 +65,10 @@ interface EquityCalculatorActions {
 }
 
 function createInitialPlayers(): Array<[Card | null, Card | null]> {
-  return Array.from({ length: NUM_PLAYERS }, () => [null, null] as [Card | null, Card | null]);
+  return Array.from(
+    { length: NUM_PLAYERS },
+    () => [null, null] as [Card | null, Card | null],
+  );
 }
 
 const INITIAL_EQUITY: EquityState = {
@@ -133,13 +138,21 @@ export const useEquityCalculatorStore = create<
 
       if (scope.kind === "player") {
         set((s) => {
-          const newPlayers = s.players.map((p) => [...p] as [Card | null, Card | null]);
+          const newPlayers = s.players.map(
+            (p) => [...p] as [Card | null, Card | null],
+          );
           newPlayers[scope.playerIndex][scope.cardIndex] = card;
           return { players: newPlayers };
         });
       } else {
         set((s) => {
-          const newBoard = [...s.board] as [Card | null, Card | null, Card | null, Card | null, Card | null];
+          const newBoard = [...s.board] as [
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+          ];
           newBoard[scope.boardIndex] = card;
           return { board: newBoard };
         });
@@ -165,14 +178,22 @@ export const useEquityCalculatorStore = create<
     clearCard: (scope) => {
       if (scope.kind === "player") {
         set((s) => {
-          const newPlayers = s.players.map((p) => [...p] as [Card | null, Card | null]);
+          const newPlayers = s.players.map(
+            (p) => [...p] as [Card | null, Card | null],
+          );
           newPlayers[scope.playerIndex][scope.cardIndex] = null;
           return { players: newPlayers };
         });
       } else {
         // Clear board from this index onwards (cascading)
         set((s) => {
-          const newBoard = [...s.board] as [Card | null, Card | null, Card | null, Card | null, Card | null];
+          const newBoard = [...s.board] as [
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+            Card | null,
+          ];
           for (let i = scope.boardIndex; i < 5; i++) {
             newBoard[i] = null;
           }
@@ -196,7 +217,9 @@ export const useEquityCalculatorStore = create<
         const next = new Set(s.activePlayers);
         next.delete(playerIndex);
         // Clear that player's cards
-        const newPlayers = s.players.map((p) => [...p] as [Card | null, Card | null]);
+        const newPlayers = s.players.map(
+          (p) => [...p] as [Card | null, Card | null],
+        );
         newPlayers[playerIndex] = [null, null];
         return { activePlayers: next, players: newPlayers };
       });
@@ -208,6 +231,19 @@ export const useEquityCalculatorStore = create<
 
     openPicker: () => set({ pickerOpen: true }),
     closePicker: () => set({ pickerOpen: false }),
+
+    loadScenario: (input) => {
+      const scenario = parseScenario(input);
+      get().resetAll();
+      const players = createInitialPlayers();
+      for (const player of scenario.players)
+        players[player.seat] = player.cards;
+      set({
+        players,
+        activePlayers: new Set(scenario.players.map((p) => p.seat)),
+        board: scenario.board,
+      });
+    },
 
     resetAll: () => {
       if (currentAbortController) {
@@ -227,7 +263,11 @@ export const useEquityCalculatorStore = create<
     },
 
     checkAndCalculateEquity: async () => {
+      // Invalidate the previous request before validating the new cards.
+      if (currentAbortController) currentAbortController.abort();
+      currentAbortController = null;
       const state = get();
+      set({ boardCardsUsedInWinningHand: new Set(), winningHandRank: null });
 
       // Only calculate for valid board states (0, 3, 4, or 5 cards)
       const boardCards = state.board.filter(
@@ -235,7 +275,8 @@ export const useEquityCalculatorStore = create<
       );
       const count = boardCards.length;
       const isValidBoardState =
-        count === 0 || count === 3 || count === 4 || count === 5;
+        (count === 0 || count === 3 || count === 4 || count === 5) &&
+        state.board.slice(0, count).every(Boolean);
 
       if (!isValidBoardState) {
         set({
@@ -261,7 +302,10 @@ export const useEquityCalculatorStore = create<
         }
       }
 
-      if (playersWithHands.length < 2) {
+      if (
+        playersWithHands.length < 2 ||
+        playersWithHands.length !== state.activePlayers.size
+      ) {
         set({
           equity: { ...INITIAL_EQUITY },
           boardCardsUsedInWinningHand: new Set(),
@@ -270,10 +314,6 @@ export const useEquityCalculatorStore = create<
         return;
       }
 
-      // Cancel in-flight requests
-      if (currentAbortController) {
-        currentAbortController.abort();
-      }
       const abortController = new AbortController();
       currentAbortController = abortController;
 
@@ -345,6 +385,7 @@ export const useEquityCalculatorStore = create<
                   holeString,
                   boardString,
                 );
+                if (abortController.signal.aborted) return;
                 const bestHandRank = evaluateResult.handRank;
                 const all7Cards: Card[] = [player[0], player[1], ...boardCards];
                 const best5Cards = findBest5CardHand(all7Cards, bestHandRank);
@@ -363,6 +404,7 @@ export const useEquityCalculatorStore = create<
                   winningHandRank: bestHandRank,
                 });
               } catch {
+                if (abortController.signal.aborted) return;
                 set({
                   boardCardsUsedInWinningHand: new Set(),
                   winningHandRank: null,
@@ -407,7 +449,7 @@ export const useEquityCalculatorStore = create<
     getPlayerEquity: (playerIndex) => {
       const winPct = get().equity.playerEquity.get(playerIndex);
       if (winPct === undefined) return null;
-      return Math.round(winPct * 100);
+      return winPct * 100;
     },
 
     getPlayerTieEquity: (playerIndex) => {
@@ -421,9 +463,12 @@ export const useEquityCalculatorStore = create<
     },
 
     isPlayerWinner: (playerIndex) => {
-      if (!get().isBoardComplete()) return false;
-      const winEquity = get().getPlayerEquity(playerIndex);
-      return winEquity !== null && winEquity >= 99.9;
+      const { equity } = get();
+      if (!get().isBoardComplete() || equity.status !== "success") return false;
+      return (
+        (equity.playerEquity.get(playerIndex) ?? 0) === 1 ||
+        (equity.playerTieEquity.get(playerIndex) ?? 0) > 0
+      );
     },
 
     getWinningPlayers: () => {
@@ -444,6 +489,8 @@ export const useEquityCalculatorStore = create<
     },
 
     dispose: () => {
+      if (equityDebounceTimer) clearTimeout(equityDebounceTimer);
+      equityDebounceTimer = null;
       if (currentAbortController) {
         currentAbortController.abort();
         currentAbortController = null;
@@ -460,8 +507,7 @@ function getEquityKey(state: EquityCalculatorState): string {
   const playerKeys = Array.from(state.activePlayers)
     .map((idx) => {
       const p = state.players[idx];
-      if (!p || !p[0] || !p[1]) return null;
-      return `${idx}:${p[0].rank}${p[0].suit}-${p[1].rank}${p[1].suit}`;
+      return `${idx}:${p.map((c) => (c ? `${c.rank}${c.suit}` : "null")).join("-")}`;
     })
     .filter((k) => k !== null)
     .join("|");
@@ -477,6 +523,13 @@ useEquityCalculatorStore.subscribe(
   (state) => getEquityKey(state),
   () => {
     if (equityDebounceTimer) clearTimeout(equityDebounceTimer);
+    if (currentAbortController) currentAbortController.abort();
+    currentAbortController = null;
+    useEquityCalculatorStore.setState({
+      equity: { ...INITIAL_EQUITY },
+      boardCardsUsedInWinningHand: new Set(),
+      winningHandRank: null,
+    });
     equityDebounceTimer = setTimeout(() => {
       useEquityCalculatorStore.getState().checkAndCalculateEquity();
     }, EQUITY_DEBOUNCE_MS);

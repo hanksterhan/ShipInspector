@@ -48,13 +48,26 @@ class HttpClient {
   ): Promise<unknown> {
     const headers = await this.getHeaders();
 
-    const response = await fetch(`${this.baseUrl}${url}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : null,
-      signal,
-      credentials: "include",
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${url}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null,
+        signal,
+        credentials: "include",
+      });
+    } catch (error) {
+      if (
+        signal?.aborted ||
+        (error instanceof Error && error.name === "AbortError")
+      )
+        throw error;
+      // Browser network errors can include a malformed URL. Do not display it.
+      throw new Error(
+        "Could not reach the server. Check your connection and try again.",
+      );
+    }
 
     if (!response.ok) {
       let errorMessage = "Request failed";

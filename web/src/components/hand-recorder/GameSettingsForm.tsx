@@ -1,12 +1,6 @@
 import { useMemo } from "react";
 import { useHandRecorderStore } from "@/stores";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,7 +18,6 @@ function FieldError({ message }: { message?: string }) {
 
 export function GameSettingsForm() {
   const gameSettings = useHandRecorderStore((s) => s.gameSettings);
-  const players = useHandRecorderStore((s) => s.players);
   const validationErrors = useHandRecorderStore((s) => s.validationErrors);
   const clearValidationErrors = useHandRecorderStore(
     (s) => s.clearValidationErrors,
@@ -48,9 +41,6 @@ export function GameSettingsForm() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-base">Game Settings</CardTitle>
-        <CardDescription>
-          Configure stakes and table setup. Seats: {players.length}
-        </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>

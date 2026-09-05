@@ -1,142 +1,128 @@
-import { useState, useMemo } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { calculateSPR, validateSPRInput } from "@/lib/poker/sprCalculator";
 
 export default function SPRCalculatorPage() {
-  const [effectiveStack, setEffectiveStack] = useState<string>("");
-  const [potSize, setPotSize] = useState<string>("");
-
-  // Calculate results in real-time
+  const [effectiveStack, setEffectiveStack] = useState("");
+  const [potSize, setPotSize] = useState("");
   const { result, error } = useMemo(() => {
-    const stack = parseFloat(effectiveStack);
-    const pot = parseFloat(potSize);
-
-    if (!effectiveStack || !potSize || isNaN(stack) || isNaN(pot)) {
-      return { result: null, error: null };
-    }
-
-    const validationError = validateSPRInput({
-      effectiveStack: stack,
-      potSize: pot,
-    });
-    if (validationError) {
-      return { result: null, error: validationError };
-    }
-
-    const calculatedResult = calculateSPR({
-      effectiveStack: stack,
-      potSize: pot,
-    });
-    return { result: calculatedResult, error: null };
+    if (!effectiveStack || !potSize) return { result: null, error: null };
+    const input = {
+      effectiveStack: Number(effectiveStack),
+      potSize: Number(potSize),
+    };
+    const error = validateSPRInput(input);
+    return { error, result: error ? null : calculateSPR(input) };
   }, [effectiveStack, potSize]);
-
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto p-4 md:p-6">
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold md:text-3xl">SPR Calculator</h1>
-        <p className="mt-2 text-sm text-muted-foreground md:text-base">
-          Calculate Stack-to-Pot Ratio (SPR) to determine optimal playing
-          strategy based on stack depth. SPR helps you understand how committed
-          you are to the pot and guides your decision-making.
-        </p>
+    <div className="utility-page">
+      <div className="page-title-row">
+        <div>
+          <div className="eyebrow">QUICK TOOLS / 02</div>
+          <h1>SPR Calculator</h1>
+        </div>
       </div>
-
-      {/* Content grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:max-w-6xl">
-        {/* Input card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Calculate SPR</CardTitle>
-            <CardDescription>
-              Enter effective stack and current pot size
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="effectiveStack">Effective Stack ($)</Label>
-                <Input
-                  id="effectiveStack"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={effectiveStack}
-                  onChange={(e) => setEffectiveStack(e.target.value)}
-                  placeholder="100"
-                  className="mt-1"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Smallest stack in play
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="potSize">Pot Size ($)</Label>
-                <Input
-                  id="potSize"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={potSize}
-                  onChange={(e) => setPotSize(e.target.value)}
-                  placeholder="20"
-                  className="mt-1"
-                />
-              </div>
-              {error && (
-                <p className="text-sm text-destructive" role="alert">
-                  {error}
-                </p>
-              )}
+      <div className="utility-grid">
+        <section className="utility-inputs" aria-label="Stack-to-pot inputs">
+          <div className="utility-section-label">
+            <Layers size={17} />
+            <h2>Stack and pot</h2>
+          </div>
+          <div className="utility-field">
+            <Label htmlFor="effectiveStack">Effective stack (chips)</Label>
+            <Input
+              id="effectiveStack"
+              type="number"
+              min="0.01"
+              step="any"
+              placeholder="100"
+              value={effectiveStack}
+              onChange={(e) => setEffectiveStack(e.target.value)}
+              aria-describedby="stack-definition"
+            />
+            <p id="stack-definition">
+              The smaller remaining stack in a heads-up hand.
+            </p>
+          </div>
+          <div className="utility-field">
+            <Label htmlFor="potSize">Current pot (chips)</Label>
+            <Input
+              id="potSize"
+              type="number"
+              min="0.01"
+              step="any"
+              placeholder="20"
+              value={potSize}
+              onChange={(e) => setPotSize(e.target.value)}
+            />
+          </div>
+          {error && (
+            <p className="inline-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="utility-presets">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEffectiveStack("100");
+                setPotSize("20");
+              }}
+            >
+              Try 100 into 20
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEffectiveStack("");
+                setPotSize("");
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+        </section>
+        <section
+          className="utility-result"
+          aria-label="Stack-to-pot result"
+          aria-live="polite"
+        >
+          <span className="eyebrow">STACK-TO-POT RATIO</span>
+          <div className="utility-number">
+            {result ? result.spr.toFixed(1) : "—"}
+          </div>
+          <dl>
+            <div>
+              <dt>Effective stack</dt>
+              <dd>
+                {effectiveStack
+                  ? `${Number(effectiveStack).toLocaleString()} chips`
+                  : "—"}
+              </dd>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Results card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Results</CardTitle>
-            <CardDescription>SPR and strategy guidance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {result ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Stack-to-Pot Ratio
-                  </p>
-                  <p className="text-3xl font-bold">
-                    {result.spr.toFixed(1)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Strategy</p>
-                  <p className="text-lg font-semibold capitalize">
-                    {result.strategy.replace("-", " ")}
-                  </p>
-                </div>
-                <div className="mt-4 rounded-md bg-muted p-3">
-                  <p className="text-sm text-muted-foreground">
-                    {result.strategyDescription}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Enter effective stack and pot size to calculate SPR.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            <div>
+              <dt>Current pot</dt>
+              <dd>
+                {potSize ? `${Number(potSize).toLocaleString()} chips` : "—"}
+              </dd>
+            </div>
+          </dl>
+          <p>
+            Effective stack ÷ pot. This ratio alone does not determine whether
+            to bet, call, or fold.
+          </p>
+        </section>
       </div>
-    </main>
+      <Link className="utility-next" to="/utilities/pot-odds">
+        <span>Check the price of a call</span>
+        <ArrowRight size={19} />
+      </Link>
+    </div>
   );
 }

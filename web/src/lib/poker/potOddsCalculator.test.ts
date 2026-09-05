@@ -10,7 +10,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 100, betToCall: 50 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("3:1");
+    expect(result.potOddsRatio).toBe("2:1");
     expect(result.requiredEquityPercent).toBe("33.3%");
     expect(result.requiredEquity).toBeCloseTo(0.333, 3);
     expect(result.totalPot).toBe(150);
@@ -20,7 +20,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 200, betToCall: 100 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("3:1");
+    expect(result.potOddsRatio).toBe("2:1");
     expect(result.requiredEquityPercent).toBe("33.3%");
     expect(result.requiredEquity).toBeCloseTo(0.333, 3);
     expect(result.totalPot).toBe(300);
@@ -30,7 +30,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 100, betToCall: 25 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("5:1");
+    expect(result.potOddsRatio).toBe("4:1");
     expect(result.requiredEquityPercent).toBe("20.0%");
     expect(result.requiredEquity).toBe(0.2);
     expect(result.totalPot).toBe(125);
@@ -40,7 +40,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 50, betToCall: 50 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("2:1");
+    expect(result.potOddsRatio).toBe("1:1");
     expect(result.requiredEquityPercent).toBe("50.0%");
     expect(result.requiredEquity).toBe(0.5);
     expect(result.totalPot).toBe(100);
@@ -50,7 +50,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 75.5, betToCall: 25.25 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("4:1"); // 100.75 / 25.25 ≈ 4
+    expect(result.potOddsRatio).toBe("2.99:1");
     expect(result.requiredEquity).toBeCloseTo(0.2507, 2);
     expect(result.totalPot).toBeCloseTo(100.75, 2);
   });
@@ -59,7 +59,7 @@ describe("calculatePotOdds", () => {
     const input: PotOddsInput = { potSize: 1000, betToCall: 10 };
     const result = calculatePotOdds(input);
 
-    expect(result.potOddsRatio).toBe("101:1");
+    expect(result.potOddsRatio).toBe("100:1");
     expect(result.requiredEquity).toBeCloseTo(0.0099, 4);
     expect(result.totalPot).toBe(1010);
   });
@@ -73,16 +73,12 @@ describe("validatePotOddsInput", () => {
 
   it("rejects zero pot size", () => {
     const input: Partial<PotOddsInput> = { potSize: 0, betToCall: 50 };
-    expect(validatePotOddsInput(input)).toBe(
-      "Pot size must be greater than 0",
-    );
+    expect(validatePotOddsInput(input)).toBe("Pot size must be greater than 0");
   });
 
   it("rejects negative pot size", () => {
     const input: Partial<PotOddsInput> = { potSize: -100, betToCall: 50 };
-    expect(validatePotOddsInput(input)).toBe(
-      "Pot size must be greater than 0",
-    );
+    expect(validatePotOddsInput(input)).toBe("Pot size must be greater than 0");
   });
 
   it("rejects zero bet to call", () => {

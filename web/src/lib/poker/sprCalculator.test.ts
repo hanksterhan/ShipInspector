@@ -6,42 +6,36 @@ describe("calculateSPR", () => {
     const input: SPRInput = { effectiveStack: 100, potSize: 20 };
     const result = calculateSPR(input);
     expect(result.spr).toBe(5);
-    expect(result.strategy).toBe("push-fold");
   });
 
-  it("calculates deep-stacked strategy for SPR > 100", () => {
+  it("calculates a ratio of 200", () => {
     const input: SPRInput = { effectiveStack: 1000, potSize: 5 };
     const result = calculateSPR(input);
     expect(result.spr).toBe(200);
-    expect(result.strategy).toBe("deep-stacked");
   });
 
-  it("calculates balanced strategy for SPR 50-100", () => {
+  it("calculates a ratio of 62.5", () => {
     const input: SPRInput = { effectiveStack: 500, potSize: 8 };
     const result = calculateSPR(input);
     expect(result.spr).toBe(62.5);
-    expect(result.strategy).toBe("balanced");
   });
 
-  it("calculates value-focused strategy for SPR 20-50", () => {
+  it("calculates a ratio of 25", () => {
     const input: SPRInput = { effectiveStack: 200, potSize: 8 };
     const result = calculateSPR(input);
     expect(result.spr).toBe(25);
-    expect(result.strategy).toBe("value-focused");
   });
 
-  it("calculates push-fold strategy for SPR < 20", () => {
+  it("calculates a ratio of 10 without inferring an action", () => {
     const input: SPRInput = { effectiveStack: 100, potSize: 10 };
     const result = calculateSPR(input);
     expect(result.spr).toBe(10);
-    expect(result.strategy).toBe("push-fold");
   });
 
   it("handles decimal values", () => {
     const input: SPRInput = { effectiveStack: 150.5, potSize: 25.25 };
     const result = calculateSPR(input);
     expect(result.spr).toBeCloseTo(5.96, 2);
-    expect(result.strategy).toBe("push-fold");
   });
 });
 

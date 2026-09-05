@@ -2,6 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Hand Library", () => {
   test.beforeEach(async ({ page }) => {
+    await page.route("**/hands?*", (route) =>
+      route.fulfill({ json: { hands: [], nextCursor: null } }),
+    );
     await page.goto("/hands/library");
   });
 
@@ -16,9 +19,12 @@ test.describe("Hand Library", () => {
       timeout: 15000,
     });
     // Should show either a table of hands or an empty state message
-    const hasTable = await page.locator("table").isVisible().catch(() => false);
+    const hasTable = await page
+      .locator("table")
+      .isVisible()
+      .catch(() => false);
     const hasEmptyState = await page
-      .getByText(/no hands saved yet/i)
+      .getByText(/Your next hand starts here/i)
       .isVisible()
       .catch(() => false);
     expect(hasTable || hasEmptyState).toBe(true);
@@ -32,8 +38,7 @@ test.describe("Hand Library", () => {
     await page.goto("/hands/library");
     await page.waitForTimeout(2000);
     const criticalErrors = errors.filter(
-      (e) =>
-        !e.includes("Clerk") && !e.includes("clerk") && !e.includes("401"),
+      (e) => !e.includes("Clerk") && !e.includes("clerk") && !e.includes("401"),
     );
     expect(criticalErrors).toHaveLength(0);
   });

@@ -6,7 +6,10 @@ export function EquityDisplay() {
 
   if (equityState.status === "loading") {
     return (
-      <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div
+        role="status"
+        className="flex items-center gap-2 text-sm text-muted-foreground"
+      >
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         <span>Calculating equity...</span>
       </div>
@@ -24,7 +27,9 @@ export function EquityDisplay() {
   if (equityState.status === "success" && equityState.data) {
     return (
       <div className="text-xs tabular-nums text-muted-foreground">
-        {equityState.data.samples.toLocaleString()} samples
+        {equityState.data.samples === 1
+          ? "Exact showdown result"
+          : `${equityState.data.samples.toLocaleString()} samples`}
       </div>
     );
   }

@@ -26,20 +26,19 @@ A utility to help track poker hands that have been played.
 npm install
 ```
 
-2. **Build the common library** (required for other packages):
+2. **Build the packages** (includes the shared library, API, and web client):
 
 ```bash
-npm run build:common
+npm run build
 ```
 
-3. **Start the Express server** (in one terminal):
+3. **Start the local API** (in one terminal):
 
 ```bash
-cd server
-npm run start
+npm run dev:api
 ```
 
-The server will start on http://localhost:3000. It provides local development support for the API routes.
+The API starts on http://localhost:3000 and uses the production routes and Clerk guards. Set `VITE_API_URL=http://localhost:3000` in `web/.env`. Keep each environment setting on its own line. Saved hands also require `DATABASE_URL` in `api/.env` or the root `.env`.
 
 4. **Start the web client** (in another terminal):
 

@@ -2,56 +2,36 @@ import type { HandForPlayback } from "@common/interfaces";
 import { ReplayPlayer } from "./ReplayPlayer";
 import { ReplayBoardCards } from "./ReplayBoardCards";
 
-// Player positions arranged around the table (ellipse).
-// Same convention as PokerTable: 0 = bottom-center (hero).
-// Supports up to 10 positions for full-ring.
-const PLAYER_POSITIONS: Array<{ left: string; top: string }> = [
-  { left: "50%", top: "88%" }, // 0: bottom-center
-  { left: "15%", top: "75%" }, // 1
-  { left: "3%", top: "45%" }, // 2
-  { left: "8%", top: "28%" }, // 3
-  { left: "15%", top: "15%" }, // 4
-  { left: "50%", top: "2%" }, // 5: top-center
-  { left: "85%", top: "15%" }, // 6
-  { left: "92%", top: "28%" }, // 7
-  { left: "97%", top: "45%" }, // 8
-  { left: "85%", top: "75%" }, // 9
-];
-
-interface ReplayTableProps {
-  hand: HandForPlayback;
-}
-
-export function ReplayTable({ hand }: ReplayTableProps) {
+export function ReplayTable({ hand }: { hand: HandForPlayback }) {
+  const seats = [...hand.players].sort((a, b) => a.seat_index - b.seat_index);
+  const middle = Math.ceil(seats.length / 2);
   return (
-    <div className="relative mx-auto aspect-[16/10] w-full max-w-4xl">
-      {/* Table background */}
-      <div className="absolute inset-[8%] rounded-[50%] border-2 border-border bg-card shadow-inner" />
-      <div className="absolute inset-[10%] rounded-[50%] border border-border/50 bg-muted/30" />
-
-      {/* Board cards - centered */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-        <ReplayBoardCards />
+    <section
+      className="table-panel replay-table"
+      aria-label="Hand replay table"
+    >
+      <div className="table-toolbar">
+        <span className="table-type">No-limit Hold’em</span>
+        <span className="player-count">{seats.length} players · Replay</span>
       </div>
-
-      {/* Player positions */}
-      {hand.players.map((player) => {
-        const posIndex = Math.min(
-          player.seat_index,
-          PLAYER_POSITIONS.length - 1,
-        );
-        const pos = PLAYER_POSITIONS[posIndex];
-
-        return (
-          <div
-            key={player.seat_index}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: pos.left, top: pos.top }}
-          >
-            <ReplayPlayer seatIndex={player.seat_index} />
-          </div>
-        );
-      })}
-    </div>
+      <div className="poker-stage">
+        <div className="table-felt" aria-hidden="true">
+          <div className="felt-stitch" />
+        </div>
+        <div className="seat-row seat-row-top">
+          {seats.slice(middle).map((p) => (
+            <ReplayPlayer key={p.seat_index} seatIndex={p.seat_index} />
+          ))}
+        </div>
+        <div className="table-center">
+          <ReplayBoardCards />
+        </div>
+        <div className="seat-row seat-row-bottom">
+          {seats.slice(0, middle).map((p) => (
+            <ReplayPlayer key={p.seat_index} seatIndex={p.seat_index} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

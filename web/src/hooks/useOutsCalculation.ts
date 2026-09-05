@@ -32,11 +32,11 @@ export function useOutsCalculation(): OutsState {
       (current) => {
         // Clear previous timer
         if (timerRef.current) clearTimeout(timerRef.current);
+        if (abortRef.current) abortRef.current.abort();
+        setState({ data: null, loading: false, error: null });
 
         // Check conditions: exactly 2 active players with complete hands, 4 board cards
-        const boardCards = current.board.filter(
-          (c): c is Card => c !== null,
-        );
+        const boardCards = current.board.filter((c): c is Card => c !== null);
         if (boardCards.length !== 4) {
           setState({ data: null, loading: false, error: null });
           return;
@@ -46,7 +46,9 @@ export function useOutsCalculation(): OutsState {
           playerIndex: number;
           cards: [Card, Card];
         }> = [];
-        for (const playerIndex of current.activePlayers) {
+        for (const playerIndex of [...current.activePlayers].sort(
+          (a, b) => a - b,
+        )) {
           const player = current.players[playerIndex];
           if (player?.[0] && player?.[1]) {
             playersWithHands.push({
@@ -56,7 +58,7 @@ export function useOutsCalculation(): OutsState {
           }
         }
 
-        if (playersWithHands.length !== 2) {
+        if (playersWithHands.length !== 2 || current.activePlayers.size !== 2) {
           setState({ data: null, loading: false, error: null });
           return;
         }
@@ -99,7 +101,13 @@ export function useOutsCalculation(): OutsState {
           }
         }, OUTS_DEBOUNCE_MS);
       },
-      { fireImmediately: true },
+      {
+        fireImmediately: true,
+        equalityFn: (a, b) =>
+          a.players === b.players &&
+          a.board === b.board &&
+          a.activePlayers === b.activePlayers,
+      },
     );
 
     return () => {

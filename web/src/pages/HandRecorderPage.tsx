@@ -35,6 +35,9 @@ export default function HandRecorderPage() {
   const wizardMode = useSettingsStore((s) => s.wizardMode);
   const toggleWizardMode = useSettingsStore((s) => s.toggleWizardMode);
 
+  const steps = ["game-context", "players", "actions", "board-review"];
+  const [step, setStep] = useState("game-context");
+  const stepIndex = steps.indexOf(step);
   const [pickerTarget, setPickerTarget] = useState<CardPickerTarget>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -102,9 +105,7 @@ export default function HandRecorderPage() {
     const activePlayers = players.filter((p) => p.isActive);
     if (activePlayers.length < 2) return false;
     if (
-      activePlayers.some(
-        (p) => !p.displayName.trim() || p.stackAtStart <= 0,
-      )
+      activePlayers.some((p) => !p.displayName.trim() || p.stackAtStart <= 0)
     ) {
       return false;
     }
@@ -154,9 +155,6 @@ export default function HandRecorderPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Record Hand</h1>
-          <p className="text-sm text-muted-foreground">
-            Capture a full hand with players, board, and actions.
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -167,7 +165,7 @@ export default function HandRecorderPage() {
               wizardMode ? "Switch to All-in-One mode" : "Switch to Wizard mode"
             }
           >
-            {wizardMode ? "Wizard" : "All-in-One"}
+            {wizardMode ? "Show all fields" : "Step by step"}
           </Button>
           {isDraft && <Badge variant="secondary">Draft saved</Badge>}
           <Button
@@ -180,12 +178,12 @@ export default function HandRecorderPage() {
       </div>
 
       {wizardMode ? (
-        <Tabs defaultValue="game-context" className="w-full">
+        <Tabs value={step} onValueChange={setStep} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="game-context">Game Context</TabsTrigger>
-            <TabsTrigger value="players">Players</TabsTrigger>
-            <TabsTrigger value="actions">Actions</TabsTrigger>
-            <TabsTrigger value="board-review">Board & Review</TabsTrigger>
+            <TabsTrigger value="game-context">1. Table</TabsTrigger>
+            <TabsTrigger value="players">2. Players</TabsTrigger>
+            <TabsTrigger value="actions">3. Actions</TabsTrigger>
+            <TabsTrigger value="board-review">4. Review</TabsTrigger>
           </TabsList>
           <TabsContent value="game-context">
             <GameSettingsForm />
@@ -217,13 +215,35 @@ export default function HandRecorderPage() {
                   </p>
                   <p>Actions: {actions.length} recorded</p>
                   <p>
-                    Board:{" "}
-                    {gameSettings.board.filter((c) => c !== null).length} cards
+                    Board: {gameSettings.board.filter((c) => c !== null).length}{" "}
+                    cards
                   </p>
                 </div>
               </div>
             </div>
           </TabsContent>
+          <div className="wizard-footer">
+            <Button
+              variant="outline"
+              disabled={stepIndex === 0}
+              onClick={() => setStep(steps[stepIndex - 1])}
+            >
+              Previous
+            </Button>
+            <span>Step {stepIndex + 1} of 4</span>
+            {stepIndex < 3 ? (
+              <Button onClick={() => setStep(steps[stepIndex + 1])}>
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSave}
+                disabled={!minimumRequirementsMet || isSaving || isHydrating}
+              >
+                {isSaving ? "Saving…" : "Save Hand"}
+              </Button>
+            )}
+          </div>
         </Tabs>
       ) : (
         <>
