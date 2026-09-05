@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { TableCommandRequest, TableSettings, TableView } from "@common/interfaces/tableInterfaces";
-import { applyCommand, expireTurn, joinSeat, makeTable, record, TableError, tableView, TableState } from "./engine";
+import { applyCommand, joinSeat, makeTable, record, TableError, tableView, TableState } from "./engine";
+import { progressTable } from "./bots";
 import { TableStore } from "./store";
 
 export type Identity = { userId: string; token?: never } | { token: string; userId?: never };
@@ -35,7 +36,7 @@ export class TableService {
       const t = await this.load(id); const principal = this.principal(t, identity);
       if (!t.members.includes(principal)) throw new TableError("Join this private table to view the game.", 403);
       const expected = t.version;
-      if (expireTurn(t, this.now())) {
+      if (progressTable(t, this.now())) {
         t.version++;
         if (!await this.store.save(t, expected)) continue;
       }
@@ -64,10 +65,10 @@ export class TableService {
     // prevents two people from taking the same final seat.
     const joining = (payload as { type?: string })?.type === "join";
     if (!joining && expected !== version) throw new TableError("The table changed. Refresh before acting.", 409);
-    if (expireTurn(t, this.now())) {
+    if (progressTable(t, this.now())) {
       t.version++;
       await this.store.save(t, expected);
-      throw new TableError("The turn expired. Refresh before acting.", 409);
+      throw new TableError("The table advanced. Refresh before acting.", 409);
     }
     change(t, principal);
     t.version++;

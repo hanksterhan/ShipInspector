@@ -1,6 +1,7 @@
 import type { Card } from "./handInterfaces";
 
 export type TableStreet = "waiting" | "preflop" | "flop" | "turn" | "river" | "complete";
+export type BotStyle = "aggressive" | "passive" | "balanced" | "random";
 export type SeatStatus = "waiting" | "active" | "folded" | "all-in";
 export interface TableSettings {
   name: string;
@@ -13,7 +14,8 @@ export interface TableSettings {
 export interface TableSeatView {
   seat: number;
   name: string;
-  kind: "human" | "agent";
+  kind: "human" | "agent" | "cpu";
+  botStyle?: BotStyle;
   stack: number;
   bet: number;
   committed: number;
@@ -80,7 +82,9 @@ export type TableCommand =
   | { type: "act"; action: "fold" | "check" | "call" | "raise"; raiseTo?: number }
   | { type: "leave" }
   | { type: "rebuy" }
-  | { type: "close" };
+  | { type: "close" }
+  | { type: "add-bots"; styles: BotStyle[] }
+  | { type: "remove-bot"; seat: number };
 export interface TableCommandRequest {
   version: number;
   requestId: string;

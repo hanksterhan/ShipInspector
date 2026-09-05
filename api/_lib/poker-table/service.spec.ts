@@ -98,4 +98,30 @@ describe("persistent tables and shared human/agent authorization", () => {
     await expect(send(v, { userId: "timeout-owner" }, { type: "act", action: "raise", raiseTo: 100 })).rejects.toThrow("table changed");
     expect((await store.get(v.id))!.version).toBe(v.version + 1);
   });
+  it("persists a due CPU turn across restart and commits it once under concurrent polls", async () => {
+    let v = await service.create("cpu-owner", settings, "Alice");
+    v = await send(v, { userId: "cpu-owner" }, { type: "add-bots", styles: ["passive"] });
+    v = await send(v, { userId: "cpu-owner" }, { type: "ready", ready: true });
+    v = await send(v, { userId: "cpu-owner" }, { type: "deal" });
+    v = await send(v, { userId: "cpu-owner" }, { type: "act", action: "call" });
+    const before = (await store.get(v.id))!;
+    expect(before.botActionAt).toBe(clock + 1400);
+    const restarted = new TableService(store, () => clock);
+    expect((await restarted.get(v.id, { userId: "cpu-owner" })).version).toBe(v.version);
+    clock += 1400;
+    const views = await Promise.all(Array.from({ length: 4 }, () => restarted.get(v.id, { userId: "cpu-owner" })));
+    expect(new Set(views.map(view => view.version))).toEqual(new Set([v.version + 1]));
+    const saved = (await store.get(v.id))!;
+    expect(saved.events.filter(event => event.text.startsWith("Marina: "))).toHaveLength(1);
+    expect(views.every(view => view.seats[1].cards.length === 0)).toBe(true);
+  });
+  it("does not let strangers drive bots and handles a repeated add request without extra seats", async () => {
+    const v = await service.create("cpu-retry-owner", settings, "Alice"); const id = randomUUID();
+    const added = await send(v, { userId: "cpu-retry-owner" }, { type: "add-bots", styles: ["random", "balanced"] }, id);
+    expect((await send(v, { userId: "cpu-retry-owner" }, { type: "add-bots", styles: ["random", "balanced"] }, id)).seats).toHaveLength(3);
+    await expect(service.get(v.id, { userId: "outsider" })).rejects.toThrow("Join this private table");
+    expect((await store.get(v.id))!.version).toBe(added.version);
+    await expect(send(added, { userId: "outsider" }, { type: "remove-bot", seat: 1 })).rejects.toThrow("Join this table");
+  });
+
 });

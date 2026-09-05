@@ -1,6 +1,7 @@
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import type { Card, CardRank } from "@common/interfaces";
-import type { LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
+import { BOT_PROFILES } from "@common/pokerBots";
+import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
 import { hand } from "@lib/poker/evaluate";
 import { compareRanks } from "@lib/poker/compare";
 
@@ -11,7 +12,8 @@ export interface Seat {
   seat: number;
   principal: string;
   name: string;
-  kind: "human" | "agent";
+  kind: "human" | "agent" | "cpu";
+  botStyle?: BotStyle;
   stack: number;
   bet: number;
   committed: number;
@@ -41,6 +43,7 @@ export interface TableState {
   button: number;
   actor: number | null;
   deadline: number | null;
+  botActionAt?: number | null;
   board: Card[];
   deck: Card[];
   currentBet: number;
@@ -62,7 +65,7 @@ export function record(t: TableState, text: string) {
 }
 export function makeTable(id: string, owner: string, settings: TableSettings): TableState {
   return { id, owner, members: [owner], version: 0, settings, street: "waiting", handNumber: 0,
-    button: -1, actor: null, deadline: null, board: [], deck: [], currentBet: 0,
+    button: -1, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
     minRaise: settings.bigBlind, seats: [], awards: [], events: [], eventId: 0, agents: [], receipts: [], closed: false };
 }
 export function shuffledDeck(): Card[] {
@@ -79,6 +82,7 @@ function next(t: TableState, after: number, candidates: Seat[]): Seat {
 }
 function setActor(t: TableState, seat: number, now: number) {
   t.actor = seat;
+  t.botActionAt = t.seats.find(s => s.seat === seat)?.kind === "cpu" ? now + 1400 : null;
   t.deadline = now + t.settings.turnSeconds * 1000;
 }
 function putChips(s: Seat, amount: number) {
@@ -146,8 +150,8 @@ function settle(t: TableState, showdown: boolean) {
     t.awards.push(award);
   }
   for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
-  t.street = "complete"; t.actor = null; t.deadline = null; t.deck = [];
-  for (const s of t.seats) { s.ready = false; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
+  t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
+  for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
   hand.clearCache();
 }
 function dealBoard(t: TableState) {
@@ -175,9 +179,13 @@ function advance(t: TableState, after: number, now: number) {
 }
 export function deal(t: TableState, now: number, deck = shuffledDeck()) {
   if (inHand(t)) throw new TableError("Finish this hand first.", 409);
-  const ready = t.seats.filter(s => s.ready && !s.sittingOut && s.stack > 0);
+  const ready = t.seats.filter(s => s.ready && !s.sittingOut && (s.stack > 0 || s.kind === "cpu"));
   if (ready.length < 2) throw new TableError("At least two players must be ready.", 409);
   if (deck.length !== 52 || new Set(deck.map(c => `${c.rank}${c.suit}`)).size !== 52) throw new TableError("Invalid deck.", 500);
+  for (const s of ready) if (s.kind === "cpu" && s.stack === 0) {
+    s.stack = t.settings.startingStack;
+    record(t, `${s.name} refilled with ${s.stack} play chips.`);
+  }
   t.deck = [...deck]; t.board = []; t.awards = []; t.handNumber++; t.street = "preflop";
   t.currentBet = t.settings.bigBlind; t.minRaise = t.settings.bigBlind;
   t.button = next(t, t.button, ready).seat;
@@ -230,6 +238,29 @@ export function expireTurn(t: TableState, now: number): boolean {
 export function applyCommand(t: TableState, principal: string, command: TableCommand, now: number) {
   if (t.closed) throw new TableError("This table is closed.", 409);
   const s = t.seats.find(s => s.principal === principal);
+  if (command.type === "add-bots" || command.type === "remove-bot") {
+    if (principal !== t.owner) throw new TableError("Only the host can manage CPU players.", 403);
+    if (inHand(t)) throw new TableError("Manage CPU players between hands.", 409);
+    if (command.type === "remove-bot") {
+      const bot = t.seats.find(p => p.seat === command.seat && p.kind === "cpu");
+      if (!bot) throw new TableError("CPU player not found.", 404);
+      applyCommand(t, bot.principal, { type: "leave" }, now);
+      t.members = t.members.filter(member => member !== bot.principal);
+    } else {
+      if (!command.styles.length || command.styles.length > 7 || command.styles.some(style => !Object.prototype.hasOwnProperty.call(BOT_PROFILES, style))) throw new TableError("Choose one to seven CPU players.");
+      if (t.seats.length + command.styles.length > t.settings.maxPlayers) throw new TableError("There are not enough open seats.", 409);
+      for (const style of command.styles) {
+        const base = BOT_PROFILES[style].name;
+        let name = base; let suffix = 2;
+        while (t.seats.some(p => p.name === name)) name = `${base} ${suffix++}`;
+        const botId = `cpu:${randomUUID()}`;
+        joinSeat(t, botId, name, "cpu");
+        const bot = t.seats.find(p => p.principal === botId)!;
+        bot.botStyle = style; bot.ready = true;
+      }
+    }
+    return;
+  }
   if (command.type === "join") { joinSeat(t, principal, command.name); return; }
   if (command.type === "close") {
     if (principal !== t.owner) throw new TableError("Only the host can close the table.", 403);
@@ -264,11 +295,11 @@ export function tableView(t: TableState, principal: string, now: number): TableV
     yourSeat: you?.seat ?? null, street: t.street, handNumber: t.handNumber, button: t.button,
     actor: t.actor, deadline: t.deadline, serverTime: now, board: t.board, currentBet: t.currentBet,
     pot: t.seats.reduce((sum, s) => sum + s.committed, 0),
-    seats: t.seats.map(s => ({ seat: s.seat, name: s.name, kind: s.kind, stack: s.stack, bet: s.bet,
+    seats: t.seats.map(s => ({ seat: s.seat, name: s.name, kind: s.kind, ...(s.botStyle ? { botStyle: s.botStyle } : {}), stack: s.stack, bet: s.bet,
       committed: s.committed, status: s.status, ready: s.ready, sittingOut: s.sittingOut,
       isYou: s.principal === principal, cards: s.principal === principal || (reveal && s.status !== "folded") ? s.cards : [],
       hasCards: s.cards.length > 0, lastAction: s.lastAction })),
     legal: legalActions(t, principal), awards: t.awards, events: t.events, closed: t.closed,
-    canDeal: !t.closed && !inHand(t) && (principal === t.owner || !!you?.ready) && t.seats.filter(s => s.ready && !s.sittingOut && s.stack > 0).length >= 2,
+    canDeal: !t.closed && !inHand(t) && (principal === t.owner || !!you?.ready) && t.seats.filter(s => s.ready && !s.sittingOut && (s.stack > 0 || s.kind === "cpu")).length >= 2,
     agents: principal === t.owner ? t.agents.map(({ id, name, seat, expiresAt, revoked }) => ({ id, name, seat, expiresAt, revoked, seated: t.seats.some(s => s.principal === `agent:${id}`) })) : [] };
 }
