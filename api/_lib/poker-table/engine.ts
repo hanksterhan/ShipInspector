@@ -41,6 +41,8 @@ export interface TableState {
   street: TableStreet;
   handNumber: number;
   button: number;
+  smallBlindSeat?: number | null;
+  bigBlindSeat?: number | null;
   actor: number | null;
   deadline: number | null;
   botActionAt?: number | null;
@@ -65,7 +67,7 @@ export function record(t: TableState, text: string) {
 }
 export function makeTable(id: string, owner: string, settings: TableSettings): TableState {
   return { id, owner, members: [owner], version: 0, settings, street: "waiting", handNumber: 0,
-    button: -1, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
+    button: -1, smallBlindSeat: null, bigBlindSeat: null, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
     minRaise: settings.bigBlind, seats: [], awards: [], events: [], eventId: 0, agents: [], receipts: [], closed: false };
 }
 export function shuffledDeck(): Card[] {
@@ -198,6 +200,7 @@ export function deal(t: TableState, now: number, deck = shuffledDeck()) {
   for (let round = 0; round < 2; round++) for (const s of order) s.cards.push(t.deck.shift()!);
   const sb = ready.length === 2 ? ready.find(s => s.seat === t.button)! : next(t, t.button, ready);
   const bb = next(t, sb.seat, ready);
+  t.smallBlindSeat = sb.seat; t.bigBlindSeat = bb.seat;
   putChips(sb, Math.min(sb.stack, t.settings.smallBlind)); sb.lastAction = "Small blind";
   putChips(bb, Math.min(bb.stack, t.settings.bigBlind)); bb.lastAction = "Big blind";
   record(t, `Hand ${t.handNumber}. ${sb.name} posts ${sb.bet}; ${bb.name} posts ${bb.bet}.`);
@@ -288,11 +291,25 @@ export function applyCommand(t: TableState, principal: string, command: TableCom
     if (t.street === "complete") { t.street = "waiting"; t.awards = []; t.board = []; for (const p of t.seats) { p.cards = []; p.committed = 0; p.status = "waiting"; } }
   }
 }
+function blindSeats(t: TableState) {
+  const empty = { smallBlindSeat: null, bigBlindSeat: null };
+  if (!t.handNumber || t.street === "waiting") return empty;
+  if (t.smallBlindSeat !== undefined && t.bigBlindSeat !== undefined)
+    return { smallBlindSeat: t.smallBlindSeat, bigBlindSeat: t.bigBlindSeat };
+  // Older saved hands have no blind fields. Folded and all-in seats still
+  // belong to the original deal; late arrivals and sitting-out seats do not.
+  const dealt = t.seats.filter(s => s.status !== "waiting");
+  const dealer = dealt.find(s => s.seat === t.button);
+  if (!dealer || dealt.length < 2) return empty;
+  const small = dealt.length === 2 ? dealer : next(t, t.button, dealt);
+  return { smallBlindSeat: small.seat, bigBlindSeat: next(t, small.seat, dealt).seat };
+}
 export function tableView(t: TableState, principal: string, now: number): TableView {
   const you = t.seats.find(s => s.principal === principal);
   const reveal = t.street === "complete";
   return { id: t.id, version: t.version, settings: t.settings, isOwner: t.owner === principal,
     yourSeat: you?.seat ?? null, street: t.street, handNumber: t.handNumber, button: t.button,
+    ...blindSeats(t),
     actor: t.actor, deadline: t.deadline, serverTime: now, board: t.board, currentBet: t.currentBet,
     pot: t.seats.reduce((sum, s) => sum + s.committed, 0),
     seats: t.seats.map(s => ({ seat: s.seat, name: s.name, kind: s.kind, ...(s.botStyle ? { botStyle: s.botStyle } : {}), stack: s.stack, bet: s.bet,

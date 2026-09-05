@@ -14,6 +14,34 @@ function river(committed: number[], cards: string[], board = "2c 4h 7s 9d 11c") 
   return t;
 }
 describe("no-limit hold'em table engine", () => {
+  it("keeps blind seats for the whole hand while street bets reset", () => {
+    const t = table(); deal(t, 0);
+    expect(tableView(t, "u0", 0)).toMatchObject({ smallBlindSeat: 0, bigBlindSeat: 1 });
+    act(t, "u0", "call", undefined, 1);
+    expect(tableView(t, "u0", 1).seats.map(s => s.bet)).toEqual([10, 10]);
+    act(t, "u1", "check", undefined, 2);
+    for (const street of ["flop", "turn", "river"]) {
+      expect(t.street).toBe(street);
+      expect(tableView(t, "u0", 2).seats.map(s => s.bet)).toEqual([0, 0]);
+      act(t, "u1", "raise", 40, 3);
+      expect(tableView(t, "u0", 3).seats.map(s => s.bet)).toEqual([0, 40]);
+      act(t, "u0", "call", undefined, 4);
+      expect(tableView(JSON.parse(JSON.stringify(t)), "u0", 4)).toMatchObject({ smallBlindSeat: 0, bigBlindSeat: 1 });
+    }
+    for (const s of t.seats) applyCommand(t, s.principal, { type: "ready", ready: true }, 5);
+    deal(t, 6);
+    expect(tableView(t, "u0", 6)).toMatchObject({ button: 1, smallBlindSeat: 1, bigBlindSeat: 0 });
+  });
+  it("recovers blinds in older hands without moving a folded blind or counting late arrivals", () => {
+    const t = table(4); t.seats[0].sittingOut = true; deal(t, 0);
+    delete t.smallBlindSeat; delete t.bigBlindSeat;
+    act(t, "u1", "call", undefined, 1);
+    act(t, "u2", "fold", undefined, 2);
+    joinSeat(t, "late", "Late arrival");
+    act(t, "u3", "check", undefined, 3);
+    expect(t.street).toBe("flop");
+    expect(tableView(t, "u1", 3)).toMatchObject({ button: 1, smallBlindSeat: 2, bigBlindSeat: 3 });
+  });
   it("deals distinct cards and uses heads-up blind and action order", () => {
     const t = table(); deal(t, 100);
     expect(t.button).toBe(0); expect(t.actor).toBe(0);

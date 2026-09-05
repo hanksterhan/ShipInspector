@@ -346,7 +346,7 @@
   box-shadow: 0 0 0 2px
     color-mix(in srgb, var(--muted-foreground) 19%, transparent);
 }
-.live-seat.is-folded {
+.live-seat.is-folded .live-hole-cards {
   opacity: 0.5;
 }
 .live-seat.is-winner {
@@ -387,17 +387,36 @@
   place-items: center;
   flex: 0 0 auto;
 }
-.live-seat-heading .dealer-button {
-  position: static;
-  flex: 0 0 auto;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  background: #e9e6d8;
-  color: var(--secondary);
+.live-seat-positions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  margin-top: 3px;
+}
+.live-position {
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  padding: 2px 5px;
   font-size: 10px;
-  line-height: 19px;
+  line-height: 16px;
   font-weight: 700;
+  white-space: nowrap;
+}
+.position-dealer {
+  color: var(--background);
+  background: var(--foreground);
+  border-color: var(--foreground);
+}
+.position-small-blind {
+  color: var(--primary);
+  background: var(--primary-foreground);
+}
+.position-big-blind {
+  color: var(--miami-pink);
+  background: var(--primary-foreground);
 }
 .live-crown {
   position: absolute;
@@ -449,6 +468,37 @@
   font-size: 11px;
   color: var(--muted-foreground);
 }
+.live-seat-bet {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 36px;
+  margin: 1px 0 7px;
+  padding: 5px 7px;
+  border: 1px solid var(--felt-edge);
+  border-radius: 6px;
+  background: var(--primary-foreground);
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.live-seat-bet > span {
+  font-size: 10px;
+  font-weight: 600;
+}
+.live-seat-bet > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  line-height: 22px;
+}
+.live-seat-bet.has-bet {
+  color: var(--miami-sunset);
+  border-color: var(--miami-sunset);
+  background: var(--winner-surface);
+}
 .live-seat-stack {
   font-size: 16px;
   font-weight: 550;
@@ -458,7 +508,7 @@
   font-size: 10px;
   font-weight: 400;
   color: var(--muted-foreground);
-  margin-left: 5px;
+  margin-right: 4px;
 }
 .live-seat-action {
   font-size: 10px;

@@ -18,6 +18,8 @@ const table: TableView = {
   street: "waiting",
   handNumber: 0,
   button: -1,
+  smallBlindSeat: null,
+  bigBlindSeat: null,
   actor: null,
   deadline: null,
   serverTime: 0,

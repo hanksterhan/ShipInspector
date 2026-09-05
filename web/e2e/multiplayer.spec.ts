@@ -148,6 +148,18 @@ test("two signed-in people play from desktop and mobile, reconnect, and finish a
     await expect(
       mobile.locator('.live-seat[data-seat="1"] .card-face'),
     ).toHaveCount(2);
+    await expect(
+      page.locator('.live-seat[data-seat="0"] .live-seat-positions'),
+    ).toHaveText("DealerSmall blind");
+    await expect(
+      page.locator('.live-seat[data-seat="1"] .live-seat-positions'),
+    ).toHaveText("Big blind");
+    await expect(
+      page.locator('.live-seat[data-seat="0"] .live-seat-bet'),
+    ).toHaveText("Preflop bet5");
+    await expect(
+      mobile.locator('.live-seat[data-seat="1"] .live-seat-bet'),
+    ).toHaveText("Preflop bet10");
     await page.screenshot({
       path: info.outputPath("desktop-live-table.png"),
       fullPage: true,
@@ -156,6 +168,9 @@ test("two signed-in people play from desktop and mobile, reconnect, and finish a
     await expect(
       mobile.getByRole("button", { name: "Check", exact: true }),
     ).toBeVisible();
+    await expect(
+      page.locator('.live-seat[data-seat="0"] .live-seat-bet'),
+    ).toHaveText("Preflop bet10");
     await noOverflow(mobile);
     await mobile.evaluate(() => window.scrollTo(0, 0));
     const actionBounds = await mobile.locator(".your-action").boundingBox();
@@ -174,9 +189,32 @@ test("two signed-in people play from desktop and mobile, reconnect, and finish a
     await mobile.getByRole("button", { name: "Bet", exact: true }).click();
     await mobile.getByLabel("Bet", { exact: true }).fill("40");
     await mobile.getByRole("button", { name: "Bet 40", exact: true }).click();
+    await expect(
+      page.locator('.live-seat[data-seat="1"] .live-seat-bet'),
+    ).toHaveText("Flop bet40");
+    await expect(
+      page.locator('.live-seat[data-seat="0"] .live-seat-bet'),
+    ).toHaveText("Flop bet0");
+    await expect(
+      page.locator('.live-seat[data-seat="1"] .position-big-blind'),
+    ).toHaveText("Big blind");
+    await page.screenshot({
+      path: info.outputPath("desktop-flop-bets.png"),
+      fullPage: true,
+    });
+    await mobile.screenshot({
+      path: info.outputPath("mobile-flop-bets.png"),
+      fullPage: true,
+    });
     await page.getByRole("button", { name: "Call 40", exact: true }).click();
     for (const street of ["Turn", "River"]) {
       await expect(page.locator(".live-hand-status")).toContainText(street);
+      await expect(
+        page.locator('.live-seat[data-seat="0"] .live-seat-bet'),
+      ).toHaveText(`${street} bet0`);
+      await expect(
+        page.locator('.live-seat[data-seat="1"] .live-seat-bet'),
+      ).toHaveText(`${street} bet0`);
       await mobile.getByRole("button", { name: "Check", exact: true }).click();
       await page.getByRole("button", { name: "Check", exact: true }).click();
     }

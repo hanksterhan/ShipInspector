@@ -11,6 +11,8 @@ it("requires a seated host to mark ready before offering to deal with CPUs", () 
     street: "waiting",
     handNumber: 0,
     button: -1,
+    smallBlindSeat: null,
+    bigBlindSeat: null,
     actor: null,
     deadline: null,
     serverTime: 0,

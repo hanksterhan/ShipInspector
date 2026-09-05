@@ -23,6 +23,8 @@ const snapshot = (version = 0, id = "table-a"): TableView => ({
   street: "waiting",
   handNumber: 0,
   button: 0,
+  smallBlindSeat: null,
+  bigBlindSeat: null,
   actor: null,
   deadline: null,
   serverTime: Date.now(),

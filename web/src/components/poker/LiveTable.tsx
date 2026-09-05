@@ -1,4 +1,4 @@
-import { BrainCircuit, Crown, UserRound } from "lucide-react";
+import { BrainCircuit, CircleDot, Crown, UserRound } from "lucide-react";
 import type { TableView } from "@common/interfaces/tableInterfaces";
 import { BOT_PROFILES } from "@common/pokerBots";
 import { BotIcon } from "./CpuPlayers";
@@ -8,6 +8,11 @@ import { useCardDeal } from "@/hooks/useCardDeal";
 
 export function LiveTable({ table }: { table: TableView }) {
   const felt = useCardDeal(table);
+  const betting = !["waiting", "complete"].includes(table.street);
+  const street =
+    table.street === "preflop"
+      ? "Preflop"
+      : table.street[0].toUpperCase() + table.street.slice(1);
   const paid = new Map<number, number>();
   table.awards.forEach((p) =>
     p.winners.forEach((w) =>
@@ -62,13 +67,38 @@ export function LiveTable({ table }: { table: TableView }) {
               </small>
             )}
           </strong>
-          {table.button === s.seat && table.handNumber > 0 && (
-            <span className="dealer-button" title="Dealer button">
-              D
-            </span>
-          )}
           {paid.has(s.seat) && (
             <Crown className="live-crown" size={20} aria-label="Winner" />
+          )}
+        </div>
+        <div className="live-seat-positions">
+          {table.street !== "waiting" && s.status !== "waiting" && (
+            <>
+              {table.button === s.seat && (
+                <span
+                  className="live-position position-dealer"
+                  aria-label={`${s.name}: Dealer`}
+                >
+                  Dealer
+                </span>
+              )}
+              {table.smallBlindSeat === s.seat && (
+                <span
+                  className="live-position position-small-blind"
+                  aria-label={`${s.name}: Small blind`}
+                >
+                  Small blind
+                </span>
+              )}
+              {table.bigBlindSeat === s.seat && (
+                <span
+                  className="live-position position-big-blind"
+                  aria-label={`${s.name}: Big blind`}
+                >
+                  Big blind
+                </span>
+              )}
+            </>
           )}
         </div>
         <div className="live-hole-cards">
@@ -110,9 +140,21 @@ export function LiveTable({ table }: { table: TableView }) {
             </span>
           )}
         </div>
+        {betting && s.status !== "waiting" && (
+          <div
+            className={cn("live-seat-bet", s.bet > 0 && "has-bet")}
+            role="group"
+            aria-label={`${s.name}: ${street} bet ${s.bet.toLocaleString()} chips`}
+          >
+            <span>{street} bet</span>
+            <strong>
+              <CircleDot size={16} aria-hidden="true" />
+              {s.bet.toLocaleString()}
+            </strong>
+          </div>
+        )}
         <div className="live-seat-stack">
-          {s.stack.toLocaleString()}
-          <span>chips</span>
+          <span>Stack</span> {s.stack.toLocaleString()}
         </div>
         <div className="live-seat-action">
           {paid.has(s.seat) ? (

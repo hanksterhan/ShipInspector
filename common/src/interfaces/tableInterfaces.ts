@@ -52,6 +52,8 @@ export interface TableView {
   street: TableStreet;
   handNumber: number;
   button: number;
+  smallBlindSeat: number | null;
+  bigBlindSeat: number | null;
   actor: number | null;
   deadline: number | null;
   serverTime: number;

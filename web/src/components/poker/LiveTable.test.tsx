@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { TableView } from "@common/interfaces/tableInterfaces";
 import { LiveTable } from "./LiveTable";
@@ -11,6 +11,8 @@ const dealt = (handNumber = 1): TableView => ({
   street: "preflop",
   handNumber,
   button: 0,
+  smallBlindSeat: 1,
+  bigBlindSeat: 2,
   actor: 0,
   deadline: null,
   serverTime: 0,
@@ -121,6 +123,83 @@ it("deals two clockwise rounds to all seats without exposing CPU cards", () => {
   expect(
     screen.getByRole("img", { name: "Human card 1: A of Spades" }),
   ).toBeVisible();
+});
+
+it("shows cumulative street bets apart from stacks and resets the displayed phase", () => {
+  const t = dealt();
+  t.seats[0] = {
+    ...t.seats[0],
+    bet: 80,
+    stack: 920,
+    committed: 180,
+    lastAction: "Call 20",
+  };
+  const { rerender } = render(<LiveTable table={t} />);
+  expect(
+    screen.getByRole("group", { name: "Human: Preflop bet 80 chips" }),
+  ).toHaveTextContent("80");
+  const seat = screen.getByText("Human").closest(".live-seat")!;
+  expect(
+    within(seat as HTMLElement).getByText("Stack").parentElement,
+  ).toHaveTextContent("920");
+  for (const street of ["flop", "turn", "river"] as const) {
+    rerender(
+      <LiveTable
+        table={{
+          ...t,
+          street,
+          seats: t.seats.map((s) => ({ ...s, bet: 0, lastAction: "" })),
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("group", {
+        name: `Human: ${street[0].toUpperCase() + street.slice(1)} bet 0 chips`,
+      }),
+    ).toHaveTextContent("0");
+    expect(
+      screen.queryByRole("group", { name: "Human: Preflop bet 80 chips" }),
+    ).not.toBeInTheDocument();
+  }
+  rerender(<LiveTable table={{ ...t, street: "complete" }} />);
+  expect(
+    screen.queryByRole("group", { name: /bet .* chips/ }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps blind markers after actions and folds, with both dealer and small blind heads-up", () => {
+  const t = dealt();
+  t.smallBlindSeat = 0;
+  t.bigBlindSeat = 1;
+  t.seats = t.seats.slice(0, 2);
+  const { rerender } = render(<LiveTable table={t} />);
+  const human = screen.getByText("Human").closest(".live-seat")! as HTMLElement;
+  expect(within(human).getByText("Dealer")).toBeVisible();
+  expect(within(human).getByText("Small blind")).toBeVisible();
+  expect(screen.getByText("Big blind")).toBeVisible();
+  rerender(
+    <LiveTable
+      table={{
+        ...t,
+        street: "flop",
+        seats: t.seats.map((s) => ({
+          ...s,
+          status: "folded",
+          lastAction: "Fold",
+          bet: 40,
+        })),
+      }}
+    />,
+  );
+  expect(screen.getByText("Small blind")).toBeVisible();
+  expect(screen.getByText("Big blind")).toBeVisible();
+  expect(
+    screen.getByRole("group", { name: "Human: Flop bet 40 chips" }),
+  ).toBeVisible();
+  rerender(<LiveTable table={waiting()} />);
+  expect(screen.queryByText("Dealer")).not.toBeInTheDocument();
+  expect(screen.queryByText("Small blind")).not.toBeInTheDocument();
+  expect(screen.queryByText("Big blind")).not.toBeInTheDocument();
 });
 
 it("does not replay a deal on a poll, a reveal, or initial reconnect", () => {
