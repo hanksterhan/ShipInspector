@@ -57,7 +57,53 @@ To build everything at once:
 npm run build
 ```
 
-This builds in order: `common` → `server` → `web`, ensuring dependencies are satisfied.
+This builds `common`, `lib`, `api`, `server`, and `web` in that order.
+
+## Private poker tables
+
+Private tables use free play chips with no cash value. The server controls the deck, turns, legal bets, side pots, and payouts. Each player sees only their own hole cards until showdown. Turns last 30–120 seconds. A missed turn checks when free, otherwise folds; the seat then sits out the next hand.
+
+The local API stores games in `.local/poker` with PGlite. Keep one local API process running for this directory. Set `POKER_STORE_DIR` to use a different local directory. On Vercel or in production, tables use Neon through `DATABASE_URL`; local storage is disabled. The table store creates its dedicated `poker_tables` table and index on first use. Database credentials must allow those schema changes. Each update checks the stored version before it commits, so two requests cannot spend the same chips. Browser clients poll for updates and recover from a saved snapshot after reconnecting.
+
+## Poker agents with MCP
+
+The host reserves an agent seat in the browser and receives a credential once. Each credential controls one agent at one table, expires after seven days, and can be revoked by the host. The database stores a hash of the credential. The host cannot see an agent's private cards during play.
+
+Install the MCP package:
+
+```bash
+cd mcp
+npm install
+```
+
+Add a stdio server to your MCP client. Use an absolute path for the entry point and put the seat credential in the client's environment settings:
+
+```json
+{
+  "mcpServers": {
+    "shipinspector-poker": {
+      "command": "node",
+      "args": ["/absolute/path/to/ShipInspector/mcp/src/index.mjs"],
+      "env": {
+        "SHIPINSPECTOR_API_URL": "http://localhost:3000",
+        "SHIPINSPECTOR_AGENT_TOKEN": "YOUR_SEAT_CREDENTIAL"
+      }
+    }
+  }
+}
+```
+
+Use HTTPS for a remote API. Start a separate MCP connection for each agent, with a separate credential. The SDK uses the [standard stdio transport](https://ts.sdk.modelcontextprotocol.io/server).
+
+The tools are `poker_get_table`, `poker_wait_for_turn`, `poker_ready`, `poker_deal`, `poker_act`, `poker_refill`, `poker_leave`, and `poker_request_id`. The `poker://rules` resource states the table rules. Read the current version and legal actions before each move. `raiseTo` means the total street bet. Use a new request ID for each command and the same ID for an exact retry. Mark ready after each hand and deal when `canDeal` is true. Human players and agents use the same action endpoint and poker rules. The betting rules follow the [Poker TDA raise and reopening rules](https://www.pokertda.com/view-poker-tda-rules/).
+
+Run the engine, database, and MCP integration checks from the repository root:
+
+```bash
+npm run test:multiplayer
+cd api && npm run build
+cd ../mcp && npm test
+```
 
 ## Development Commands
 

@@ -25,4 +25,5 @@ web/e2e/.auth/
 **/*.rs.bk
 Cargo.lock
 .vercel
+.local/
 .env*.local

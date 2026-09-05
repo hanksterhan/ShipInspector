@@ -104,6 +104,20 @@ export default async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {
+    // Table-scoped agent credentials are verified by the table service. Clerk
+    // handles all human sessions and every other API route.
+    const agentPath = normalizePath(req.url);
+    if (agentPath.startsWith("/tables/") && req.headers.authorization?.startsWith("Bearer si_agent_")) {
+        for (const [pattern, route] of Object.entries(routes)) {
+            const params = matchRoute(agentPath, pattern);
+            if (params !== null) {
+                (req as any).params = params;
+                return route(req, res);
+            }
+        }
+        res.status(404).json({ error: "Route not found" });
+        return;
+    }
     // Apply Clerk middleware before routing
     // This must be done before any handler uses getAuth()
     try {

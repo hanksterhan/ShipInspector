@@ -20,6 +20,7 @@ import { handler as pokerEvaluateHandler } from "./poker/evaluate";
 import { handler as pokerCompareHandler } from "./poker/compare";
 import { handler as pokerEquityHandler } from "./poker/equity";
 import { handler as pokerOutsHandler } from "./poker/outs";
+import { tablesHandler } from "./tables";
 
 export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
@@ -30,6 +31,11 @@ export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<
  * Example: "/auth/me" matches requests to "/api/auth/me" or "/auth/me"
  */
 export const routes: Record<string, RouteHandler> = {
+    "/tables": tablesHandler,
+    "/tables/:id": tablesHandler,
+    "/tables/:id/commands": tablesHandler,
+    "/tables/:id/agents": tablesHandler,
+    "/tables/:id/revoke-agent": tablesHandler,
     "/auth/me": authMeHandler,
     "/auth/clerk-user": authClerkUserHandler,
     "/hands": handsCreateHandler,

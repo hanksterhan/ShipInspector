@@ -7,6 +7,8 @@ for (const file of ["../api/.env", "../.env", "../web/.env"]) {
   dotenv.config({ path: path.resolve(__dirname, file) });
 }
 process.env.CLERK_PUBLISHABLE_KEY ||= process.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Local games persist between restarts without touching a remote database.
+process.env.POKER_STORE_DIR ||= path.resolve(__dirname, "../.local/poker");
 const express = apiRequire("express");
 const { default: handler } = require("../api/dist/api/index.js");
 const { handleCors } = require("../api/dist/api/_lib/api-utils/cors.js");

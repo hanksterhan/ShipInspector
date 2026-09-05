@@ -5,10 +5,11 @@
   "scripts": {
     "build": "tsc && tsc-alias -p tsconfig.json && npm run copy-wasm",
     "copy-wasm": "mkdir -p dist/lib/wasm-equity/pkg && cp ../lib/wasm-equity/pkg/wasm_equity_bg.wasm ../lib/wasm-equity/pkg/wasm_equity.js ../lib/wasm-equity/pkg/wasm_equity.d.ts ../lib/wasm-equity/pkg/wasm_equity_bg.wasm.d.ts dist/lib/wasm-equity/pkg/",
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@clerk/express": "^1.7.60",
+    "@electric-sql/pglite": "^0.5.8",
     "@neondatabase/serverless": "^1.0.2",
     "@upstash/redis": "^1.36.2",
     "@vercel/node": "^3.0.0",
@@ -58,7 +59,8 @@
       "/dist/"
     ],
     "moduleNameMapper": {
-      "^@common/(.*)$": "<rootDir>/../common/src/$1"
+      "^@common/(.*)$": "<rootDir>/../common/src/$1",
+      "^@lib/(.*)$": "<rootDir>/../lib/src/$1"
     }
   }
 }

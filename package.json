@@ -12,7 +12,10 @@
     "build:wasm": "cd lib/wasm-equity && bash build.sh",
     "prebuild:wasm": "bash scripts/prebuild-wasm.sh",
     "prepare:vercel": "node scripts/prepare-vercel-config.js",
-    "dev:api": "node scripts/dev-api.cjs"
+    "dev:api": "node scripts/dev-api.cjs",
+    "mcp": "node mcp/src/index.mjs",
+    "test:multiplayer": "cd api && npm test -- --runInBand poker-table",
+    "test:mcp": "cd mcp && npm test"
   },
   "engines": {
     "node": ">=18.0.0"
