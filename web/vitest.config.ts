@@ -13,7 +13,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "lcov"],
-      include: ["src/stores/**", "src/lib/**", "src/services/**", "src/hooks/**"],
+      include: [
+        "src/stores/**",
+        "src/lib/**",
+        "src/services/**",
+        "src/hooks/**",
+      ],
       exclude: ["src/**/*.test.*", "src/test/**"],
       thresholds: {
         statements: 80,
@@ -26,9 +31,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@common/interfaces": path.resolve(
+      "@common/interfaces": path.resolve(__dirname, "../common/src/interfaces"),
+      "@common/pokerBots": path.resolve(
         __dirname,
-        "../common/src/interfaces"
+        "../common/src/pokerBots.ts",
       ),
       "@common": path.resolve(__dirname, "../common"),
     },

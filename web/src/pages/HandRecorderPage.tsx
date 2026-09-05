@@ -144,7 +144,7 @@ export default function HandRecorderPage() {
           aria-live="assertive"
           className={`fixed right-6 top-6 z-50 rounded-lg border px-4 py-2 text-sm shadow-lg ${
             toast.type === "success"
-              ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600"
+              ? "border-primary/50 bg-card text-primary"
               : "border-destructive/50 bg-destructive/10 text-destructive"
           }`}
         >

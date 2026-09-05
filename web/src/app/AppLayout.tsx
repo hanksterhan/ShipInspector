@@ -13,7 +13,8 @@ import {
   Menu,
   LogOut,
   Calculator,
-  Ship,
+  Sailboat,
+  Layers3,
   Users,
   ArrowUpRight,
 } from "lucide-react";
@@ -57,7 +58,7 @@ const navGroups = [
       {
         to: "/utilities/spr",
         label: "Stack-to-Pot Ratio",
-        icon: Calculator,
+        icon: Layers3,
         key: "",
       },
     ],
@@ -152,7 +153,7 @@ export default function AppLayout() {
             aria-label="ShipInspector home"
           >
             <span className="brand-mark">
-              <Ship size={22} strokeWidth={1.6} />
+              <Sailboat size={22} strokeWidth={1.6} />
             </span>
             {!collapsed && (
               <span>
@@ -208,7 +209,7 @@ export default function AppLayout() {
             aria-describedby={undefined}
           >
             <SheetTitle className="brand">
-              <Ship size={24} />
+              <Sailboat size={24} />
               ShipInspector.
             </SheetTitle>
             <SidebarNav

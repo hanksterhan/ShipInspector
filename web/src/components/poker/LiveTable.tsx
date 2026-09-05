@@ -1,5 +1,7 @@
-import { Bot, Crown, UserRound } from "lucide-react";
+import { BrainCircuit, Crown, UserRound } from "lucide-react";
 import type { TableView } from "@common/interfaces/tableInterfaces";
+import { BOT_PROFILES } from "@common/pokerBots";
+import { BotIcon } from "./CpuPlayers";
 import { PlayingCard } from "./PlayingCard";
 import { cn } from "@/lib/utils";
 
@@ -28,19 +30,35 @@ export function LiveTable({ table }: { table: TableView }) {
         className={cn(
           "live-seat",
           s.isYou && "is-you",
+          s.kind === "cpu" && `cpu-${s.botStyle || "balanced"}`,
           s.seat === table.actor && "is-acting",
-          s.status === "folded" && "is-folded",
+          s.status === "folded" && table.street !== "complete" && "is-folded",
           paid.has(s.seat) && "is-winner",
         )}
         data-seat={s.seat}
       >
         <div className="live-seat-heading">
           <span className="live-avatar">
-            {s.kind === "agent" ? <Bot size={16} /> : <UserRound size={16} />}
+            {s.kind === "cpu" ? (
+              <BotIcon style={s.botStyle || "balanced"} size={17} />
+            ) : s.kind === "agent" ? (
+              <BrainCircuit size={16} />
+            ) : (
+              <UserRound size={16} />
+            )}
           </span>
           <strong>
             {s.name}
             {s.isYou && <small> You</small>}
+            {s.kind === "cpu" && (
+              <small
+                className="cpu-seat-tag"
+                title={BOT_PROFILES[s.botStyle || "balanced"].label}
+              >
+                {" "}
+                CPU
+              </small>
+            )}
           </strong>
           {table.button === s.seat && table.handNumber > 0 && (
             <span className="dealer-button" title="Dealer button">

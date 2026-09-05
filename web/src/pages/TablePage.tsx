@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import {
   ArrowLeft,
-  Bot,
+  BrainCircuit,
+  Gamepad2,
   Check,
   Copy,
   Crown,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { LiveTable } from "@/components/poker/LiveTable";
 import { TableActions } from "@/components/poker/TableActions";
+import { CpuPlayers } from "@/components/poker/CpuPlayers";
 import { AgentSeats } from "@/components/poker/AgentSeats";
 import { useLiveTable } from "@/hooks/useLiveTable";
 
@@ -25,6 +27,8 @@ export default function TablePage() {
   const [name, setName] = useState(
     user?.firstName || user?.username || "Player",
   );
+  const [cpuOpen, setCpuOpen] = useState(false);
+  const cpuTrigger = useRef<HTMLButtonElement>(null);
   const [agentsOpen, setAgentsOpen] = useState(false);
   const agentTrigger = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
@@ -141,13 +145,19 @@ export default function TablePage() {
             {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? "Link copied" : "Invite"}
           </Button>
+          {table.isOwner && !table.closed && (
+            <Button ref={cpuTrigger} onClick={() => setCpuOpen(true)}>
+              <Gamepad2 size={18} />
+              CPU players
+            </Button>
+          )}
           {table.isOwner && (
             <Button
               ref={agentTrigger}
               variant="secondary"
               onClick={() => setAgentsOpen(true)}
             >
-              <Bot size={17} />
+              <BrainCircuit size={17} />
               Agent seats
             </Button>
           )}
@@ -274,6 +284,26 @@ export default function TablePage() {
           </div>
         </aside>
       </div>
+      <Sheet open={cpuOpen} onOpenChange={setCpuOpen}>
+        <SheetContent
+          className="agent-sheet cpu-sheet"
+          aria-describedby={undefined}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            cpuTrigger.current?.focus();
+          }}
+        >
+          <SheetTitle>CPU players</SheetTitle>
+          <CpuPlayers
+            table={table}
+            disabled={disabled}
+            busy={live.busy}
+            error={live.error}
+            retry={live.retry ? () => void live.retryAction() : undefined}
+            send={(command) => void live.send(command)}
+          />
+        </SheetContent>
+      </Sheet>
       <Sheet open={agentsOpen} onOpenChange={setAgentsOpen}>
         <SheetContent
           className="agent-sheet"

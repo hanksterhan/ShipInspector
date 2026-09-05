@@ -8,9 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@common/interfaces": path.resolve(
+      "@common/interfaces": path.resolve(__dirname, "../common/src/interfaces"),
+      "@common/pokerBots": path.resolve(
         __dirname,
-        "../common/src/interfaces"
+        "../common/src/pokerBots.ts",
       ),
       "@common": path.resolve(__dirname, "../common"),
     },

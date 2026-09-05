@@ -29,7 +29,7 @@ function OutCard({
         "flex flex-col items-center justify-center rounded border p-1",
         "min-w-[2rem] min-h-[2.5rem]",
         variant === "win"
-          ? "border-green-500/50 bg-green-500/10"
+          ? "border-primary/50 bg-primary/10"
           : "border-yellow-500/50 bg-yellow-500/10",
       )}
       style={{ color: suitData.color }}
@@ -47,7 +47,10 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
 
   if (loading) {
     return (
-      <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div
+        role="status"
+        className="flex items-center gap-2 text-sm text-muted-foreground"
+      >
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         <span>Calculating outs...</span>
       </div>
@@ -55,7 +58,11 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
   }
 
   if (error) {
-    return <div role="alert" className="text-sm text-destructive">{error}</div>;
+    return (
+      <div role="alert" className="text-sm text-destructive">
+        {error}
+      </div>
+    );
   }
 
   if (!data) return null;
@@ -78,7 +85,7 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
     <div className="space-y-3">
       {/* Baseline percentages */}
       <div className="flex gap-4 text-xs">
-        <span className="text-green-400">
+        <span className="text-primary">
           Win: {(data.baseline_win * 100).toFixed(1)}%
         </span>
         <span className="text-yellow-400">
@@ -92,7 +99,7 @@ export function OutsDisplay({ data, loading, error }: OutsDisplayProps) {
       {/* Win outs */}
       {winOuts.length > 0 && (
         <div className="space-y-1">
-          <div className="text-xs font-medium text-green-400">
+          <div className="text-xs font-medium text-primary">
             Win Outs ({winOuts.length})
           </div>
           <div className="flex flex-wrap gap-1">

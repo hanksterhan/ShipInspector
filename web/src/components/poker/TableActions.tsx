@@ -44,8 +44,10 @@ export function TableActions({
           </strong>
           <span>
             {
-              table.seats.filter((s) => s.ready && !s.sittingOut && s.stack > 0)
-                .length
+              table.seats.filter(
+                (s) =>
+                  s.ready && !s.sittingOut && (s.stack > 0 || s.kind === "cpu"),
+              ).length
             }{" "}
             players ready
           </span>
@@ -75,7 +77,7 @@ export function TableActions({
                 )}
               </Button>
             ))}
-          {table.canDeal && (
+          {table.canDeal && (!you || you.ready || you.sittingOut) && (
             <Button disabled={disabled} onClick={() => send({ type: "deal" })}>
               Deal hand
             </Button>
@@ -98,7 +100,9 @@ export function TableActions({
         <span className="turn-dot" />
         <strong>
           {table.seats.find((s) => s.seat === table.actor)?.name || "The table"}{" "}
-          to act
+          {table.seats.find((s) => s.seat === table.actor)?.kind === "cpu"
+            ? "is thinking"
+            : "to act"}
         </strong>
         {you?.status === "folded" && <span>You folded this hand</span>}
       </div>

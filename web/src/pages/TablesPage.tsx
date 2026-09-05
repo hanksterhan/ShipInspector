@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-import { ArrowRight, Plus, Users, Bot, LoaderCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Plus,
+  Users,
+  Gamepad2,
+  BrainCircuit,
+  LoaderCircle,
+} from "lucide-react";
 import type { TableSummary } from "@common/interfaces/tableInterfaces";
 import { Button } from "@/components/ui/button";
 import { tableService } from "@/services/tableService";
@@ -132,7 +139,7 @@ export default function TablesPage() {
                 <i />
                 <i />
               </div>
-              <h2>Your table is open</h2>
+              <h2>Take a seat</h2>
               <Button onClick={() => setCreating(true)}>
                 <Plus size={17} />
                 Create your first table
@@ -240,18 +247,27 @@ export default function TablesPage() {
           </form>
         ) : (
           <aside className="live-panel lobby-agent-note">
-            <Bot size={28} strokeWidth={1.4} />
-            <h2>Agents welcome</h2>
-            <p>Reserve a seat for each agent, then connect with MCP.</p>
+            <Gamepad2 size={30} strokeWidth={1.6} />
+            <h2>Play against CPU players</h2>
             <Button
               variant="secondary"
+              onClick={() => {
+                setTakeSeat(true);
+                setCreating(true);
+              }}
+            >
+              Create a practice table
+              <ArrowRight size={16} />
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => {
                 setTakeSeat(false);
                 setCreating(true);
               }}
             >
+              <BrainCircuit size={17} />
               Set up an agent table
-              <ArrowRight size={16} />
             </Button>
           </aside>
         )}

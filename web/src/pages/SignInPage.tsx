@@ -1,6 +1,6 @@
 import { SignIn, useAuth } from "@clerk/clerk-react";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { Ship, ArrowUpRight } from "lucide-react";
+import { Sailboat, ArrowUpRight } from "lucide-react";
 import LoadingSpinner from "../components/layout/LoadingSpinner";
 import { PlayingCard } from "@/components/poker/PlayingCard";
 
@@ -23,7 +23,7 @@ export default function SignInPage() {
       <section className="signin-intro">
         <div className="brand">
           <span className="brand-mark">
-            <Ship size={27} />
+            <Sailboat size={27} />
           </span>
           ShipInspector<span className="brand-dot">.</span>
         </div>
@@ -63,26 +63,26 @@ export default function SignInPage() {
           routing="hash"
           appearance={{
             variables: {
-              colorPrimary: "#b5d49b",
-              colorTextOnPrimaryBackground: "#182617",
-              colorBackground: "#17201c",
-              colorInputBackground: "#101715",
-              colorInputText: "#ecf1ed",
-              colorText: "#ecf1ed",
-              colorTextSecondary: "#a6b8aa",
+              colorPrimary: "#5de4e8",
+              colorTextOnPrimaryBackground: "#101b2b",
+              colorBackground: "#191e35",
+              colorInputBackground: "#101426",
+              colorInputText: "#f5f1fa",
+              colorText: "#f5f1fa",
+              colorTextSecondary: "#b2bad2",
               borderRadius: "0.6rem",
               fontFamily: "Avenir Next, Segoe UI, sans-serif",
             },
             elements: {
-              cardBox: { boxShadow: "none", border: "1px solid #344137" },
-              footer: { background: "#1b281f" },
+              cardBox: { boxShadow: "none", border: "1px solid #3b4363" },
+              footer: { background: "#202640" },
               socialButtonsBlockButton: {
-                color: "#ecf1ed",
-                background: "#243329",
-                border: "1px solid #4b5a4c",
+                color: "#f5f1fa",
+                background: "#2a304e",
+                border: "1px solid #697392",
               },
-              socialButtonsBlockButtonText: { color: "#ecf1ed" },
-              formFieldInput: { border: "1px solid #455345" },
+              socialButtonsBlockButtonText: { color: "#f5f1fa" },
+              formFieldInput: { border: "1px solid #697392" },
             },
           }}
         />
