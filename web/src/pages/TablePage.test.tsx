@@ -21,6 +21,7 @@ const makeLive = () => ({
   receivedAt: { current: Date.now() },
   loading: false,
   needsJoin: false,
+  needsReload: false,
   error: "",
   retry: null,
   busy: false,
@@ -170,4 +171,12 @@ it("resets an open bet draft on the next river even when actor and current bet m
   fireEvent.click(screen.getByRole("button", { name: "Raise" }));
   expect(screen.getByRole("spinbutton", { name: "Raise to" })).toHaveValue(20);
   expect(live.send).not.toHaveBeenCalled();
+});
+
+it("offers a reload and hides game actions when table rules need an update", () => {
+  live.needsReload = true; live.connected = false; live.error = "Reload the website before playing.";
+  render(page());
+  expect(screen.getByRole("button", { name: "Reload table" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Call 10" })).not.toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent("Reload");
 });

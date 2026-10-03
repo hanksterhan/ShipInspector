@@ -154,3 +154,17 @@ describe("live table network recovery", () => {
     expect(result.current.table?.id).toBe("table-b");
   });
 });
+
+it.each(["server refusal", "future rules"])("stops polling and requires reload after %s", async kind => {
+  vi.useFakeTimers();
+  if (kind === "server refusal") vi.mocked(tableService.get).mockRejectedValue(Object.assign(new Error("Reload this table"), { status: 426 }));
+  else vi.mocked(tableService.get).mockResolvedValue({ ...snapshot(), settings: { ...snapshot().settings, gameMode: "red-river-holdem" }, rulesVersion: 2 });
+  const { result, unmount } = renderHook(() => useLiveTable("table-a"));
+  try {
+    await act(async () => {});
+    expect(result.current.needsReload).toBe(true); expect(result.current.connected).toBe(false);
+    expect(result.current.table).toBeNull(); expect(result.current.retry).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(tableService.get).toHaveBeenCalledTimes(1);
+  } finally { unmount(); vi.useRealTimers(); }
+});

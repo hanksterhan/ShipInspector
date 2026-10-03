@@ -43,7 +43,8 @@ export async function tablesHandler(req: VercelRequest, res: VercelResponse): Pr
     if (bucket && bucket.reset > now && bucket.count >= 240) { res.setHeader("Retry-After", "10"); throw new TableError("Too many requests. Wait a few seconds.", 429); }
     if (bucket && bucket.reset > now) bucket.count++; else buckets.set(key, { count: 1, reset: now + 60000 });
     if (buckets.size > 10000) for (const [id, value] of buckets) if (value.reset <= now) buckets.delete(id);
-    const service = new TableService(await getTableStore());
+    const support = req.headers["x-poker-rules"];
+    const service = new TableService(await getTableStore(), Date.now, typeof support === "string" ? support : "");
     const path = (req.url || "").split("?")[0].replace(/^\/api(?=\/)/, "").replace(/\/$/, "");
     if (path === "/tables") {
       if (!who.userId) throw new TableError("Use the browser to create or list private tables.", 403);

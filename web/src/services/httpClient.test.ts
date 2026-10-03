@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { tableService } from "./tableService";
 import { httpClient, setTokenProvider } from "./httpClient";
 
 describe("httpClient", () => {
@@ -13,6 +14,13 @@ describe("httpClient", () => {
     setTokenProvider(async () => null);
   });
 
+  it("advertises known rule revisions for table reads and commands", async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(new Response("{}", { headers: { "content-type": "application/json" } }));
+    await tableService.get("rules-table");
+    vi.mocked(globalThis.fetch).mockResolvedValue(new Response("{}", { headers: { "content-type": "application/json" } }));
+    await tableService.command("rules-table", { version: 3, requestId: "request", command: { type: "act", action: "check" } });
+    expect(vi.mocked(globalThis.fetch).mock.calls.every(call => new Headers(call[1]!.headers).get("X-Poker-Rules") === "holdem:1,red-river-holdem:1")).toBe(true);
+  });
   it("makes a GET request to the correct URL", async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {

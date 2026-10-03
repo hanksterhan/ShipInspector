@@ -31,6 +31,8 @@ const definitions: Record<GameMode, GameDefinition> = {
   }),
 };
 
+export const SUPPORTED_POKER_RULES = GAME_MODES.map(mode => `${mode}:${definitions[mode].rulesVersion}`).join(",");
+
 export function gameDefinition(mode: GameMode = "holdem", rulesVersion = 1): GameDefinition {
   if (!Object.prototype.hasOwnProperty.call(definitions, mode)) throw new Error("Unsupported poker mode.");
   const definition = definitions[mode];

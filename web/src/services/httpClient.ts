@@ -1,3 +1,5 @@
+import { SUPPORTED_POKER_RULES } from "@common/pokerModes";
+
 type TokenProvider = () => Promise<string | null>;
 
 let tokenProvider: TokenProvider = async () => null;
@@ -46,7 +48,9 @@ class HttpClient {
     body?: unknown,
     signal?: AbortSignal,
   ): Promise<unknown> {
-    const headers = await this.getHeaders();
+    const headers = { ...await this.getHeaders(),
+      ...(url.startsWith("/api/tables") ? { "X-Poker-Rules": SUPPORTED_POKER_RULES } : {}),
+    };
 
     let response: Response;
     try {

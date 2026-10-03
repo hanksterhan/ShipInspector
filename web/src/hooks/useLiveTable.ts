@@ -1,3 +1,4 @@
+import { gameDefinition } from "@common/pokerModes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   TableCommand,
@@ -13,6 +14,8 @@ export function useLiveTable(id: string) {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  const [needsReload, setNeedsReload] = useState(false);
+  const unsupported = useRef(false);
   const [needsJoin, setNeedsJoin] = useState(false);
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState<TableCommandRequest | null>(null);
@@ -24,6 +27,8 @@ export function useLiveTable(id: string) {
   const accept = useCallback(
     (next: TableView) => {
       if (!mounted.current || next.id !== id || liveId.current !== id) return;
+      try { gameDefinition(next.settings.gameMode, next.rulesVersion); }
+      catch { throw Object.assign(new Error("This table uses newer rules. Reload the website before playing."), { status: 426 }); }
       if (!current.current || next.version >= current.current.version) {
         current.current = next;
         receivedAt.current = Date.now();
@@ -31,6 +36,8 @@ export function useLiveTable(id: string) {
       }
       setConnected(true);
       setNeedsJoin(false);
+      setNeedsReload(false);
+      unsupported.current = false;
       setLoading(false);
       setLoadError("");
     },
@@ -53,6 +60,7 @@ export function useLiveTable(id: string) {
         setConnected(false);
         setLoading(false);
         setNeedsJoin(status === 403);
+        if (status === 426) { unsupported.current = true; setNeedsReload(true); setRetry(null); }
         if (status !== 403)
           setLoadError(
             controller.signal.aborted
@@ -70,6 +78,8 @@ export function useLiveTable(id: string) {
   );
   useEffect(() => {
     mounted.current = true;
+    unsupported.current = false;
+    setNeedsReload(false);
     current.current = null;
     setTable(null);
     setLoading(true);
@@ -79,11 +89,11 @@ export function useLiveTable(id: string) {
     let timer: ReturnType<typeof setTimeout>;
     let polling = false;
     const poll = async () => {
-      if (polling || controller.signal.aborted) return;
+      if (polling || controller.signal.aborted || unsupported.current) return;
       polling = true;
       await refresh(controller.signal);
       polling = false;
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted && !unsupported.current)
         timer = setTimeout(poll, document.hidden ? 5000 : 1000);
     };
     void poll();
@@ -171,6 +181,7 @@ export function useLiveTable(id: string) {
     loading,
     connected,
     needsJoin,
+    needsReload,
     busy,
     retry,
     send,

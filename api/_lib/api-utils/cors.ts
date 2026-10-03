@@ -34,7 +34,7 @@ export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
     }
 
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Poker-Rules");
     res.setHeader("Access-Control-Allow-Credentials", "true");
 
     // Handle preflight requests

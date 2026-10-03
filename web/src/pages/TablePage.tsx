@@ -43,7 +43,7 @@ export default function TablePage() {
         <span>Opening table</span>
       </div>
     );
-  if (!table || live.needsJoin)
+  if (!table || live.needsJoin || live.needsReload)
     return (
       <div className="table-join-screen">
         <Link to="/tables">
@@ -51,7 +51,7 @@ export default function TablePage() {
           Private tables
         </Link>
         <div className="live-panel">
-          <h1>{live.needsJoin ? "Take your seat" : "Table unavailable"}</h1>
+          <h1>{live.needsReload ? "Table update required" : live.needsJoin ? "Take your seat" : "Table unavailable"}</h1>
           {live.error && (
             <p className="live-error" role="alert">
               {live.error}
@@ -77,6 +77,8 @@ export default function TablePage() {
                 Join table
               </Button>
             </form>
+          ) : live.needsReload ? (
+            <Button onClick={() => window.location.reload()}>Reload table</Button>
           ) : (
             <Button onClick={() => live.refresh()}>Try again</Button>
           )}

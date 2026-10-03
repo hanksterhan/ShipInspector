@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { act, applyCommand, deal, joinSeat, legalActions, makeTable, type TableState } from "./engine";
 import { eightSeatExhaustionDeck } from "./__tests__/fixtures";
+import * as storage from "./store";
 import { TableStore } from "./store";
+import { tablesHandler } from "../handlers/tables";
+jest.mock("../api-utils/auth", () => ({ requireAuth: (req: any) => ({ userId: req.headers["x-test-user"] || "compat-owner" }) }));
 import { Identity, TableService } from "./service";
 import type { TableCommand, TableView } from "@common/interfaces/tableInterfaces";
 
@@ -128,6 +131,12 @@ describe("persistent tables and shared human/agent authorization", () => {
     await expect(service.get(v.id, { userId: "outsider" })).rejects.toThrow("Join this private table");
     expect((await store.get(v.id))!.version).toBe(added.version);
     await expect(send(added, { userId: "outsider" }, { type: "remove-bot", seat: 1 })).rejects.toThrow("Join this table");
+    let playing = await send(added, { userId: "cpu-retry-owner" }, { type: "ready", ready: true });
+    playing = await send(playing, { userId: "cpu-retry-owner" }, { type: "deal" });
+    playing = await send(playing, { userId: "cpu-retry-owner" }, { type: "act", action: "call" });
+    clock += 1400;
+    await expect(send(playing, { userId: "outsider" }, { type: "act", action: "fold" })).rejects.toThrow("Join this table");
+    expect((await store.get(v.id))!.version).toBe(playing.version);
   });
 
   it("restores a later river and archives only the winning completion before the next hand", async () => {
@@ -181,5 +190,32 @@ describe("persistent tables and shared human/agent authorization", () => {
     expect(JSON.stringify(own)).not.toContain("principal");
     await db.query("UPDATE poker_hand_records SET record = jsonb_set(record, '{formatVersion}', '2') WHERE table_id = $1", [v.id]);
     await expect(service.history(v.id, { userId: "archive-private" }, 1)).rejects.toThrow("format is not supported");
+  });
+  it("requires rule support before old HTTP clients can drive or read a Red River table", async () => {
+    let v = await service.create("compat-owner", { ...settings, gameMode: "red-river-holdem" }, "Alice");
+    v = await send(v, { userId: "compat-other" }, { type: "join", name: "Bob" });
+    v = await send(v, { userId: "compat-owner" }, { type: "ready", ready: true });
+    v = await send(v, { userId: "compat-other" }, { type: "ready", ready: true });
+    v = await send(v, { userId: "compat-owner" }, { type: "deal" });
+    const factory = jest.spyOn(storage, "getTableStore").mockResolvedValue(store);
+    const invoke = async (method: string, path: string, support?: string, body?: unknown) => {
+      let status = 200; let data: any; const headers: Record<string, unknown> = {};
+      const res = { setHeader(key: string, value: unknown) { headers[key] = value; }, status(code: number) { status = code; return this; }, json(value: unknown) { data = value; } };
+      await tablesHandler({ method, url: path, headers: support ? { "x-poker-rules": support } : {}, body } as any, res as any);
+      return { status, data, headers };
+    };
+    try {
+      for (const support of [undefined, "holdem:1", "red-river-holdem:2"]) {
+        expect((await invoke("GET", `/api/tables/${v.id}`, support)).status).toBe(426);
+        expect((await invoke("POST", `/api/tables/${v.id}/commands`, support, { version: v.version, requestId: randomUUID(), command: { type: "act", action: "fold" } })).status).toBe(426);
+      }
+      expect((await store.get(v.id))!.version).toBe(v.version);
+      const fresh = await invoke("GET", `/api/tables/${v.id}`, "holdem:1,red-river-holdem:1");
+      expect(fresh.status).toBe(200); expect(fresh.headers["Access-Control-Allow-Headers"]).toContain("X-Poker-Rules");
+      expect(fresh.data.settings.gameMode).toBe("red-river-holdem");
+      const old = new TableService(store, () => clock, "holdem:1");
+      await expect(old.create("compat-old", { ...settings, gameMode: "red-river-holdem" })).rejects.toMatchObject({ status: 426 });
+      expect((await old.create("compat-old", settings)).settings.gameMode).toBe("holdem");
+    } finally { factory.mockRestore(); }
   });
 });

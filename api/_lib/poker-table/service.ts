@@ -8,7 +8,13 @@ import { TableStore } from "./store";
 export type Identity = { userId: string; token?: never } | { token: string; userId?: never };
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export class TableService {
-  constructor(private store: TableStore, private now = Date.now) {}
+  constructor(private store: TableStore, private now = Date.now, private supportedRules: string | null = null) {}
+  private requireRules(t: TableState) {
+    if (t.settings.gameMode !== "holdem" && this.supportedRules !== null &&
+        !this.supportedRules.split(",").map(s => s.trim()).includes(`${t.settings.gameMode}:${t.rulesVersion}`)) {
+      throw new TableError("This table uses Red River rules. Reload the website or update your MCP client before playing.", 426);
+    }
+  }
   private principal(t: TableState, identity: Identity): string {
     if (identity.userId) return identity.userId;
     const tokenHash = hash(identity.token || "");
@@ -28,6 +34,7 @@ export class TableService {
   async create(userId: string, settings: TableSettings, name?: string) {
     if ((await this.store.list(userId)).filter(t => t.owner === userId).length >= 20) throw new TableError("Close an existing table before creating another.", 409);
     const t = makeTable(randomUUID(), userId, settings);
+    this.requireRules(t);
     if (name) joinSeat(t, userId, name);
     await this.store.create(t);
     return tableView(t, userId, this.now());
@@ -36,6 +43,7 @@ export class TableService {
     for (let attempt = 0; attempt < 5; attempt++) {
       const t = await this.load(id); const principal = this.principal(t, identity);
       if (!t.members.includes(principal)) throw new TableError("Join this private table to view the game.", 403);
+      this.requireRules(t);
       const expected = t.version;
       if (progressTable(t, this.now())) {
         t.version++;
@@ -48,6 +56,7 @@ export class TableService {
   async history(id: string, identity: Identity, handNumber: number) {
     const t = await this.load(id); const principal = this.principal(t, identity);
     if (!t.members.includes(principal)) throw new TableError("Join this private table to view its hands.", 403);
+    this.requireRules(t);
     const record = await this.store.getHandRecord(id, handNumber);
     if (!record) throw new TableError("Completed hand record not found.", 404);
     return handRecordView(record, principal);
@@ -62,6 +71,11 @@ export class TableService {
   private async mutate(id: string, identity: Identity, version: number, requestId: string, payload: unknown,
     change: (t: TableState, principal: string) => void): Promise<TableView> {
     const t = await this.load(id); const principal = this.principal(t, identity);
+    const type = (payload as { type?: string })?.type;
+    const joining = type === "join";
+    if (["issue-agent", "revoke-agent"].includes(type || "") && principal !== t.owner) throw new TableError("Only the host can manage agent credentials.", 403);
+    if (!joining && !t.members.includes(principal)) throw new TableError("Join this table first.", 403);
+    this.requireRules(t);
     const key = `${principal}:${requestId}`; const digest = hash(JSON.stringify(payload));
     const receipt = t.receipts.find(r => r.key === key);
     if (receipt) {
@@ -71,7 +85,6 @@ export class TableService {
     const expected = t.version;
     // A join uses the invite ID and has no private snapshot yet. CAS still
     // prevents two people from taking the same final seat.
-    const joining = (payload as { type?: string })?.type === "join";
     if (!joining && expected !== version) throw new TableError("The table changed. Refresh before acting.", 409);
     if (progressTable(t, this.now())) {
       t.version++;
