@@ -21,7 +21,7 @@ export class TableService {
     return t;
   }
   async list(userId: string) {
-    return (await this.store.list(userId)).map(t => ({ id: t.id, name: t.settings.name, seats: t.seats.length,
+    return (await this.store.list(userId)).map(t => ({ gameMode: t.settings.gameMode, id: t.id, name: t.settings.name, seats: t.seats.length,
       maxPlayers: t.settings.maxPlayers, smallBlind: t.settings.smallBlind, bigBlind: t.settings.bigBlind, street: t.street }));
   }
   async create(userId: string, settings: TableSettings, name?: string) {

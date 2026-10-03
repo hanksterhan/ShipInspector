@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { Card, CardRank } from "@common/interfaces";
+import { gameDefinition, type TerminalReason } from "@common/pokerModes";
 import { BOT_PROFILES } from "@common/pokerBots";
 import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
 import { hand } from "@lib/poker/evaluate";
@@ -33,6 +34,13 @@ export interface AgentGrant {
   revoked: boolean;
 }
 export interface TableState {
+  stateFormatVersion: 1;
+  rulesVersion: number;
+  roundId: number;
+  riverNumber: number;
+  dealtPlayerCount: number;
+  burnCount: number;
+  terminalReason: TerminalReason | null;
   id: string;
   owner: string;
   members: string[];
@@ -66,7 +74,10 @@ export function record(t: TableState, text: string) {
   t.events = t.events.slice(-80);
 }
 export function makeTable(id: string, owner: string, settings: TableSettings): TableState {
-  return { id, owner, members: [owner], version: 0, settings, street: "waiting", handNumber: 0,
+  const rules = gameDefinition(settings.gameMode);
+  return { stateFormatVersion: 1, rulesVersion: rules.rulesVersion, roundId: 0, riverNumber: 0,
+    dealtPlayerCount: 0, burnCount: 0, terminalReason: null,
+    id, owner, members: [owner], version: 0, settings: { ...settings, gameMode: rules.id }, street: "waiting", handNumber: 0,
     button: -1, smallBlindSeat: null, bigBlindSeat: null, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
     minRaise: settings.bigBlind, seats: [], awards: [], events: [], eventId: 0, agents: [], receipts: [], closed: false };
 }
@@ -152,15 +163,18 @@ function settle(t: TableState, showdown: boolean) {
     t.awards.push(award);
   }
   for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
+  t.terminalReason = showdown ? "river-complete" : "uncontested";
   t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
   for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
   hand.clearCache();
 }
 function dealBoard(t: TableState) {
   t.deck.shift(); // Burn before each street.
+  t.burnCount++; t.roundId++;
   const count = t.street === "preflop" ? 3 : 1;
   t.board.push(...t.deck.splice(0, count));
   t.street = t.street === "preflop" ? "flop" : t.street === "flop" ? "turn" : "river";
+  if (t.street === "river") t.riverNumber++;
   record(t, `${t.street[0].toUpperCase() + t.street.slice(1)} dealt.`);
   for (const s of t.seats) { s.bet = 0; s.actedAtBet = null; s.lastAction = s.status === "folded" ? "Fold" : s.status === "all-in" ? "All-in" : ""; }
   t.currentBet = 0; t.minRaise = t.settings.bigBlind;
@@ -188,6 +202,7 @@ export function deal(t: TableState, now: number, deck = shuffledDeck()) {
     s.stack = t.settings.startingStack;
     record(t, `${s.name} refilled with ${s.stack} play chips.`);
   }
+  t.roundId = 1; t.riverNumber = 0; t.burnCount = 0; t.dealtPlayerCount = ready.length; t.terminalReason = null;
   t.deck = [...deck]; t.board = []; t.awards = []; t.handNumber++; t.street = "preflop";
   t.currentBet = t.settings.bigBlind; t.minRaise = t.settings.bigBlind;
   t.button = next(t, t.button, ready).seat;
@@ -307,7 +322,9 @@ function blindSeats(t: TableState) {
 export function tableView(t: TableState, principal: string, now: number): TableView {
   const you = t.seats.find(s => s.principal === principal);
   const reveal = t.street === "complete";
-  return { id: t.id, version: t.version, settings: t.settings, isOwner: t.owner === principal,
+  return { rulesVersion: t.rulesVersion, roundId: t.roundId, riverNumber: t.riverNumber, terminalReason: t.terminalReason,
+    dealtPlayerCount: t.dealtPlayerCount, burnCount: t.burnCount, drawCapacity: t.deck.length,
+    id: t.id, version: t.version, settings: t.settings, isOwner: t.owner === principal,
     yourSeat: you?.seat ?? null, street: t.street, handNumber: t.handNumber, button: t.button,
     ...blindSeats(t),
     actor: t.actor, deadline: t.deadline, serverTime: now, board: t.board, currentBet: t.currentBet,

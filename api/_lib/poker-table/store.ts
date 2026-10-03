@@ -1,4 +1,5 @@
 import type { TableState } from "./engine";
+import { readTableState } from "./state";
 
 export type Query = (sql: string, params?: unknown[]) => Promise<Record<string, any>[]>;
 // A single compare-and-swap UPDATE commits a whole hand transition. This works
@@ -23,12 +24,12 @@ export class TableStore {
   async get(id: string): Promise<TableState | null> {
     await this.initialize();
     const rows = await this.query("SELECT state FROM poker_tables WHERE id = $1", [id]);
-    return rows[0]?.state || null;
+    return rows[0]?.state ? readTableState(rows[0].state) : null;
   }
   async list(principal: string): Promise<TableState[]> {
     await this.initialize();
     const rows = await this.query("SELECT state FROM poker_tables WHERE members @> ARRAY[$1]::text[] AND state->>'closed' = 'false' ORDER BY updated_at DESC LIMIT 50", [principal]);
-    return rows.map(r => r.state);
+    return rows.map(r => readTableState(r.state));
   }
   async save(t: TableState, expected: number): Promise<boolean> {
     const rows = await this.query("UPDATE poker_tables SET state = $1::jsonb, version = $2, members = $3::text[], updated_at = now() WHERE id = $4 AND version = $5 RETURNING id", [JSON.stringify(t), t.version, t.members, t.id, expected]);

@@ -1,9 +1,11 @@
+import type { GameMode, TerminalReason } from "../pokerModes";
 import type { Card } from "./handInterfaces";
 
 export type TableStreet = "waiting" | "preflop" | "flop" | "turn" | "river" | "complete";
 export type BotStyle = "aggressive" | "passive" | "balanced" | "random";
 export type SeatStatus = "waiting" | "active" | "folded" | "all-in";
 export interface TableSettings {
+  gameMode?: GameMode;
   name: string;
   maxPlayers: number;
   smallBlind: number;
@@ -44,6 +46,13 @@ export interface PotAward {
   winners: { seat: number; amount: number; hand: string }[];
 }
 export interface TableView {
+  rulesVersion?: number;
+  roundId?: number;
+  riverNumber?: number;
+  terminalReason?: TerminalReason | null;
+  dealtPlayerCount?: number;
+  burnCount?: number;
+  drawCapacity?: number;
   id: string;
   version: number;
   settings: TableSettings;
@@ -69,6 +78,7 @@ export interface TableView {
   agents: { id: string; name: string; seat: number; expiresAt: number; revoked: boolean; seated: boolean }[];
 }
 export interface TableSummary {
+  gameMode?: GameMode;
   id: string;
   name: string;
   seats: number;
