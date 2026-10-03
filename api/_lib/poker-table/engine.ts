@@ -3,7 +3,7 @@ import type { Card, CardRank } from "@common/interfaces";
 import { gameDefinition, type TerminalReason } from "@common/pokerModes";
 import { BOT_PROFILES } from "@common/pokerBots";
 import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
-import { hand } from "@lib/poker/evaluate";
+import { bestHighHand } from "@lib/poker/highHand";
 import { compareRanks } from "@lib/poker/compare";
 import { nextBoardDeal, terminalBoard } from "@lib/poker/rules";
 
@@ -142,7 +142,7 @@ function settle(t: TableState, showdown: boolean, reason: TerminalReason = "unco
   const levels = [...new Set(t.seats.map(s => s.committed).filter(Boolean))].sort((a, b) => a - b);
   let previous = 0;
   t.awards = [];
-  const ranks = new Map(remaining.map(s => [s.seat, showdown ? hand.evaluate7([...s.cards, ...t.board]) : null]));
+  const ranks = new Map(remaining.map(s => [s.seat, showdown ? bestHighHand([...s.cards, ...t.board]).rank : null]));
   for (const level of levels) {
     const contributors = t.seats.filter(s => s.committed >= level);
     const amount = (level - previous) * contributors.length;
@@ -164,10 +164,10 @@ function settle(t: TableState, showdown: boolean, reason: TerminalReason = "unco
     t.awards.push(award);
   }
   for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
+  if (reason === "deck-exhausted") record(t, "Deck exhausted. Showdown on the current board.");
   t.terminalReason = reason;
   t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
   for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
-  hand.clearCache();
 }
 function dealBoard(t: TableState) {
   const rules = gameDefinition(t.settings.gameMode, t.rulesVersion);
@@ -178,7 +178,7 @@ function dealBoard(t: TableState) {
   t.board.push(...t.deck.splice(0, count));
   t.street = t.street === "preflop" ? "flop" : t.street === "flop" ? "turn" : "river";
   if (t.street === "river") t.riverNumber++;
-  record(t, `${t.street[0].toUpperCase() + t.street.slice(1)} dealt.`);
+  record(t, `${t.street === "river" ? `River ${t.riverNumber}` : t.street[0].toUpperCase() + t.street.slice(1)} dealt.`);
   for (const s of t.seats) { s.bet = 0; s.actedAtBet = null; s.lastAction = s.status === "folded" ? "Fold" : s.status === "all-in" ? "All-in" : ""; }
   t.currentBet = 0; t.minRaise = t.settings.bigBlind;
 }
