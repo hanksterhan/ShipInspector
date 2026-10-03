@@ -43,7 +43,9 @@ const actionTypeSchema = z.enum([
 ]);
 
 const createHandRequestSchema = z.object({
+    gameMode: z.literal("holdem", { errorMap: () => ({ message: "The hand recorder supports Hold'em only." }) }).optional(),
     hand: z.object({
+        gameMode: z.literal("holdem").optional(),
         table_size: z.number().int().min(2).max(10),
         button_seat: z.number().int().min(0),
         small_blind: z.number().int().positive(),
@@ -54,7 +56,7 @@ const createHandRequestSchema = z.object({
         board_flop_3: z.string().nullable().optional(),
         board_turn: z.string().nullable().optional(),
         board_river: z.string().nullable().optional(),
-    }),
+    }).strict(),
     players: z.array(
         z.object({
             seat_index: z.number().int().min(0).max(9),
@@ -77,7 +79,7 @@ const createHandRequestSchema = z.object({
             tags: z.array(z.enum(VALID_ACTION_TAGS)),
         })
     ),
-});
+}).strict();
 
 export type CreateHandRequest = z.infer<typeof createHandRequestSchema>;
 

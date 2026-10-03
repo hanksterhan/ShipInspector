@@ -10,10 +10,11 @@ import { hand } from "@lib/poker/evaluate";
 import { compareRanks } from "@lib/poker/compare";
 
 const compareSchema = z.object({
+    gameMode: z.literal("holdem", { errorMap: () => ({ message: "This tool supports Hold'em only." }) }).optional(),
     hand1: z.string().min(1, "hand1 is required"),
     hand2: z.string().min(1, "hand2 is required"),
     board: z.string().optional(),
-});
+}).strict();
 
 /**
  * Check for duplicate cards in an array

@@ -9,9 +9,10 @@ import { parseHole, parseBoard, Card } from "@common/interfaces/handInterfaces";
 import { hand } from "@lib/poker/evaluate";
 
 const evaluateSchema = z.object({
+    gameMode: z.literal("holdem", { errorMap: () => ({ message: "This tool supports Hold'em only." }) }).optional(),
     hole: z.string().min(1, "hole is required"),
     board: z.string().optional(),
-});
+}).strict();
 
 /**
  * Check for duplicate cards in an array

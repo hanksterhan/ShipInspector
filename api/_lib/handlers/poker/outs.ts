@@ -9,10 +9,11 @@ import { parseHole, parseBoard, Card } from "@common/interfaces/handInterfaces";
 import { calculateTurnOuts } from "@lib/poker/outs";
 
 const outsSchema = z.object({
+    gameMode: z.literal("holdem", { errorMap: () => ({ message: "This tool supports Hold'em only." }) }).optional(),
     hero: z.string().min(1, "hero is required"),
     villain: z.string().min(1, "villain is required"),
     board: z.string().min(1, "board is required"),
-});
+}).strict();
 
 /**
  * Check for duplicate cards in an array

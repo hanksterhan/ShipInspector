@@ -9,6 +9,7 @@ import { parseHole, parseBoard, parseCard } from "@common/interfaces/handInterfa
 import { computeEquity } from "@lib/poker/equity";
 
 const equitySchema = z.object({
+    gameMode: z.literal("holdem", { errorMap: () => ({ message: "This tool supports Hold'em only." }) }).optional(),
     players: z.array(z.string().min(1)).min(2, "At least 2 players required"),
     board: z.string().optional(),
     options: z
@@ -17,7 +18,7 @@ const equitySchema = z.object({
         })
         .optional(),
     dead: z.array(z.string()).optional(),
-});
+}).strict();
 
 const handler_POST = createHandler(
     { method: "POST", rateLimit: "global" },
@@ -50,6 +51,10 @@ const handler_POST = createHandler(
             return;
         }
 
+        if (board.cards.length > 5) {
+            res.status(400).json({ error: "This tool supports a Hold'em board with at most five cards." });
+            return;
+        }
         // computeEquity validates duplicates internally
         const { equity: equityResult, timings } = await computeEquity(
             players,
