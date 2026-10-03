@@ -21,8 +21,8 @@ before(async () => {
   app.use(tablesHandler);
   http = await new Promise(resolve => { const server = app.listen(0, "127.0.0.1", () => resolve(server)); });
   apiUrl = `http://127.0.0.1:${http.address().port}`;
-});
-after(async () => { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); });
+}, { timeout: 10000 });
+after(async () => { if (http) { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); } }, { timeout: 5000 });
 
 for (const gameMode of ["holdem", "red-river-holdem"]) test(`${gameMode}: two stdio clients play through HTTP with private cards`, { timeout: 30000 }, async () => {
   let view = await service.create("mcp-host", { gameMode, name: "Agent match", maxPlayers: 6, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 60 });
@@ -35,19 +35,19 @@ for (const gameMode of ["holdem", "red-river-holdem"]) test(`${gameMode}: two st
   try {
     for (const grant of grants) {
       const client = new Client({ name: "poker-test", version: "1.0.0" });
+      clients.push(client);
       await client.connect(new StdioClientTransport({ command: process.execPath,
         args: [new URL("../src/index.mjs", import.meta.url).pathname],
-        env: { ...process.env, SHIPINSPECTOR_API_URL: apiUrl, SHIPINSPECTOR_AGENT_TOKEN: grant.token }, stderr: "pipe" }));
-      clients.push(client);
+        env: { ...process.env, SHIPINSPECTOR_API_URL: apiUrl, SHIPINSPECTOR_AGENT_TOKEN: grant.token }, stderr: "pipe" }), { timeout: 5000 });
     }
     const call = async (i, name, args = {}) => {
-      const response = await clients[i].callTool({ name, arguments: args });
+      const response = await clients[i].callTool({ name, arguments: args }, undefined, { timeout: 5000 });
       assert.ok(!response.isError, response.content?.[0]?.text);
       return response.structuredContent;
     };
-    const names = (await clients[0].listTools()).tools.map(t => t.name);
+    const names = (await clients[0].listTools({}, { timeout: 5000 })).tools.map(t => t.name);
     assert.ok(names.includes("poker_act")); assert.ok(names.includes("poker_wait_for_turn"));
-    assert.match((await clients[0].readResource({ uri: "poker://rules" })).contents[0].text, /no cash value/);
+    assert.match((await clients[0].readResource({ uri: "poker://rules" }, { timeout: 5000 })).contents[0].text, /no cash value/);
     for (let i = 0; i < 2; i++) {
       view = await call(i, "poker_get_table");
       view = await call(i, "poker_ready", { version: view.version, requestId: randomUUID(), ready: true });
@@ -69,7 +69,7 @@ for (const gameMode of ["holdem", "red-river-holdem"]) test(`${gameMode}: two st
       assert.equal(observations[i].seats[1 - i].cards.length, 0);
       assert.ok(!JSON.stringify(observations[i]).includes('"deck"'));
     }
-    const illegal = await clients[1].callTool({ name: "poker_act", arguments: { version: view.version, requestId: randomUUID(), action: "fold" } });
+    const illegal = await clients[1].callTool({ name: "poker_act", arguments: { version: view.version, requestId: randomUUID(), action: "fold" } }, undefined, { timeout: 5000 });
     assert.equal(illegal.isError, true);
     view = observations[0];
     const streets = new Set(); const rivers = new Set(); let actions = 0;
@@ -88,17 +88,17 @@ for (const gameMode of ["holdem", "red-river-holdem"]) test(`${gameMode}: two st
     if (gameMode === "red-river-holdem") {
       assert.deepEqual([...rivers], [1, 2, 3]); assert.equal(view.board.length, 7);
       assert.equal(view.terminalReason, "black-river");
-      assert.match((await clients[0].readResource({ uri: "poker://rules" })).contents[0].text, /Keep all board cards/);
+      assert.match((await clients[0].readResource({ uri: "poker://rules" }, { timeout: 5000 })).contents[0].text, /Keep all board cards/);
     }
     const history = await call(0, "poker_get_hand", { handNumber: 1 });
     assert.equal(history.gameMode, gameMode);
     assert.deepEqual(history.events.filter(e => e.type === "deal").flatMap(e => e.cards), view.board);
     assert.equal(view.seats.reduce((sum, s) => sum + s.stack, 0), 2000);
     assert.equal(view.seats.every(s => s.cards.length === 2), true);
-    const replay = await clients[0].callTool({ name: "poker_act", arguments: { version: 0, requestId: randomUUID(), action: "check" } });
+    const replay = await clients[0].callTool({ name: "poker_act", arguments: { version: 0, requestId: randomUUID(), action: "check" } }, undefined, { timeout: 5000 });
     assert.equal(replay.isError, true);
     await service.revokeAgent(view.id, "mcp-host", view.version, randomUUID(), grants[0].agentId);
-    assert.equal((await clients[0].callTool({ name: "poker_get_table", arguments: {} })).isError, true);
+    assert.equal((await clients[0].callTool({ name: "poker_get_table", arguments: {} }, undefined, { timeout: 5000 })).isError, true);
   } finally { await Promise.all(clients.map(c => c.close())); }
 });
 test("rejects remote cleartext transport and malformed credentials", () => {
