@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { act, applyCommand, deal, joinSeat, legalActions, makeTable, type TableState } from "./engine";
+import { eightSeatExhaustionDeck } from "./__tests__/fixtures";
 import { TableStore } from "./store";
 import { Identity, TableService } from "./service";
 import type { TableCommand, TableView } from "@common/interfaces/tableInterfaces";
@@ -124,4 +126,56 @@ describe("persistent tables and shared human/agent authorization", () => {
     await expect(send(added, { userId: "outsider" }, { type: "remove-bot", seat: 1 })).rejects.toThrow("Join this table");
   });
 
+  it("restores a later river and archives only the winning completion before the next hand", async () => {
+    const t = makeTable(randomUUID(), "archive-0", { ...settings, gameMode: "red-river-holdem" });
+    for (let i = 0; i < 8; i++) {
+      joinSeat(t, `archive-${i}`, `Player ${i}`);
+      applyCommand(t, `archive-${i}`, { type: "ready", ready: true }, clock);
+    }
+    deal(t, clock, eightSeatExhaustionDeck());
+    const step = (state: TableState, fold = false) => {
+      const s = state.seats.find(s => s.seat === state.actor)!;
+      act(state, s.principal, fold ? "fold" : legalActions(state, s.principal)!.check ? "check" : "call", undefined, clock);
+    };
+    let count = 0;
+    while (t.riverNumber < 2 && count++ < 40) step(t);
+    expect(t.board).toHaveLength(6);
+    await store.create(t);
+    const restarted = new TableService(new TableStore(async (sql, params) => (await db.query(sql, params)).rows), () => clock);
+    const view = await restarted.get(t.id, { userId: "archive-0" });
+    expect(view).toMatchObject({ riverNumber: 2, roundId: 5 });
+    expect(view.handRecord!.events.filter(e => e.type === "deal").flatMap(e => e.type === "deal" ? e.cards : [])).toEqual(t.board);
+    await expect(restarted.history(t.id, { userId: "archive-0" }, 1)).rejects.toThrow("not found");
+    let previous = structuredClone(t);
+    while (t.street !== "complete" && count++ < 160) { previous = structuredClone(t); step(t); }
+    expect(t.street).toBe("complete");
+    const rival = structuredClone(previous); step(rival, true);
+    t.version++; rival.version++;
+    const saved = await Promise.all([store.save(t, 0), store.save(rival, 0)]);
+    expect(saved.filter(Boolean)).toHaveLength(1);
+    const winner = (await store.get(t.id))!;
+    const archive = await store.getHandRecord(t.id, 1);
+    expect(archive!.events).toEqual(winner.handRecord!.events);
+    expect((await db.query("SELECT * FROM poker_hand_records WHERE table_id = $1", [t.id])).rows).toHaveLength(1);
+    const expected = winner.version;
+    for (const s of winner.seats) applyCommand(winner, s.principal, { type: "ready", ready: true }, clock);
+    deal(winner, clock); winner.version++;
+    expect(await store.save(winner, expected)).toBe(true);
+    expect((await restarted.history(t.id, { userId: "archive-0" }, 1)).handNumber).toBe(1);
+    expect((await store.get(t.id))!.handNumber).toBe(2);
+    await expect(restarted.history(t.id, { userId: "stranger" }, 1)).rejects.toThrow("private table");
+  });
+  it("keeps folded cards private in a durable archive and rejects unknown archive formats", async () => {
+    let v = await service.create("archive-private", settings, "Alice");
+    v = await send(v, { userId: "archive-other" }, { type: "join", name: "Bob" });
+    v = await send(v, { userId: "archive-private" }, { type: "ready", ready: true });
+    v = await send(v, { userId: "archive-other" }, { type: "ready", ready: true });
+    v = await send(v, { userId: "archive-private" }, { type: "deal" });
+    await send(v, { userId: "archive-private" }, { type: "act", action: "fold" });
+    const own = await service.history(v.id, { userId: "archive-private" }, 1);
+    expect(own.players.map(p => p.cards.length)).toEqual([2, 0]);
+    expect(JSON.stringify(own)).not.toContain("principal");
+    await db.query("UPDATE poker_hand_records SET record = jsonb_set(record, '{formatVersion}', '2') WHERE table_id = $1", [v.id]);
+    await expect(service.history(v.id, { userId: "archive-private" }, 1)).rejects.toThrow("format is not supported");
+  });
 });

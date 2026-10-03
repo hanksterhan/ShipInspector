@@ -56,6 +56,10 @@ export async function tablesHandler(req: VercelRequest, res: VercelResponse): Pr
       const segments = path.split("/"); const id = z.string().uuid().parse(segments[2]);
       if (who.token && !who.token.startsWith(`si_agent_${id}.`)) throw new TableError("This credential belongs to a different table.", 403);
       if (segments.length === 3 && req.method === "GET") { res.json(await service.get(id, who)); return; }
+      if (segments.length === 5 && segments[3] === "hands" && req.method === "GET") {
+        const handNumber = z.coerce.number().int().positive().safe().parse(segments[4]);
+        res.json(await service.history(id, who, handNumber)); return;
+      }
       if (segments[3] === "commands" && req.method === "POST") { res.json(await service.command(id, who, request.parse(req.body) as TableCommandRequest)); return; }
       if (segments[3] === "agents" && req.method === "POST" && who.userId) {
         const body = agentRequest.parse(req.body); res.status(201).json(await service.issueAgent(id, who.userId, body.version, body.requestId, body.name)); return;

@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import type { TableCommandRequest, TableSettings, TableView } from "@common/interfaces/tableInterfaces";
 import { applyCommand, joinSeat, makeTable, record, TableError, tableView, TableState } from "./engine";
 import { progressTable } from "./bots";
+import { handRecordView } from "./history";
 import { TableStore } from "./store";
 
 export type Identity = { userId: string; token?: never } | { token: string; userId?: never };
@@ -43,6 +44,13 @@ export class TableService {
       return tableView(t, principal, this.now());
     }
     throw new TableError("The table changed. Refresh and try again.", 409);
+  }
+  async history(id: string, identity: Identity, handNumber: number) {
+    const t = await this.load(id); const principal = this.principal(t, identity);
+    if (!t.members.includes(principal)) throw new TableError("Join this private table to view its hands.", 403);
+    const record = await this.store.getHandRecord(id, handNumber);
+    if (!record) throw new TableError("Completed hand record not found.", 404);
+    return handRecordView(record, principal);
   }
   async command(id: string, identity: Identity, input: TableCommandRequest) {
     return this.mutate(id, identity, input.version, input.requestId, input.command, (t, principal) => {

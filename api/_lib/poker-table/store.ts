@@ -1,4 +1,6 @@
-import type { TableState } from "./engine";
+import { TableError, type TableState } from "./engine";
+import { gameDefinition } from "@common/pokerModes";
+import type { PrivateHandRecord } from "./history";
 import { readTableState } from "./state";
 
 export type Query = (sql: string, params?: unknown[]) => Promise<Record<string, any>[]>;
@@ -12,6 +14,10 @@ export class TableStore {
       await this.query(`CREATE TABLE IF NOT EXISTS poker_tables (
         id UUID PRIMARY KEY, version INTEGER NOT NULL, state JSONB NOT NULL,
         members TEXT[] NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`);
+      await this.query(`CREATE TABLE IF NOT EXISTS poker_hand_records (
+        table_id UUID NOT NULL REFERENCES poker_tables(id), hand_number INTEGER NOT NULL,
+        record JSONB NOT NULL, PRIMARY KEY (table_id, hand_number)
       )`);
       await this.query("CREATE INDEX IF NOT EXISTS poker_tables_members ON poker_tables USING GIN (members)");
     })().catch(error => { this.initialized = undefined; throw error; });
@@ -32,8 +38,28 @@ export class TableStore {
     return rows.map(r => readTableState(r.state));
   }
   async save(t: TableState, expected: number): Promise<boolean> {
-    const rows = await this.query("UPDATE poker_tables SET state = $1::jsonb, version = $2, members = $3::text[], updated_at = now() WHERE id = $4 AND version = $5 RETURNING id", [JSON.stringify(t), t.version, t.members, t.id, expected]);
+    const rows = await this.query(`WITH saved AS (
+      UPDATE poker_tables SET state = $1::jsonb, version = $2, members = $3::text[], updated_at = now()
+      WHERE id = $4 AND version = $5 RETURNING id
+    ), archived AS (
+      INSERT INTO poker_hand_records (table_id, hand_number, record)
+      SELECT id, $6, $7::jsonb FROM saved WHERE $8::boolean
+      ON CONFLICT (table_id, hand_number) DO NOTHING RETURNING table_id
+    ) SELECT id FROM saved`, [JSON.stringify(t), t.version, t.members, t.id, expected,
+      t.handNumber, JSON.stringify(t.handRecord), t.street === "complete" && t.handRecord !== null]);
     return rows.length === 1;
+  }
+  async getHandRecord(id: string, handNumber: number): Promise<PrivateHandRecord | null> {
+    await this.initialize();
+    const rows = await this.query("SELECT record FROM poker_hand_records WHERE table_id = $1 AND hand_number = $2", [id, handNumber]);
+    const record = rows[0]?.record;
+    if (!record) return null;
+    if (record.formatVersion !== 1 || !Array.isArray(record.players) || !Array.isArray(record.events)) {
+      throw new TableError("This hand record format is not supported. Update the application.", 409);
+    }
+    try { gameDefinition(record.gameMode, record.rulesVersion); }
+    catch { throw new TableError("This hand uses unsupported rules. Update the application.", 409); }
+    return record;
   }
 }
 let store: Promise<TableStore> | undefined;
