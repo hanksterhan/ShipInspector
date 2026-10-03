@@ -5,6 +5,7 @@ import { BOT_PROFILES } from "@common/pokerBots";
 import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
 import { hand } from "@lib/poker/evaluate";
 import { compareRanks } from "@lib/poker/compare";
+import { nextBoardDeal, terminalBoard } from "@lib/poker/rules";
 
 export class TableError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -135,7 +136,7 @@ function refundUncalled(t: TableState) {
   }
 }
 const handNames = ["High card", "One pair", "Two pair", "Three of a kind", "Straight", "Flush", "Full house", "Four of a kind", "Straight flush", "Royal flush"];
-function settle(t: TableState, showdown: boolean) {
+function settle(t: TableState, showdown: boolean, reason: TerminalReason = "uncontested") {
   refundUncalled(t);
   const remaining = contenders(t);
   const levels = [...new Set(t.seats.map(s => s.committed).filter(Boolean))].sort((a, b) => a - b);
@@ -163,15 +164,17 @@ function settle(t: TableState, showdown: boolean) {
     t.awards.push(award);
   }
   for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
-  t.terminalReason = showdown ? "river-complete" : "uncontested";
+  t.terminalReason = reason;
   t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
   for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
   hand.clearCache();
 }
 function dealBoard(t: TableState) {
-  t.deck.shift(); // Burn before each street.
-  t.burnCount++; t.roundId++;
-  const count = t.street === "preflop" ? 3 : 1;
+  const rules = gameDefinition(t.settings.gameMode, t.rulesVersion);
+  const count = nextBoardDeal(t.board.length);
+  if (t.deck.length < rules.burnCards + count) throw new TableError("The deck cannot complete this deal.", 500);
+  t.deck.splice(0, rules.burnCards);
+  t.burnCount += rules.burnCards; t.roundId++;
   t.board.push(...t.deck.splice(0, count));
   t.street = t.street === "preflop" ? "flop" : t.street === "flop" ? "turn" : "river";
   if (t.street === "river") t.riverNumber++;
@@ -186,11 +189,17 @@ function advance(t: TableState, after: number, now: number) {
   const needs = players.filter(s => s.bet < t.currentBet || (s.actedAtBet === null && players.length > 1));
   if (needs.length) { setActor(t, next(t, after, needs).seat, now); return; }
   refundUncalled(t);
-  if (t.street === "river") { settle(t, true); return; }
+  const rules = gameDefinition(t.settings.gameMode, t.rulesVersion);
+  const reason = terminalBoard(rules, t.board, t.deck.length);
+  if (reason) { settle(t, true, reason); return; }
   dealBoard(t);
   if (active(t).length <= 1) {
-    while (t.board.length < 5) dealBoard(t);
-    settle(t, true);
+    let end = terminalBoard(rules, t.board, t.deck.length);
+    while (!end) {
+      dealBoard(t);
+      end = terminalBoard(rules, t.board, t.deck.length);
+    }
+    settle(t, true, end);
   } else setActor(t, next(t, t.button, active(t)).seat, now);
 }
 export function deal(t: TableState, now: number, deck = shuffledDeck()) {
