@@ -216,6 +216,15 @@ describe("persistent tables and shared human/agent authorization", () => {
       const old = new TableService(store, () => clock, "holdem:1");
       await expect(old.create("compat-old", { ...settings, gameMode: "red-river-holdem" })).rejects.toMatchObject({ status: 426 });
       expect((await old.create("compat-old", settings)).settings.gameMode).toBe("holdem");
+      const body = { settings: { ...settings, gameMode: "red-river-holdem" }, displayName: "Alice" };
+      const count = (await store.list("compat-owner")).length;
+      expect((await invoke("POST", "/api/tables", undefined, body)).status).toBe(426);
+      expect((await store.list("compat-owner")).length).toBe(count);
+      const created = await invoke("POST", "/api/tables", "holdem:1,red-river-holdem:1", body);
+      expect(created.status).toBe(201);
+      expect(created.data).toMatchObject({ settings: { gameMode: "red-river-holdem" }, rulesVersion: 1, roundId: 0 });
+      expect((await invoke("POST", "/api/tables", undefined, { settings })).status).toBe(201);
+      expect((await invoke("POST", "/api/tables", "holdem:1,red-river-holdem:1", { settings: { ...settings, gameMode: "unknown" } })).status).toBe(400);
     } finally { factory.mockRestore(); }
   });
 });

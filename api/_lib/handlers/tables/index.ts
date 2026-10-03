@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
+import { GAME_MODES } from "@common/pokerModes";
 import type { TableCommandRequest, TableSettings } from "@common/interfaces/tableInterfaces";
 import { requireAuth } from "../../api-utils/auth";
 import { handleCors } from "../../api-utils/cors";
@@ -9,7 +10,7 @@ import { Identity, TableService } from "../../poker-table/service";
 
 const name = z.string().trim().min(1).max(40).regex(/^[^\x00-\x1f\x7f]+$/, "Use a plain display name.");
 const integer = z.number().int().safe();
-const settings = z.object({ gameMode: z.literal("holdem").optional(), name, maxPlayers: integer.min(2).max(8), smallBlind: integer.min(1).max(500),
+const settings = z.object({ gameMode: z.enum(GAME_MODES).optional(), name, maxPlayers: integer.min(2).max(8), smallBlind: integer.min(1).max(500),
   bigBlind: integer.min(2).max(1000), startingStack: integer.min(20).max(100000), turnSeconds: integer.min(30).max(120) }).strict()
   .refine(s => s.bigBlind >= 2 * s.smallBlind && s.startingStack >= 20 * s.bigBlind, "Use a big blind of at least twice the small blind and a stack of at least 20 big blinds.");
 const command = z.discriminatedUnion("type", [
