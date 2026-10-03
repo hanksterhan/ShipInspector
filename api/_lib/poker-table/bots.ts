@@ -1,8 +1,10 @@
 import { randomInt } from "node:crypto";
-import type { Card, CardRank } from "@common/interfaces";
+import type { Card } from "@common/interfaces";
 import type { BotStyle, LegalActions } from "@common/interfaces/tableInterfaces";
 import { gameDefinition, type GameMode } from "@common/pokerModes";
-import { hand } from "@lib/poker/evaluate";
+import { bestHighHand } from "@lib/poker/highHand";
+import { sampleRunout } from "@lib/poker/runout";
+import { potLayers } from "@lib/poker/pots";
 import { compareRanks } from "@lib/poker/compare";
 import { act, expireTurn, inHand, legalActions, type TableState } from "./engine";
 
@@ -51,38 +53,51 @@ export function botObservation(t: TableState): BotObservation {
     position: order.findIndex(s => s === bot) / Math.max(1, order.length - 1),
     legal: { ...legalActions(t, bot.principal)! } };
 }
-// Bounded sampling against unknown hands. This estimates pot share, not an
-// optimal strategy or opponent range. Folded cards remain unknown as in real play.
-export function estimateBotEquity(view: BotObservation, rng: Random): number {
-  const known = new Set([...view.cards, ...view.board].map(c => `${c.rank}${c.suit}`));
-  const unseen: Card[] = [];
-  for (const suit of ["s", "h", "d", "c"] as const) for (let rank = 2; rank <= 14; rank++) {
-    if (!known.has(`${rank}${suit}`)) unseen.push({ rank: rank as CardRank, suit });
-  }
-  const samples = 96;
-  const count = 5 - view.board.length + view.opponents * 2;
-  let share = 0;
+export interface BotEstimate {
+  equity: number;
+  eligiblePot: number;
+  samples: number;
+  rankEvaluations: number;
+  elapsedMs: number;
+  reason?: "work-budget" | "estimator-error";
+}
+// Only complete trials count. Work caps apply to every mode and profile.
+export function estimateBotEquity(view: BotObservation, rng: Random): BotEstimate {
+  const started = Date.now();
+  let share = 0; let samples = 0; let rankEvaluations = 0; let eligiblePot = 0;
+  const result = (reason?: BotEstimate["reason"]): BotEstimate => ({ equity: samples ? share / samples : 0,
+    eligiblePot, samples, rankEvaluations, elapsedMs: Math.max(0, Date.now() - started), ...(reason ? { reason } : {}) });
   try {
-    for (let sample = 0; sample < samples; sample++) {
-      const deck = [...unseen];
-      for (let i = 0; i < count; i++) {
-        const index = i + Math.floor(rng() * (deck.length - i));
-        [deck[i], deck[index]] = [deck[index], deck[i]];
+    const rules = gameDefinition(view.gameMode, view.rulesVersion);
+    const opponents = view.players.filter(p => p.eligible && p.seat !== view.seat);
+    if (opponents.length !== view.opponents) throw new Error("Invalid pot eligibility.");
+    const pots = potLayers(view.players.map(p => ({ ...p,
+      committed: p.committed + (p.seat === view.seat ? view.legal.call : 0),
+    }))).filter(p => p.eligible.includes(view.seat));
+    eligiblePot = pots.reduce((n, p) => n + p.amount, 0);
+    if (eligiblePot <= 0) throw new Error("No eligible pot.");
+    for (; samples < 96; samples++) {
+      if (Date.now() - started >= 100 || rankEvaluations + opponents.length + 1 > 768) return result("work-budget");
+      const trial = sampleRunout(view, rules, rng);
+      const ranks = new Map([[view.seat, bestHighHand([...view.cards, ...trial.board]).rank]]); rankEvaluations++;
+      for (let i = 0; i < opponents.length; i++) {
+        ranks.set(opponents[i].seat, bestHighHand([...trial.hands[i], ...trial.board]).rank); rankEvaluations++;
       }
-      const missing = 5 - view.board.length;
-      const board = [...view.board, ...deck.slice(0, missing)];
-      const hero = hand.evaluate7([...view.cards, ...board]);
-      let ties = 1; let beaten = false;
-      for (let i = 0; i < view.opponents; i++) {
-        const start = missing + i * 2;
-        const comparison = compareRanks(hero, hand.evaluate7([...deck.slice(start, start + 2), ...board]));
-        if (comparison < 0) { beaten = true; break; }
-        if (comparison === 0) ties++;
+      let award = 0;
+      for (const pot of pots) {
+        let ties = 1; let beaten = false;
+        for (const seat of pot.eligible) {
+          if (seat === view.seat) continue;
+          const comparison = compareRanks(ranks.get(view.seat)!, ranks.get(seat)!);
+          if (comparison < 0) { beaten = true; break; }
+          if (comparison === 0) ties++;
+        }
+        if (!beaten) award += pot.amount / ties;
       }
-      if (!beaten) share += 1 / ties;
+      share += award / eligiblePot;
     }
-  } finally { hand.clearCache(); }
-  return share / samples;
+    return result();
+  } catch { return result("estimator-error"); }
 }
 function startingHand(cards: Card[]): number {
   const [high, low] = cards.map(c => c.rank).sort((a, b) => b - a);
@@ -103,10 +118,16 @@ export function chooseBotAction(view: BotObservation, style: BotStyle, rng: Rand
     return choices[Math.floor(rng() * choices.length)];
   }
   const profile = styles[style];
-  const equity = estimateBotEquity(view, rng);
-  const odds = legal.call / Math.max(1, view.pot + legal.call);
+  const estimate = estimateBotEquity(view, rng);
+  if (estimate.reason) {
+    console.warn("CPU estimate fallback", { gameMode: view.gameMode, roundId: view.roundId,
+      reason: estimate.reason, samples: estimate.samples, rankEvaluations: estimate.rankEvaluations, elapsedMs: estimate.elapsedMs });
+    return { action: legal.check ? "check" : "fold" };
+  }
+  const equity = estimate.equity;
+  const odds = legal.call / Math.max(1, estimate.eligiblePot);
   const fairShare = 1 / (view.opponents + 1);
-  const weakStart = view.board.length === 0 && startingHand(view.cards) < profile.entry + (1 - view.position) * 0.08 - (view.opponents === 1 ? 0.08 : 0);
+  const weakStart = view.gameMode === "holdem" && view.board.length === 0 && startingHand(view.cards) < profile.entry + (1 - view.position) * 0.08 - (view.opponents === 1 ? 0.08 : 0);
   if (!legal.check && (equity + profile.loose < odds + 0.025 || (weakStart && legal.call >= view.bigBlind))) return { action: "fold" };
   const value = equity > Math.max(fairShare + 0.12, odds + 0.15);
   const bluff = legal.call <= view.stack * 0.12 && rng() < profile.bluff / Math.max(1, view.opponents);

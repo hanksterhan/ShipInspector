@@ -100,8 +100,8 @@ describe("persistent tables and shared human/agent authorization", () => {
     await expect(send(v, { userId: "timeout-owner" }, { type: "act", action: "raise", raiseTo: 100 })).rejects.toThrow("table changed");
     expect((await store.get(v.id))!.version).toBe(v.version + 1);
   });
-  it("persists a due CPU turn across restart and commits it once under concurrent polls", async () => {
-    let v = await service.create("cpu-owner", settings, "Alice");
+  it.each(["holdem", "red-river-holdem"] as const)("%s persists a due CPU turn and commits it once under concurrent polls", async gameMode => {
+    let v = await service.create("cpu-owner", { ...settings, gameMode }, "Alice");
     v = await send(v, { userId: "cpu-owner" }, { type: "add-bots", styles: ["passive"] });
     v = await send(v, { userId: "cpu-owner" }, { type: "ready", ready: true });
     v = await send(v, { userId: "cpu-owner" }, { type: "deal" });
@@ -111,7 +111,11 @@ describe("persistent tables and shared human/agent authorization", () => {
     const restarted = new TableService(store, () => clock);
     expect((await restarted.get(v.id, { userId: "cpu-owner" })).version).toBe(v.version);
     clock += 1400;
+    const started = performance.now();
     const views = await Promise.all(Array.from({ length: 4 }, () => restarted.get(v.id, { userId: "cpu-owner" })));
+    const elapsedMs = performance.now() - started;
+    console.info("Four table polls including storage and CPU", { gameMode, elapsedMs: Math.round(elapsedMs) });
+    expect(elapsedMs).toBeLessThan(8000);
     expect(new Set(views.map(view => view.version))).toEqual(new Set([v.version + 1]));
     const saved = (await store.get(v.id))!;
     expect(saved.events.filter(event => event.text.startsWith("Marina: "))).toHaveLength(1);
