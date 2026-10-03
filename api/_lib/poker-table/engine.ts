@@ -5,6 +5,7 @@ import { BOT_PROFILES } from "@common/pokerBots";
 import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableEvent, TableSettings, TableStreet, TableView } from "@common/interfaces/tableInterfaces";
 import { bestHighHand } from "@lib/poker/highHand";
 import { compareRanks } from "@lib/poker/compare";
+import { potLayers } from "@lib/poker/pots";
 import { nextBoardDeal, terminalBoard } from "@lib/poker/rules";
 import { handEvent, handRecordView, startHandRecord, type PrivateHandRecord } from "./history";
 
@@ -142,15 +143,11 @@ const handNames = ["High card", "One pair", "Two pair", "Three of a kind", "Stra
 function settle(t: TableState, showdown: boolean, reason: TerminalReason = "uncontested") {
   refundUncalled(t);
   const remaining = contenders(t);
-  const levels = [...new Set(t.seats.map(s => s.committed).filter(Boolean))].sort((a, b) => a - b);
-  let previous = 0;
+  const layers = potLayers(t.seats.map(s => ({ seat: s.seat, committed: s.committed, eligible: remaining.includes(s) })));
   t.awards = [];
   const ranks = new Map(remaining.map(s => [s.seat, showdown ? bestHighHand([...s.cards, ...t.board]).rank : null]));
-  for (const level of levels) {
-    const contributors = t.seats.filter(s => s.committed >= level);
-    const amount = (level - previous) * contributors.length;
-    previous = level;
-    const eligible = remaining.filter(s => s.committed >= level);
+  for (const { amount, eligible: seats } of layers) {
+    const eligible = remaining.filter(s => seats.includes(s.seat));
     if (!eligible.length) throw new TableError("Pot has no eligible player.", 500);
     let winners = [eligible[0]];
     for (const s of eligible.slice(1)) {

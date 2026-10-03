@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { Card, CardRank } from "@common/interfaces";
 import type { BotStyle, LegalActions } from "@common/interfaces/tableInterfaces";
+import { gameDefinition, type GameMode } from "@common/pokerModes";
 import { hand } from "@lib/poker/evaluate";
 import { compareRanks } from "@lib/poker/compare";
 import { act, expireTurn, inHand, legalActions, type TableState } from "./engine";
@@ -8,6 +9,14 @@ import { act, expireTurn, inHand, legalActions, type TableState } from "./engine
 // This is the full policy boundary: no deck, opponent cards, credentials, or
 // event text. The policy never receives TableState or a human's private view.
 export interface BotObservation {
+  gameMode: GameMode;
+  rulesVersion: number;
+  roundId: number;
+  dealtPlayerCount: number;
+  burnCount: number;
+  drawCapacity: number;
+  seat: number;
+  players: { seat: number; committed: number; eligible: boolean }[];
   cards: Card[];
   board: Card[];
   opponents: number;
@@ -32,7 +41,11 @@ export function botObservation(t: TableState): BotObservation {
   if (!bot) throw new Error("A CPU must have the turn.");
   const players = t.seats.filter(s => s.status === "active" || s.status === "all-in");
   const order = [...players].sort((a, b) => ((a.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers) - ((b.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers));
-  return { cards: bot.cards.map(c => ({ ...c })), board: t.board.map(c => ({ ...c })),
+  return { gameMode: gameDefinition(t.settings.gameMode, t.rulesVersion).id, rulesVersion: t.rulesVersion,
+    roundId: t.roundId, dealtPlayerCount: t.dealtPlayerCount, burnCount: t.burnCount,
+    drawCapacity: 52 - 2 * t.dealtPlayerCount - t.board.length - t.burnCount, seat: bot.seat,
+    players: t.seats.filter(s => s.status !== "waiting").map(s => ({ seat: s.seat, committed: s.committed, eligible: players.includes(s) })),
+    cards: bot.cards.map(c => ({ ...c })), board: t.board.map(c => ({ ...c })),
     opponents: players.length - 1, pot: t.seats.reduce((sum, s) => sum + s.committed, 0),
     bigBlind: t.settings.bigBlind, currentBet: t.currentBet, bet: bot.bet, stack: bot.stack,
     position: order.findIndex(s => s === bot) / Math.max(1, order.length - 1),

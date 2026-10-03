@@ -10,7 +10,8 @@ function game(bots = 1) {
   applyCommand(t, "owner", { type: "ready", ready: true }, 0); return t;
 }
 function observation(): BotObservation {
-  return { cards: [parseCard("14s"), parseCard("14h")], board: [], opponents: 1, pot: 30, bigBlind: 10, currentBet: 10, bet: 0, stack: 1000, position: 0.5,
+  return { gameMode: "holdem", rulesVersion: 1, roundId: 1, dealtPlayerCount: 2, burnCount: 0, drawCapacity: 48, seat: 0,
+    players: [{ seat: 0, committed: 0, eligible: true }, { seat: 1, committed: 30, eligible: true }], cards: [parseCard("14s"), parseCard("14h")], board: [], opponents: 1, pot: 30, bigBlind: 10, currentBet: 10, bet: 0, stack: 1000, position: 0.5,
     legal: { fold: true, check: false, call: 10, minRaiseTo: 20, maxRaiseTo: 1000 } };
 }
 describe("CPU policy and lifecycle", () => {
@@ -27,7 +28,8 @@ describe("CPU policy and lifecycle", () => {
   it("does not let hidden opponent cards or the deck affect a bot observation or seeded action", () => {
     const t = game(); deal(t, 0); act(t, "owner", "call", undefined, 1);
     const before = botObservation(t);
-    expect(Object.keys(before).sort()).toEqual(["bet", "bigBlind", "board", "cards", "currentBet", "legal", "opponents", "position", "pot", "stack"].sort());
+    expect(before).toMatchObject({ gameMode: "holdem", rulesVersion: 1, dealtPlayerCount: 2, burnCount: 0, drawCapacity: 48 });
+    expect(JSON.stringify(before)).not.toMatch(/principal|credential|hash|events|"deck"/);
     t.seats[0].cards = [parseCard("2c"), parseCard("3c")]; t.deck.reverse();
     expect(botObservation(t)).toEqual(before);
     expect(chooseBotAction(before, "balanced", seeded(7))).toEqual(chooseBotAction(botObservation(t), "balanced", seeded(7)));
