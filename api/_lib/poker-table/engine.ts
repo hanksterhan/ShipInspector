@@ -6,6 +6,7 @@ import type { BotStyle, LegalActions, PotAward, SeatStatus, TableCommand, TableE
 import { bestHighHand } from "@lib/poker/highHand";
 import { compareRanks } from "@lib/poker/compare";
 import { nextBoardDeal, terminalBoard } from "@lib/poker/rules";
+import { handEvent, handRecordView, startHandRecord, type PrivateHandRecord } from "./history";
 
 export class TableError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -35,6 +36,7 @@ export interface AgentGrant {
   revoked: boolean;
 }
 export interface TableState {
+  handRecord: PrivateHandRecord | null;
   stateFormatVersion: 1;
   rulesVersion: number;
   roundId: number;
@@ -76,7 +78,7 @@ export function record(t: TableState, text: string) {
 }
 export function makeTable(id: string, owner: string, settings: TableSettings): TableState {
   const rules = gameDefinition(settings.gameMode);
-  return { stateFormatVersion: 1, rulesVersion: rules.rulesVersion, roundId: 0, riverNumber: 0,
+  return { handRecord: null, stateFormatVersion: 1, rulesVersion: rules.rulesVersion, roundId: 0, riverNumber: 0,
     dealtPlayerCount: 0, burnCount: 0, terminalReason: null,
     id, owner, members: [owner], version: 0, settings: { ...settings, gameMode: rules.id }, street: "waiting", handNumber: 0,
     button: -1, smallBlindSeat: null, bigBlindSeat: null, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
@@ -132,6 +134,7 @@ function refundUncalled(t: TableState) {
   if (excess > 0) {
     const s = sorted[0]; s.stack += excess; s.committed -= excess; s.bet = Math.max(0, s.bet - excess);
     if (s.status === "all-in") s.status = "active";
+    handEvent(t, { type: "refund", seat: s.seat, amount: excess });
     record(t, `${excess} uncalled chips returned to ${s.name}.`);
   }
 }
@@ -162,9 +165,11 @@ function settle(t: TableState, showdown: boolean, reason: TerminalReason = "unco
       return { seat: s.seat, amount: chips, hand: showdown ? handNames[ranks.get(s.seat)!.category] || "Winning hand" : "Uncontested" };
     }) };
     t.awards.push(award);
+    handEvent(t, { type: "award", award });
   }
   for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
   if (reason === "deck-exhausted") record(t, "Deck exhausted. Showdown on the current board.");
+  handEvent(t, { type: "end", reason, revealedSeats: showdown ? remaining.map(s => s.seat) : [] });
   t.terminalReason = reason;
   t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
   for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
@@ -178,6 +183,7 @@ function dealBoard(t: TableState) {
   t.board.push(...t.deck.splice(0, count));
   t.street = t.street === "preflop" ? "flop" : t.street === "flop" ? "turn" : "river";
   if (t.street === "river") t.riverNumber++;
+  handEvent(t, { type: "deal", cards: t.board.slice(-count), riverNumber: t.riverNumber });
   record(t, `${t.street === "river" ? `River ${t.riverNumber}` : t.street[0].toUpperCase() + t.street.slice(1)} dealt.`);
   for (const s of t.seats) { s.bet = 0; s.actedAtBet = null; s.lastAction = s.status === "folded" ? "Fold" : s.status === "all-in" ? "All-in" : ""; }
   t.currentBet = 0; t.minRaise = t.settings.bigBlind;
@@ -227,6 +233,7 @@ export function deal(t: TableState, now: number, deck = shuffledDeck()) {
   t.smallBlindSeat = sb.seat; t.bigBlindSeat = bb.seat;
   putChips(sb, Math.min(sb.stack, t.settings.smallBlind)); sb.lastAction = "Small blind";
   putChips(bb, Math.min(bb.stack, t.settings.bigBlind)); bb.lastAction = "Big blind";
+  startHandRecord(t);
   record(t, `Hand ${t.handNumber}. ${sb.name} posts ${sb.bet}; ${bb.name} posts ${bb.bet}.`);
   advance(t, bb.seat, now);
 }
@@ -234,6 +241,7 @@ export function act(t: TableState, principal: string, action: "fold" | "check" |
   const legal = legalActions(t, principal);
   if (!legal) throw new TableError("It is not your turn.", 409);
   const s = t.seats.find(s => s.principal === principal)!;
+  const before = s.committed;
   if (action === "fold") { s.status = "folded"; s.lastAction = "Fold"; }
   if (action === "check") {
     if (!legal.check) throw new TableError("You must call or fold.");
@@ -251,6 +259,7 @@ export function act(t: TableState, principal: string, action: "fold" | "check" |
     s.lastAction = `${raiseTo === increase ? "Bet" : "Raise to"} ${raiseTo}${s.stack === 0 ? " · All-in" : ""}`;
   }
   s.actedAtBet = t.currentBet;
+  handEvent(t, { type: "action", seat: s.seat, action, amount: s.committed - before, ...(action === "raise" ? { raiseTo } : {}) });
   record(t, `${s.name}: ${s.lastAction}.`);
   advance(t, s.seat, now);
 }
@@ -331,7 +340,7 @@ function blindSeats(t: TableState) {
 export function tableView(t: TableState, principal: string, now: number): TableView {
   const you = t.seats.find(s => s.principal === principal);
   const reveal = t.street === "complete";
-  return { rulesVersion: t.rulesVersion, roundId: t.roundId, riverNumber: t.riverNumber, terminalReason: t.terminalReason,
+  return { handRecord: t.handRecord ? handRecordView(t.handRecord, principal) : null, rulesVersion: t.rulesVersion, roundId: t.roundId, riverNumber: t.riverNumber, terminalReason: t.terminalReason,
     dealtPlayerCount: t.dealtPlayerCount, burnCount: t.burnCount, drawCapacity: t.deck.length,
     id: t.id, version: t.version, settings: t.settings, isOwner: t.owner === principal,
     yourSeat: you?.seat ?? null, street: t.street, handNumber: t.handNumber, button: t.button,

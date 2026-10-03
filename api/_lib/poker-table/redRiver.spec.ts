@@ -1,3 +1,4 @@
+import { eightSeatExhaustionDeck } from "./__tests__/fixtures";
 import { parseCard, type Card } from "@common/interfaces";
 import { act, applyCommand, deal, joinSeat, legalActions, makeTable, tableView, type TableState } from "./engine";
 const settings = { name: "Red River", gameMode: "red-river-holdem" as const, maxPlayers: 8,
@@ -79,13 +80,7 @@ describe("Red River complete hand paths", () => {
   });
   it("handles a physically complete deck with no black river before exhaustion", () => {
     const t = game(8);
-    const all = ["c", "d", "h", "s"].flatMap(suit => Array.from({ length: 13 }, (_, i) => parseCard(`${i + 2}${suit}`)));
-    const black = all.filter(c => c.suit === "c" || c.suit === "s");
-    const red = all.filter(c => c.suit === "h" || c.suit === "d");
-    const deck = [...black.splice(0, 16)];
-    deck.push(black.shift()!, ...red.splice(0, 3), black.shift()!, red.shift()!, black.shift()!, red.shift()!);
-    while (red.length >= 2) deck.push(black.shift() || red.shift()!, red.shift()!);
-    deck.push(...black, ...red);
+    const deck = eightSeatExhaustionDeck();
     expect(deck).toHaveLength(52); deal(t, 0, deck);
     let rounds = 0;
     while (t.street !== "complete" && rounds++ < 24) checkRound(t);

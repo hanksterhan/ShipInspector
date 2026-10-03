@@ -17,10 +17,10 @@ export function readTableState(raw: TableState): TableState {
     if (!raw.settings.gameMode) throw new TableError("Missing saved poker mode.", 409);
     if (raw.rulesVersion !== 1 || [raw.roundId, raw.riverNumber, raw.dealtPlayerCount, raw.burnCount]
       .some(n => !Number.isSafeInteger(n) || n < 0)) throw new TableError("Invalid saved hand metadata.", 409);
-    return raw;
+    return { ...raw, handRecord: raw.handRecord ?? null };
   }
   const burns = raw.board.length >= 5 ? 3 : raw.board.length === 4 ? 2 : raw.board.length === 3 ? 1 : 0;
-  return { ...raw, settings: { ...raw.settings, gameMode: rules.id }, stateFormatVersion: 1,
+  return { ...raw, handRecord: null, settings: { ...raw.settings, gameMode: rules.id }, stateFormatVersion: 1,
     rulesVersion: rules.rulesVersion, roundId: raw.handNumber ? burns + 1 : 0,
     riverNumber: raw.board.length >= 5 ? 1 : 0, burnCount: burns,
     dealtPlayerCount: raw.seats.filter(s => s.status !== "waiting").length,

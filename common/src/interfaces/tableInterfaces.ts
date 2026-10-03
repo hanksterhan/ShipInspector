@@ -1,3 +1,4 @@
+import type { TableHandRecord } from "./tableHandInterfaces";
 import type { GameMode, TerminalReason } from "../pokerModes";
 import type { Card } from "./handInterfaces";
 
@@ -46,6 +47,7 @@ export interface PotAward {
   winners: { seat: number; amount: number; hand: string }[];
 }
 export interface TableView {
+  handRecord?: TableHandRecord | null;
   rulesVersion?: number;
   roundId?: number;
   riverNumber?: number;
