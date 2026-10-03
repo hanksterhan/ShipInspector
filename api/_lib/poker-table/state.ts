@@ -1,4 +1,5 @@
 import { gameDefinition } from "@common/pokerModes";
+import { readHandRecord } from "./history";
 import { TableError, type TableState } from "./engine";
 
 export function readTableState(raw: TableState): TableState {
@@ -17,6 +18,12 @@ export function readTableState(raw: TableState): TableState {
     if (!raw.settings.gameMode) throw new TableError("Missing saved poker mode.", 409);
     if (raw.rulesVersion !== 1 || [raw.roundId, raw.riverNumber, raw.dealtPlayerCount, raw.burnCount]
       .some(n => !Number.isSafeInteger(n) || n < 0)) throw new TableError("Invalid saved hand metadata.", 409);
+    if (raw.handRecord) {
+      const record = readHandRecord(raw.handRecord);
+      if (record.handNumber !== raw.handNumber || record.gameMode !== rules.id || record.rulesVersion !== raw.rulesVersion) {
+        throw new TableError("Invalid saved hand metadata.", 409);
+      }
+    }
     return { ...raw, handRecord: raw.handRecord ?? null };
   }
   const burns = raw.board.length >= 5 ? 3 : raw.board.length === 4 ? 2 : raw.board.length === 3 ? 1 : 0;

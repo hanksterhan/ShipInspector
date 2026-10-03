@@ -1,6 +1,5 @@
-import { TableError, type TableState } from "./engine";
-import { gameDefinition } from "@common/pokerModes";
-import type { PrivateHandRecord } from "./history";
+import type { TableState } from "./engine";
+import { readHandRecord, type PrivateHandRecord } from "./history";
 import { readTableState } from "./state";
 
 export type Query = (sql: string, params?: unknown[]) => Promise<Record<string, any>[]>;
@@ -54,12 +53,7 @@ export class TableStore {
     const rows = await this.query("SELECT record FROM poker_hand_records WHERE table_id = $1 AND hand_number = $2", [id, handNumber]);
     const record = rows[0]?.record;
     if (!record) return null;
-    if (record.formatVersion !== 1 || !Array.isArray(record.players) || !Array.isArray(record.events)) {
-      throw new TableError("This hand record format is not supported. Update the application.", 409);
-    }
-    try { gameDefinition(record.gameMode, record.rulesVersion); }
-    catch { throw new TableError("This hand uses unsupported rules. Update the application.", 409); }
-    return record;
+    return readHandRecord(record);
   }
 }
 let store: Promise<TableStore> | undefined;

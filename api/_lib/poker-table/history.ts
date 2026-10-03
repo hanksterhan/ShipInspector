@@ -1,10 +1,22 @@
 import type { HandEventBody, HandPlayer, TableHandRecord } from "@common/interfaces/tableHandInterfaces";
 import { gameDefinition } from "@common/pokerModes";
-import type { TableState } from "./engine";
+import { TableError, type TableState } from "./engine";
 
 type PrivatePlayer = Omit<HandPlayer, "isYou"> & { principal: string };
 export type PrivateHandRecord = Omit<TableHandRecord, "players"> & { players: PrivatePlayer[] };
 
+export function readHandRecord(record: PrivateHandRecord): PrivateHandRecord {
+  if (!record || record.formatVersion !== 1 || !Array.isArray(record.players) || !Array.isArray(record.events)) {
+    throw new TableError("This hand record format is not supported. Update the application.", 409);
+  }
+  if (!record.gameMode || record.rulesVersion !== 1) throw new TableError("This hand uses unsupported rules. Update the application.", 409);
+  try { gameDefinition(record.gameMode, record.rulesVersion); }
+  catch { throw new TableError("This hand uses unsupported rules. Update the application.", 409); }
+  if (record.settings?.gameMode !== record.gameMode || !Number.isSafeInteger(record.handNumber) || record.handNumber < 1) {
+    throw new TableError("Invalid saved hand metadata.", 409);
+  }
+  return record;
+}
 export function startHandRecord(t: TableState) {
   t.handRecord = { formatVersion: 1, handNumber: t.handNumber, gameMode: gameDefinition(t.settings.gameMode).id,
     rulesVersion: t.rulesVersion, settings: { ...t.settings }, button: t.button,

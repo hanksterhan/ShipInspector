@@ -35,6 +35,17 @@ describe("saved table format compatibility", () => {
     t.settings.gameMode = "unknown" as any;
     await expect(load(t)).rejects.toThrow("Unsupported poker mode");
   });
+  it("rejects newer or inconsistent hand records before a private table projection", async () => {
+    for (const change of [
+      (t: TableState) => { t.handRecord!.formatVersion = 2 as any; },
+      (t: TableState) => { t.handRecord!.rulesVersion = 2; },
+      (t: TableState) => { t.handRecord!.handNumber++; },
+      (t: TableState) => { t.handRecord!.settings.gameMode = "red-river-holdem"; },
+    ]) {
+      const t = saved(); change(t);
+      await expect(load(t)).rejects.toThrow(/not supported|unsupported rules|metadata/);
+    }
+  });
   it("tracks rounds and original participants without counting late seats", () => {
     const t = saved(); joinSeat(t, "late", "Late");
     act(t, "one", "call", undefined, 1); act(t, "two", "check", undefined, 2);
