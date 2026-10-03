@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   LoaderCircle,
 } from "lucide-react";
+import { GAME_MODES, gameDefinition, type GameMode } from "@common/pokerModes";
 import type { TableSummary } from "@common/interfaces/tableInterfaces";
 import { Button } from "@/components/ui/button";
 import { tableService } from "@/services/tableService";
@@ -25,6 +26,7 @@ export default function TablesPage() {
   const [displayName, setDisplayName] = useState(
     user?.firstName || user?.username || "Player",
   );
+  const [gameMode, setGameMode] = useState<GameMode>("holdem");
   const [size, setSize] = useState(6);
   const [blind, setBlind] = useState(10);
   const [turn, setTurn] = useState(60);
@@ -51,6 +53,7 @@ export default function TablesPage() {
     try {
       const t = await tableService.create(
         {
+          gameMode,
           name,
           maxPlayers: size,
           smallBlind: blind / 2,
@@ -117,7 +120,7 @@ export default function TablesPage() {
                   <div>
                     <strong>{t.name}</strong>
                     <span>
-                      {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
+                      {gameDefinition(t.gameMode).label} · {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
                       seats
                     </span>
                   </div>
@@ -175,6 +178,12 @@ export default function TablesPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
               />
+            </label>
+            <label>
+              Game mode
+              <select value={gameMode} onChange={(e) => setGameMode(e.target.value as GameMode)}>
+                {GAME_MODES.map((mode) => <option key={mode} value={mode}>{gameDefinition(mode).label}</option>)}
+              </select>
             </label>
             <div className="live-form-grid">
               <label>

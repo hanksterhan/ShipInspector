@@ -32,6 +32,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@common/interfaces": path.resolve(__dirname, "../common/src/interfaces"),
+      "@common/pokerModes": path.resolve(__dirname, "../common/src/pokerModes.ts"),
       "@common/pokerBots": path.resolve(
         __dirname,
         "../common/src/pokerBots.ts",

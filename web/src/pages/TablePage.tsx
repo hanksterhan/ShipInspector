@@ -1,3 +1,4 @@
+import { gameDefinition } from "@common/pokerModes";
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -116,6 +117,7 @@ export default function TablePage() {
           </Link>
           <h1>{table.settings.name}</h1>
           <div className="live-table-stakes">
+            <span>{gameDefinition(table.settings.gameMode).label}</span>
             <span>
               {table.settings.smallBlind}/{table.settings.bigBlind}
             </span>
