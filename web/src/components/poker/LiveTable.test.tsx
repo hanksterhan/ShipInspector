@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { parseCard } from "@common/interfaces";
 import type { TableView } from "@common/interfaces/tableInterfaces";
 import { LiveTable } from "./LiveTable";
 
@@ -245,5 +246,42 @@ it.each(["reduced motion", "keyboard"])("keeps cards still for %s", (mode) => {
   expect(flights).toHaveLength(0);
   expect(
     screen.getByRole("img", { name: "Human card 1: A of Spades" }),
+  ).toBeVisible();
+});
+
+it("keeps all 25 board cards and numbered rivers visible with a text color cue", () => {
+  const t = dealt();
+  t.settings.gameMode = "red-river-holdem";
+  t.street = "river";
+  t.riverNumber = 21;
+  t.board = ["h", "d"]
+    .flatMap((suit) =>
+      Array.from({ length: 13 }, (_, i) => parseCard(`${i + 2}${suit}`)),
+    )
+    .slice(0, 25);
+  const { rerender } = render(<LiveTable table={t} />);
+  expect(screen.getAllByRole("img", { name: /Board card/ })).toHaveLength(25);
+  expect(screen.getByRole("group", { name: "River 21 · Red" })).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+  expect(
+    screen.getByRole("img", { name: "Board card 25: K of Diamonds" }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("group", { name: "Human: River 21 bet 0 chips" }),
+  ).toBeVisible();
+  expect(screen.getByText("RED RIVER HOLD'EM")).toBeVisible();
+  rerender(
+    <LiveTable
+      table={{
+        ...t,
+        board: [...t.board.slice(0, -1), parseCard("2c")],
+        riverNumber: 21,
+      }}
+    />,
+  );
+  expect(
+    screen.getByRole("group", { name: "River 21 · Black · Final" }),
   ).toBeVisible();
 });

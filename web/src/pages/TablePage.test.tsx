@@ -1,4 +1,10 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import TablePage from "./TablePage";
@@ -142,4 +148,26 @@ it("removes timers and warnings outside an active turn", () => {
     expect(screen.queryAllByRole("timer")).toHaveLength(0);
     expect(container.querySelectorAll(".has-turn-warning")).toHaveLength(0);
   }
+});
+
+it("resets an open bet draft on the next river even when actor and current bet match", () => {
+  live.table = {
+    ...live.table,
+    settings: { ...live.table.settings, gameMode: "red-river-holdem" },
+    street: "river",
+    roundId: 4,
+    riverNumber: 1,
+  };
+  const { rerender } = render(page());
+  fireEvent.click(screen.getByRole("button", { name: "Raise" }));
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Raise to" }), {
+    target: { value: "80" },
+  });
+  expect(screen.getByRole("spinbutton", { name: "Raise to" })).toHaveValue(80);
+  live.table = { ...live.table, version: 2, roundId: 5, riverNumber: 2 };
+  rerender(page());
+  expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Raise" }));
+  expect(screen.getByRole("spinbutton", { name: "Raise to" })).toHaveValue(20);
+  expect(live.send).not.toHaveBeenCalled();
 });

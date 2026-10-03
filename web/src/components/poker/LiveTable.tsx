@@ -1,5 +1,6 @@
 import { BrainCircuit, CircleDot, Crown, UserRound } from "lucide-react";
 import type { TableView } from "@common/interfaces/tableInterfaces";
+import { gameDefinition } from "@common/pokerModes";
 import { BOT_PROFILES } from "@common/pokerBots";
 import { BotIcon } from "./CpuPlayers";
 import { PlayingCard } from "./PlayingCard";
@@ -17,9 +18,11 @@ export function LiveTable({
   const felt = useCardDeal(table);
   const betting = !["waiting", "complete"].includes(table.street);
   const street =
-    table.street === "preflop"
-      ? "Preflop"
-      : table.street[0].toUpperCase() + table.street.slice(1);
+    table.street === "river" && table.settings.gameMode === "red-river-holdem"
+      ? `River ${table.riverNumber ?? 1}`
+      : table.street === "preflop"
+        ? "Preflop"
+        : table.street[0].toUpperCase() + table.street.slice(1);
   const paid = new Map<number, number>();
   table.awards.forEach((p) =>
     p.winners.forEach((w) =>
@@ -211,25 +214,56 @@ export function LiveTable({
           <strong>{table.pot.toLocaleString()}</strong>
         </div>
         <div className="live-board">
-          {Array.from({ length: 5 }, (_, i) =>
-            table.board[i] ? (
-              <PlayingCard
-                key={`${table.handNumber}:${i}`}
-                card={table.board[i]}
-                label={`Board card ${i + 1}`}
-              />
-            ) : (
-              <div
-                key={`${table.handNumber}:${i}`}
-                className="live-board-empty"
-                aria-label={`Board card ${i + 1}: not dealt`}
-              >
-                ♠
-              </div>
+          {[
+            { label: "Flop", start: 0, count: 3 },
+            { label: "Turn", start: 3, count: 1 },
+            ...Array.from(
+              { length: Math.max(1, table.board.length - 4) },
+              (_, i) => ({ label: `River ${i + 1}`, start: i + 4, count: 1 }),
             ),
-          )}
+          ].map(({ label, start, count }) => {
+            const card = table.board[start];
+            const latest = start >= 4 && start === table.board.length - 1;
+            const color =
+              card &&
+              (card.suit === "h" || card.suit === "d" ? "Red" : "Black");
+            const title = `${label}${start >= 4 && color && table.settings.gameMode === "red-river-holdem" ? ` · ${color}${color === "Black" ? " · Final" : ""}` : ""}`;
+            return (
+              <div
+                className={cn("live-board-group", latest && "is-latest-river")}
+                key={label}
+                role="group"
+                aria-label={title}
+                aria-current={latest ? "step" : undefined}
+              >
+                <span className="live-board-label">{title}</span>
+                <div className="live-board-cards">
+                  {Array.from({ length: count }, (_, offset) => {
+                    const i = start + offset;
+                    return table.board[i] ? (
+                      <PlayingCard
+                        key={`${table.handNumber}:${i}`}
+                        card={table.board[i]}
+                        label={`Board card ${i + 1}`}
+                      />
+                    ) : (
+                      <div
+                        key={`${table.handNumber}:${i}`}
+                        className="live-board-empty"
+                        aria-label={`Board card ${i + 1}: not dealt`}
+                      >
+                        ♠
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <span className="felt-game-label">NO-LIMIT TEXAS HOLD’EM</span>
+        <span className="felt-game-label">
+          {gameDefinition(table.settings.gameMode).label.toUpperCase()}
+        </span>
       </div>
       <div className="live-seat-row">
         {seats.slice(split).map((s, i) => renderSeat(s, i + split))}

@@ -176,8 +176,13 @@ export default function TablePage() {
                 : table.street === "waiting"
                   ? "Waiting for players"
                   : table.street === "complete"
-                    ? "Hand complete"
-                    : table.street[0].toUpperCase() + table.street.slice(1)}
+                    ? table.terminalReason === "deck-exhausted"
+                      ? "Hand complete · Deck exhausted"
+                      : "Hand complete"
+                    : table.street === "river" &&
+                        table.settings.gameMode === "red-river-holdem"
+                      ? `River ${table.riverNumber ?? 1}`
+                      : table.street[0].toUpperCase() + table.street.slice(1)}
             </strong>
           </div>
           <LiveTable table={table} remaining={remaining} />
@@ -208,7 +213,7 @@ export default function TablePage() {
             </div>
           )}
           <TableActions
-            key={`${table.handNumber}:${table.street}:${table.currentBet}:${table.actor}`}
+            key={`${table.handNumber}:${table.roundId ?? table.street}:${table.currentBet}:${table.actor}`}
             table={table}
             remaining={remaining}
             disabled={disabled}
@@ -242,6 +247,18 @@ export default function TablePage() {
           )}
         </section>
         <aside className="live-panel live-activity">
+          {table.settings.gameMode === "red-river-holdem" && (
+            <details className="live-game-rules">
+              <summary>Red River rules</summary>
+              <p>
+                Bet on each river. After a red river, burn one card and append
+                another river. The first black river gets the final betting
+                round. Use the best five from all board cards and your two hole
+                cards. If the deck cannot supply another burn and river, show
+                down on the current board.
+              </p>
+            </details>
+          )}
           <h2>Table activity</h2>
           <ol>
             {[...table.events]

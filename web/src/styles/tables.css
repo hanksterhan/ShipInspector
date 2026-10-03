@@ -682,6 +682,8 @@
   font-variant-numeric: tabular-nums;
 }
 .live-board {
+  width: 100%;
+  flex-wrap: wrap;
   display: flex;
   justify-content: center;
   gap: 7px;
@@ -1536,5 +1538,46 @@ html[data-input-method="keyboard"]
   }
   .live-page-header .live-button-group > button:last-child:nth-child(3) {
     grid-column: 1 / -1;
+  }
+}
+
+.live-board-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.live-board-cards {
+  display: flex;
+  gap: 7px;
+}
+.live-board-label {
+  font-size: 10px;
+  color: #bdd7df;
+  text-align: center;
+  max-width: 105px;
+}
+.is-latest-river .playing-card {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.live-game-rules {
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+.live-game-rules summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.live-game-rules p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+@media (max-width: 600px) {
+  .live-board-cards {
+    gap: 5px;
+  }
+  .live-board {
+    row-gap: 12px;
   }
 }
