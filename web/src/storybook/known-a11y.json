@@ -2,333 +2,289 @@
   {
     "story": "ui-button--variants",
     "source": "components/ui/button.tsx",
-    "rules": [
-      "color-contrast"
-    ],
+    "rules": ["color-contrast"],
     "reason": "Destructive button uses white text on #ff9b9b; observed contrast is 2.01:1."
   },
   {
     "story": "ui-badge--variants",
     "source": "components/ui/badge.tsx",
-    "rules": [
-      "color-contrast"
-    ],
+    "rules": ["color-contrast"],
     "reason": "Destructive badge uses white text on the current destructive color."
   },
   {
     "story": "ui-table--overflow",
     "source": "components/ui/table.tsx",
-    "rules": [
-      "scrollable-region-focusable"
-    ],
+    "rules": ["scrollable-region-focusable"],
     "reason": "The production horizontal scroll container has no keyboard focus target."
   },
   {
     "story": "ui-slider--default",
     "source": "components/ui/slider.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "The single thumb does not receive the label passed to the root."
   },
   {
     "story": "ui-slider--vertical",
     "source": "components/ui/slider.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "The single thumb does not receive the label passed to the root."
   },
   {
     "story": "ui-slider--minimum",
     "source": "components/ui/slider.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "The single thumb does not receive the label passed to the root."
   },
   {
     "story": "ui-slider--maximum",
     "source": "components/ui/slider.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "The single thumb does not receive the label passed to the root."
   },
   {
     "story": "ui-slider--disabled",
     "source": "components/ui/slider.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "The single thumb does not receive the label passed to the root."
   },
   {
     "story": "ui-select--grouped",
     "source": "components/ui/select.tsx",
-    "rules": [
-      "aria-hidden-focus",
-      "scrollable-region-focusable"
-    ],
+    "rules": ["aria-hidden-focus", "scrollable-region-focusable"],
     "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
   },
   {
     "story": "ui-select--scrollable",
     "source": "components/ui/select.tsx",
-    "rules": [
-      "aria-hidden-focus",
-      "scrollable-region-focusable"
-    ],
+    "rules": ["aria-hidden-focus", "scrollable-region-focusable"],
     "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
   },
   {
     "story": "ui-select--popper",
     "source": "components/ui/select.tsx",
-    "rules": [
-      "aria-hidden-focus"
-    ],
+    "rules": ["aria-hidden-focus"],
     "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
   },
   {
     "story": "replay-controls--start",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-controls--middle",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-controls--last",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-controls--playing",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-controls--speeds",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-controls--no-actions",
     "source": "components/hand-replayer/ReplayControls.tsx",
-    "rules": [
-      "aria-input-field-name"
-    ],
+    "rules": ["aria-input-field-name"],
     "reason": "Replay sliders have no accessible name."
   },
   {
     "story": "replay-player--hidden",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-player--hero",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-player--dealer",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-player--folded",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-player--all-in",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-player--long-name",
     "source": "components/hand-replayer/ReplayPlayer.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--heads-up",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--full-table",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--preflop",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--flop",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--turn",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--river",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--complete",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "replay-table--split-pot",
     "source": "components/hand-replayer/ReplayTable.tsx",
-    "rules": [
-      "aria-prohibited-attr"
-    ],
+    "rules": ["aria-prohibited-attr"],
     "reason": "The production face-down card has aria-label on a div without an image role."
   },
   {
     "story": "recorder-actionrecorder--default",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--action-types",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--amount",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--raise",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--tags",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--long-history",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--edit",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "recorder-actionrecorder--delete",
     "source": "components/hand-recorder/ActionRecorder.tsx",
-    "rules": [
-      "button-name"
-    ],
+    "rules": ["button-name"],
     "reason": "The production action editor has unnamed combobox triggers."
   },
   {
     "story": "pages-handrecorder--all-fields",
     "source": "pages/HandRecorderPage.tsx",
-    "rules": [
-      "button-name",
-      "heading-order"
-    ],
+    "rules": ["button-name", "heading-order"],
     "reason": "The full production form contains unnamed action controls and skips a heading level."
   },
   {
     "story": "pages-handrecorder--invalid",
     "source": "pages/HandRecorderPage.tsx",
-    "rules": [
-      "button-name",
-      "heading-order"
-    ],
+    "rules": ["button-name", "heading-order"],
     "reason": "The full production form contains unnamed action controls and skips a heading level."
+  },
+  {
+    "story": "library-handlibrarylist--delete-open",
+    "source": "components/hand-library/HandLibraryList.tsx",
+    "rules": ["color-contrast"],
+    "reason": "The delete dialog uses the production destructive button with low text contrast."
+  },
+  {
+    "story": "pages-handreplayer--loaded",
+    "source": "pages/HandReplayerPage.tsx",
+    "rules": ["aria-input-field-name", "aria-prohibited-attr"],
+    "reason": "The replay page inherits unnamed sliders and face-down cards with invalid aria-label."
+  },
+  {
+    "story": "library-handlibrarygrid--delete-open",
+    "source": "components/hand-library/HandLibraryGrid.tsx",
+    "rules": ["color-contrast"],
+    "reason": "The delete dialog uses the production destructive button with low text contrast."
+  },
+  {
+    "story": "shell-applayout--replay-page",
+    "source": "app/AppLayout.tsx",
+    "rules": ["aria-input-field-name", "aria-prohibited-attr"],
+    "reason": "The full replay composition inherits unnamed sliders and invalid card aria-label."
+  },
+  {
+    "story": "shell-applayout--live-page",
+    "source": "app/AppLayout.tsx",
+    "rules": ["landmark-unique"],
+    "reason": "The app sidebar and live activity aside have no unique landmark names."
+  },
+  {
+    "story": "pages-handrecorder--wizard-actions",
+    "source": "pages/HandRecorderPage.tsx",
+    "rules": ["button-name", "heading-order"],
+    "reason": "The action wizard step contains unnamed controls and skips a heading level."
+  },
+  {
+    "story": "pages-handrecorder--wizard-review",
+    "source": "pages/HandRecorderPage.tsx",
+    "rules": ["heading-order"],
+    "reason": "The wizard summary skips a heading level."
   }
 ]
