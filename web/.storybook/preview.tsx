@@ -50,6 +50,16 @@ const preview: Preview = {
     },
   },
   beforeEach: async () => {
+    // Storybook 10.3.1 runStory skips its animation cleanup when addon afterEach
+    // throws. Restore only that exact test style before the next story runs.
+    for (const style of document.head.querySelectorAll("style")) {
+      if (
+        /^\*, \*:before, \*:after \{\s*animation-delay: 0s !important;\s*animation-direction: (reverse|normal) !important;\s*animation-play-state: paused !important;\s*transition: none !important;\s*\}$/.test(
+          style.textContent?.trim() ?? "",
+        )
+      )
+        style.remove();
+    }
     if (
       import.meta.env.STORYBOOK_REDUCED_MOTION &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches
