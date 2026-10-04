@@ -50,6 +50,11 @@ const preview: Preview = {
     },
   },
   beforeEach: async () => {
+    if (
+      import.meta.env.STORYBOOK_REDUCED_MOTION &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      throw new Error("Reduced-motion browser context is missing");
     await resetStory();
     return async () => {
       await resetStory();

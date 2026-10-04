@@ -65,8 +65,11 @@ export const DeleteError: Story = {
     await userEvent.click(
       within(dialog).getByRole("button", { name: /^Delete$/ }),
     );
-    await expect(await c.findByRole("alert")).toHaveTextContent(
-      "Could not delete hand",
-    );
+    await waitFor(() => expect(dialog).not.toBeInTheDocument(), {
+      timeout: 4000,
+    });
+    await expect(
+      await c.findByRole("alert", {}, { timeout: 3000 }),
+    ).toHaveTextContent("Could not delete hand");
   },
 };

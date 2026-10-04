@@ -90,6 +90,8 @@ npm run typecheck:storybook
 npm run test:storybook -- src/components/ui/dialog.stories.tsx -t Closed
 ```
 
+To check system motion settings, run `STORYBOOK_REDUCED_MOTION=1 npm run test:storybook -- src/components/poker/LiveTable.stories.tsx`. This uses a browser context with reduced motion and checks that the media preference is active.
+
 If Chromium is missing, run `npm --prefix web exec -- playwright install chromium`. Storybook uses a separate Vitest config from app unit and auth tests. Run the complete catalog and source-to-story audit:
 
 ```bash

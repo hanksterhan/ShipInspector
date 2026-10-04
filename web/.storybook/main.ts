@@ -41,6 +41,9 @@ const config: StorybookConfig = {
     config.define = {
       ...config.define,
       "import.meta.env.VITE_API_URL": JSON.stringify(""),
+      "import.meta.env.STORYBOOK_REDUCED_MOTION": JSON.stringify(
+        process.env.STORYBOOK_REDUCED_MOTION === "1",
+      ),
       "import.meta.env.STORYBOOK_A11Y_AUDIT": JSON.stringify(
         process.env.STORYBOOK_A11Y_AUDIT === "1",
       ),
