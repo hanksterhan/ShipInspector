@@ -59,6 +59,37 @@ npm run build
 
 This builds `common`, `lib`, `api`, `server`, and `web` in that order.
 
+## Storybook
+
+Use Node.js 24 (tested with 24.19.0). From the repo root:
+
+```bash
+npm --prefix web ci
+npm run storybook
+```
+
+Open [Storybook](http://localhost:6006). Press `Ctrl+C` in the terminal to stop it. To use another port, run `npm run storybook -- --port 6007`.
+
+Storybook uses the production components and CSS. It uses fake auth data, local HTTP handlers, and memory-only drafts. Startup generates the MSW worker from the pinned package. The catalog does not need an API process, database, sibling package build, WASM build, or Clerk key.
+
+Build and serve a static copy:
+
+```bash
+npm run build-storybook
+npm run preview-storybook
+```
+
+The build writes to `web/storybook-static`. The preview also uses port 6006; stop the dev instance first, or pass `-- --port 6007`.
+
+Check types and run a target in Chromium:
+
+```bash
+npm run typecheck:storybook
+npm run test:storybook -- src/components/ui/dialog.stories.tsx -t Closed
+```
+
+If Chromium is missing, run `npm --prefix web exec -- playwright install chromium`. Storybook checks use a separate Vitest config from app unit and auth tests. The catalog is in progress; `web/src/storybook/coverage.json` lists all required UI states.
+
 ## Private poker tables
 
 Private tables use free play chips with no cash value. The server controls the deck, turns, legal bets, side pots, and payouts. Each player sees only their own hole cards until showdown. Turns last 30–120 seconds. A missed turn checks when free, otherwise folds; the seat then sits out the next hand.

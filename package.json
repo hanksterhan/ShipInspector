@@ -15,7 +15,13 @@
     "dev:api": "node scripts/dev-api.cjs",
     "mcp": "node mcp/src/index.mjs",
     "test:multiplayer": "cd api && npm test -- --runInBand poker-table",
-    "test:mcp": "cd mcp && npm test"
+    "test:mcp": "cd mcp && npm test",
+    "storybook": "npm --prefix web run storybook --",
+    "build-storybook": "npm --prefix web run build-storybook --",
+    "preview-storybook": "npm --prefix web run preview-storybook --",
+    "typecheck:storybook": "npm --prefix web run typecheck:storybook --",
+    "test:storybook": "npm --prefix web run test:storybook --",
+    "check:storybook:source": "npm --prefix web run check:storybook:source --"
   },
   "engines": {
     "node": ">=20.0.0"
