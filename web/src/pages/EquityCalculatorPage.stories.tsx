@@ -90,6 +90,13 @@ export const Showdown: Story = {
     await waitFor(() =>
       expect(within(canvasElement).getByText("Player 1 wins")).toBeVisible(),
     );
+    await expect(
+      await within(canvasElement).findByText(
+        "Two pair (3s and 2s)",
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeVisible();
   },
 };
 export const Outs: Story = {
@@ -139,9 +146,8 @@ export const PickerOpen: Story = {
     await userEvent.click(
       within(canvasElement).getByRole("button", { name: "Choose cards" }),
     );
-    await expect(
-      await within(document.body).findByRole("dialog"),
-    ).toBeVisible();
+    const dialog = await within(document.body).findByRole("dialog");
+    await waitFor(() => expect(dialog).toBeVisible());
   },
 };
 export const FullTable: Story = {

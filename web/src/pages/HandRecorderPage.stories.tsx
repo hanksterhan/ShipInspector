@@ -137,8 +137,7 @@ export const PickerOpen: Story = {
     await userEvent.click(
       c.getByRole("button", { name: /^Select flop card 1:/ }),
     );
-    await expect(
-      await within(document.body).findByRole("dialog"),
-    ).toBeVisible();
+    const dialog = await within(document.body).findByRole("dialog");
+    await waitFor(() => expect(dialog).toBeVisible());
   },
 };

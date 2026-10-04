@@ -118,7 +118,11 @@ export const Error: Story = {
   play: async (context) => {
     await reserve!(context);
     await expect(
-      within(context.canvasElement).getByRole("alert"),
+      await within(context.canvasElement).findByRole(
+        "alert",
+        {},
+        { timeout: 3000 },
+      ),
     ).toHaveTextContent("Agent seat unavailable");
   },
 };

@@ -1,5 +1,14 @@
 import { http, HttpResponse } from "msw";
 import { setupWorker } from "msw/browser";
+import { parseBoard, parseHole } from "@common/interfaces";
+import type {
+  EvaluateHandRequest,
+  EvaluateHandResponse,
+} from "@common/interfaces";
+import {
+  evaluate5CardHand,
+  findBest5CardHand,
+} from "@/lib/poker/handEvaluator";
 import { handList, replayHand, table } from "../fixtures";
 import { installRequestBoundary } from "./requests";
 
@@ -71,6 +80,20 @@ export const handlers = [
       dead: [],
     }),
   ),
+  http.post("*/poker/hand/evaluate", async ({ request }) => {
+    const input = (await request.json()) as EvaluateHandRequest;
+    const hole = parseHole(input.hole).cards;
+    const board = parseBoard(input.board ?? "").cards;
+    const best = findBest5CardHand([...hole, ...board], {
+      category: 0,
+      tiebreak: [],
+    });
+    return HttpResponse.json({
+      hole,
+      board,
+      handRank: evaluate5CardHand(best),
+    } satisfies EvaluateHandResponse);
+  }),
   http.post("*/poker/outs/calculate", () =>
     HttpResponse.json({
       suppressed: null,

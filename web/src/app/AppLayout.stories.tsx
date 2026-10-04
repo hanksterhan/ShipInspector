@@ -68,9 +68,8 @@ export const MenuOpen: Story = {
     const c = within(canvasElement);
     const trigger = c.getByRole("button", { name: "Open navigation" });
     await userEvent.click(trigger);
-    await expect(
-      await within(document.body).findByRole("dialog"),
-    ).toBeVisible();
+    const dialog = await within(document.body).findByRole("dialog");
+    await waitFor(() => expect(dialog).toBeVisible());
   },
 };
 export const SettingsOpen: Story = {
@@ -78,9 +77,8 @@ export const SettingsOpen: Story = {
     await userEvent.click(
       within(canvasElement).getByRole("button", { name: "Settings" }),
     );
-    await expect(
-      await within(document.body).findByRole("dialog"),
-    ).toBeVisible();
+    const dialog = await within(document.body).findByRole("dialog");
+    await waitFor(() => expect(dialog).toBeVisible());
   },
 };
 export const AllRoutes: Story = {
@@ -125,7 +123,7 @@ export const SettingsFocus: Story = {
     const trigger = c.getByRole("button", { name: "Settings" });
     await userEvent.click(trigger);
     const dialog = await within(document.body).findByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await waitFor(() => expect(dialog).toBeVisible());
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(trigger).toHaveFocus());
   },
