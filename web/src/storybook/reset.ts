@@ -7,8 +7,10 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { setTokenProvider } from "@/services/httpClient";
 import { setAuthState } from "./mocks/clerk";
 import { clear } from "./mocks/storage";
+import { allowRequests, stopRequests } from "./mocks/requests";
 
 export async function resetStory() {
+  await stopRequests();
   useEquityCalculatorStore.getState().dispose();
   useHandReplayStore.getState().dispose();
   // Let a private pending draft timer expire while hydration blocks its write.
@@ -28,6 +30,7 @@ export async function resetStory() {
   delete document.documentElement.dataset.inputMethod;
   setAuthState();
   setTokenProvider(async () => "storybook-token");
+  allowRequests();
 }
 
 function structuredCloneData<T extends object>(state: T): T {

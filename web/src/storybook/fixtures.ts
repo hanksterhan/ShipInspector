@@ -16,14 +16,18 @@ export function table(overrides: Partial<TableView> = {}): TableView {
     board: [], pot: 15, currentBet: 10,
     legal: { fold: true, check: false, call: 5, minRaiseTo: 20, maxRaiseTo: 1000 },
     awards: [], events: [{ id: 1, hand: 1, text: "Alex posted small blind 5" }], canDeal: false, closed: false, agents: [],
-    seats: ["Alex", "Marina", "Vega", "Rico", "Ziggy", "Robin", "Sam", "Jordan"].map<TableSeatView>((name, seat) => ({
+    seats: tableSeats(2),
+    ...overrides,
+  };
+}
+
+export function tableSeats(count = 8): TableSeatView[] {
+  return ["Alex", "Marina", "Vega", "Rico", "Ziggy", "Robin", "Sam", "Jordan"].slice(0, count).map<TableSeatView>((name, seat) => ({
       seat, name, kind: seat === 1 ? "cpu" : "human", ...(seat === 1 ? { botStyle: "passive" as const } : {}),
       stack: 1000 - (seat === 0 ? 5 : seat === 1 ? 10 : 0), bet: seat === 0 ? 5 : seat === 1 ? 10 : 0,
       committed: seat === 0 ? 5 : seat === 1 ? 10 : 0, status: "active", ready: true, sittingOut: false,
       isYou: seat === 0, cards: seat === 0 ? [card(14, "s"), card(13, "s")] : [], hasCards: true, lastAction: "",
-    })).slice(0, 2),
-    ...overrides,
-  };
+  }));
 }
 
 export function handList(count = 6): HandListItem[] {
@@ -54,7 +58,7 @@ export function replayHand(players = 6): HandForPlayback {
   ];
   const actions = steps.map((action, sequence_index) => ({ ...metadata, id: `action-${sequence_index}`, hand_id: id, sequence_index, raise_to: null, decision_ms: null, tags: [], ...action }));
   return {
-    hand: { ...metadata, ...handList(1)[0], id, owner_user_id: "storybook-user", table_size: players },
+    hand: { ...metadata, ...handList(1)[0], id, owner_user_id: "storybook-user", table_size: players, board_turn: "9s", board_river: "3c" },
     players: Array.from({ length: players }, (_, seat_index) => ({
       ...metadata, id: `player-${seat_index}`, hand_id: id, seat_index, display_name: ["Alex", "Marina", "Vega", "Rico", "Sam", "Robin", "Jordan", "Lee", "Casey"][seat_index], stack_at_start: 1000,
       is_hero: seat_index === 0, showdown_card_1: seat_index === 0 ? "14s" : null, showdown_card_2: seat_index === 0 ? "13s" : null,

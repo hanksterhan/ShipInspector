@@ -5,7 +5,7 @@ import { Button } from "./button";
 function Example({ open = false, side = "bottom" as "top" | "right" | "bottom" | "left", anchored = false, edge = false }) {
   return <div className={edge ? "flex justify-end" : "flex min-h-60 items-center justify-center"}><Popover defaultOpen={open}>{anchored && <PopoverAnchor asChild><span className="mr-8">Seat 1</span></PopoverAnchor>}<PopoverTrigger asChild><Button>Player details</Button></PopoverTrigger><PopoverContent side={side} aria-label="Alex player details"><PopoverHeader><PopoverTitle>Alex</PopoverTitle><PopoverDescription>Seat 1 · 1,000 chips</PopoverDescription></PopoverHeader></PopoverContent></Popover></div>;
 }
-const meta = { title: "UI/Popover", component: Example, tags: ["autodocs"] } satisfies Meta<typeof Example>;
+const meta = { title: "UI/Popover", component: Example, tags: ["autodocs", "source-only"] } satisfies Meta<typeof Example>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Closed: Story = {};

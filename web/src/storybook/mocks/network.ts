@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { setupWorker } from "msw/browser";
 import { handList, replayHand, table } from "../fixtures";
+import { installRequestBoundary } from "./requests";
 
 export const handlers = [
   http.get("*/auth/me", () => HttpResponse.json({ user: { userId: "storybook-user", email: "alex@example.test" } })),
@@ -29,5 +30,6 @@ export async function startWorker() {
     },
   });
   await started;
+  installRequestBoundary();
   return worker;
 }

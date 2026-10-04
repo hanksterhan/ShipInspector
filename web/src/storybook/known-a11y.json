@@ -88,5 +88,247 @@
       "aria-hidden-focus"
     ],
     "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
+  },
+  {
+    "story": "replay-controls--start",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-controls--middle",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-controls--last",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-controls--playing",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-controls--speeds",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-controls--no-actions",
+    "source": "components/hand-replayer/ReplayControls.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "Replay sliders have no accessible name."
+  },
+  {
+    "story": "replay-player--hidden",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-player--hero",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-player--dealer",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-player--folded",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-player--all-in",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-player--long-name",
+    "source": "components/hand-replayer/ReplayPlayer.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--heads-up",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--full-table",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--preflop",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--flop",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--turn",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--river",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--complete",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "replay-table--split-pot",
+    "source": "components/hand-replayer/ReplayTable.tsx",
+    "rules": [
+      "aria-prohibited-attr"
+    ],
+    "reason": "The production face-down card has aria-label on a div without an image role."
+  },
+  {
+    "story": "recorder-actionrecorder--default",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--action-types",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--amount",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--raise",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--tags",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--long-history",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--edit",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "recorder-actionrecorder--delete",
+    "source": "components/hand-recorder/ActionRecorder.tsx",
+    "rules": [
+      "button-name"
+    ],
+    "reason": "The production action editor has unnamed combobox triggers."
+  },
+  {
+    "story": "pages-handrecorder--all-fields",
+    "source": "pages/HandRecorderPage.tsx",
+    "rules": [
+      "button-name",
+      "heading-order"
+    ],
+    "reason": "The full production form contains unnamed action controls and skips a heading level."
+  },
+  {
+    "story": "pages-handrecorder--invalid",
+    "source": "pages/HandRecorderPage.tsx",
+    "rules": [
+      "button-name",
+      "heading-order"
+    ],
+    "reason": "The full production form contains unnamed action controls and skips a heading level."
   }
 ]
