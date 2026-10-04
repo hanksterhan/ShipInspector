@@ -29,4 +29,5 @@ web/storybook-results/
 Cargo.lock
 .vercel
 .local/
+.cloudflare/
 .env*.local

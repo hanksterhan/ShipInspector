@@ -18,6 +18,8 @@
     "test:mcp": "cd mcp && npm test",
     "storybook": "npm --prefix web run storybook --",
     "build-storybook": "npm --prefix web run build-storybook --",
+    "deploy:storybook": "npm --prefix web run deploy:storybook --",
+    "verify:storybook-access": "npm --prefix web run verify:storybook-access --",
     "preview-storybook": "npm --prefix web run preview-storybook --",
     "typecheck:storybook": "npm --prefix web run typecheck:storybook --",
     "test:storybook": "npm --prefix web run test:storybook --",

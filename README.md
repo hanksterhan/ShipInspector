@@ -83,6 +83,21 @@ npm run preview-storybook
 
 The build writes to `web/storybook-static`. The preview also uses port 6006; stop the dev instance first, or run `npm run preview-storybook -- --port 6007`. The preview fails if its chosen port is busy. Startup, build, and browser tests generate the MSW worker from the pinned package.
 
+The hosted copy is [storybook.sipoker.club](https://storybook.sipoker.club). Cloudflare Access permits only `henryhan62@gmail.com`, with an email code and a 24-hour session. The separate static Worker has no app bindings. Its `workers.dev` and version preview URLs are disabled.
+
+Publish from an interactive terminal with Node.js 24:
+
+```bash
+npm --prefix web exec -- cf auth login
+CLOUDFLARE_ACCESS_TOKEN_FILE=/path/to/private/access-token npm run deploy:storybook
+```
+
+Keep the token outside Git with file mode `0600`. It needs account Access applications and policies read permission. You can also use `CLOUDFLARE_ACCESS_API_TOKEN`. The Worker uses the `cf` login or `CLOUDFLARE_API_TOKEN`. Do not paste tokens into commands or commit them.
+
+The command checks Access, builds Storybook once, and checks the root page, preview page, and linked JavaScript and CSS in Cloudflare's local asset runtime. It then sends the static output to `cf deploy --prebuilt`. It checks Access again before and after the upload, then checks signed-out page and asset requests. It stops if source files change during the build. It can publish intended local edits; the Worker version records the Git commit and source hash. The Cloudflare CLI and build output tools are pinned because their APIs are in beta.
+
+Run `npm run deploy:storybook -- --dry-run` to build and check the upload format without credentials or an upload. Run `npm run verify:storybook-access` to repeat the signed-out checks after a build.
+
 Check types and one story in Chromium:
 
 ```bash
