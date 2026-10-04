@@ -15,7 +15,16 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "prestorybook": "node scripts/prepare-storybook.mjs",
+    "storybook": "storybook dev --port 6006 --host 127.0.0.1 --no-open",
+    "prebuild-storybook": "node scripts/prepare-storybook.mjs",
+    "build-storybook": "storybook build --output-dir storybook-static",
+    "preview-storybook": "vite preview --outDir storybook-static --port 6006 --host 127.0.0.1",
+    "typecheck:storybook": "tsc --project tsconfig.storybook.json --noEmit",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
+    "test:storybook:watch": "vitest --config vitest.storybook.config.ts",
+    "check:storybook:source": "node scripts/source-inventory.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.60.0",
