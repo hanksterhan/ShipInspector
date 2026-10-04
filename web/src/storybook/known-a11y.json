@@ -1,0 +1,92 @@
+[
+  {
+    "story": "ui-button--variants",
+    "source": "components/ui/button.tsx",
+    "rules": [
+      "color-contrast"
+    ],
+    "reason": "Destructive button uses white text on #ff9b9b; observed contrast is 2.01:1."
+  },
+  {
+    "story": "ui-badge--variants",
+    "source": "components/ui/badge.tsx",
+    "rules": [
+      "color-contrast"
+    ],
+    "reason": "Destructive badge uses white text on the current destructive color."
+  },
+  {
+    "story": "ui-table--overflow",
+    "source": "components/ui/table.tsx",
+    "rules": [
+      "scrollable-region-focusable"
+    ],
+    "reason": "The production horizontal scroll container has no keyboard focus target."
+  },
+  {
+    "story": "ui-slider--default",
+    "source": "components/ui/slider.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "The single thumb does not receive the label passed to the root."
+  },
+  {
+    "story": "ui-slider--vertical",
+    "source": "components/ui/slider.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "The single thumb does not receive the label passed to the root."
+  },
+  {
+    "story": "ui-slider--minimum",
+    "source": "components/ui/slider.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "The single thumb does not receive the label passed to the root."
+  },
+  {
+    "story": "ui-slider--maximum",
+    "source": "components/ui/slider.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "The single thumb does not receive the label passed to the root."
+  },
+  {
+    "story": "ui-slider--disabled",
+    "source": "components/ui/slider.tsx",
+    "rules": [
+      "aria-input-field-name"
+    ],
+    "reason": "The single thumb does not receive the label passed to the root."
+  },
+  {
+    "story": "ui-select--grouped",
+    "source": "components/ui/select.tsx",
+    "rules": [
+      "aria-hidden-focus",
+      "scrollable-region-focusable"
+    ],
+    "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
+  },
+  {
+    "story": "ui-select--scrollable",
+    "source": "components/ui/select.tsx",
+    "rules": [
+      "aria-hidden-focus",
+      "scrollable-region-focusable"
+    ],
+    "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
+  },
+  {
+    "story": "ui-select--popper",
+    "source": "components/ui/select.tsx",
+    "rules": [
+      "aria-hidden-focus"
+    ],
+    "reason": "Radix Select keeps the background trigger focusable and uses arrow-key focus in its scroll viewport. The story verifies option focus; the axe warnings remain visible for review."
+  }
+]
