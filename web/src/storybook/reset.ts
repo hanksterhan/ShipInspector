@@ -18,13 +18,25 @@ export async function resetStory() {
   useHandRecorderStore.setState({ _isHydrating: true });
   await new Promise((resolve) => setTimeout(resolve, 550));
   await clear();
-  useHandRecorderStore.setState(structuredCloneData(useHandRecorderStore.getInitialState()));
-  useEquityCalculatorStore.setState(structuredCloneData(useEquityCalculatorStore.getInitialState()));
+  useHandRecorderStore.setState(
+    structuredCloneData(useHandRecorderStore.getInitialState()),
+  );
+  useEquityCalculatorStore.setState(
+    structuredCloneData(useEquityCalculatorStore.getInitialState()),
+  );
   useEquityCalculatorStore.getState().dispose();
-  useSettingsStore.setState(structuredCloneData(useSettingsStore.getInitialState()));
-  useHandLibraryStore.setState(structuredCloneData(useHandLibraryStore.getInitialState()));
-  useHandLibraryFiltersStore.setState(structuredCloneData(useHandLibraryFiltersStore.getInitialState()));
-  useHandReplayStore.setState(structuredCloneData(useHandReplayStore.getInitialState()));
+  useSettingsStore.setState(
+    structuredCloneData(useSettingsStore.getInitialState()),
+  );
+  useHandLibraryStore.setState(
+    structuredCloneData(useHandLibraryStore.getInitialState()),
+  );
+  useHandLibraryFiltersStore.setState(
+    structuredCloneData(useHandLibraryFiltersStore.getInitialState()),
+  );
+  useHandReplayStore.setState(
+    structuredCloneData(useHandReplayStore.getInitialState()),
+  );
   localStorage.removeItem("ship-inspector-settings");
   localStorage.removeItem("hand-library-filters");
   delete document.documentElement.dataset.inputMethod;
@@ -34,5 +46,10 @@ export async function resetStory() {
 }
 
 function structuredCloneData<T extends object>(state: T): T {
-  return Object.fromEntries(Object.entries(state).map(([key, value]) => [key, typeof value === "function" ? value : structuredClone(value)])) as T;
+  return Object.fromEntries(
+    Object.entries(state).map(([key, value]) => [
+      key,
+      typeof value === "function" ? value : structuredClone(value),
+    ]),
+  ) as T;
 }

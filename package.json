@@ -21,7 +21,8 @@
     "preview-storybook": "npm --prefix web run preview-storybook --",
     "typecheck:storybook": "npm --prefix web run typecheck:storybook --",
     "test:storybook": "npm --prefix web run test:storybook --",
-    "check:storybook:source": "npm --prefix web run check:storybook:source --"
+    "check:storybook:source": "npm --prefix web run check:storybook:source --",
+    "check:storybook": "npm --prefix web run check:storybook --"
   },
   "engines": {
     "node": ">=20.0.0"

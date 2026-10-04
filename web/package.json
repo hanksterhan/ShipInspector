@@ -24,7 +24,10 @@
     "typecheck:storybook": "tsc --project tsconfig.storybook.json --noEmit",
     "test:storybook": "vitest run --config vitest.storybook.config.ts",
     "test:storybook:watch": "vitest --config vitest.storybook.config.ts",
-    "check:storybook:source": "node scripts/source-inventory.mjs"
+    "check:storybook:source": "node scripts/source-inventory.mjs",
+    "check:storybook": "node scripts/check-storybook-coverage.mjs",
+    "pretest:storybook": "node scripts/prepare-storybook.mjs",
+    "pretest:storybook:watch": "node scripts/prepare-storybook.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.60.0",

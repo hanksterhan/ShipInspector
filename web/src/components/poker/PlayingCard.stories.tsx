@@ -5,16 +5,41 @@ import { PlayingCard } from "./PlayingCard";
 import { card, deck } from "@/storybook/fixtures";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 
-const meta = { title: "Poker/PlayingCard", component: PlayingCard, tags: ["autodocs"], args: { card: card(14, "s"), label: "Hero card", onSelect: fn() } } satisfies Meta<typeof PlayingCard>;
+const meta = {
+  title: "Poker/PlayingCard",
+  component: PlayingCard,
+  tags: ["autodocs"],
+  args: { card: card(14, "s"), label: "Hero card", onSelect: fn() },
+} satisfies Meta<typeof PlayingCard>;
 export default meta;
 type Story = StoryObj<typeof meta>;
-const gallery = () => <div className="flex flex-wrap gap-3">{deck().map(c => <div key={`${c.rank}${c.suit}`} data-case={`${c.rank}${c.suit}`}><PlayingCard card={c} label={`${c.rank}${c.suit}`} onSelect={fn()} /></div>)}</div>;
+const gallery = () => (
+  <div className="flex flex-wrap gap-3">
+    {deck().map((c) => (
+      <div key={`${c.rank}${c.suit}`} data-case={`${c.rank}${c.suit}`}>
+        <PlayingCard card={c} label={`${c.rank}${c.suit}`} onSelect={fn()} />
+      </div>
+    ))}
+  </div>
+);
 export const AllCards: Story = { render: gallery };
-export const FourColor: Story = { beforeEach: () => { useSettingsStore.setState({ fourColorDeck: true }); }, render: gallery };
+export const FourColor: Story = {
+  beforeEach: () => {
+    useSettingsStore.setState({ fourColorDeck: true });
+  },
+  render: gallery,
+};
 export const Empty: Story = { args: { card: null } };
 export const Small: Story = { args: { small: true } };
 export const Selected: Story = { args: { selected: true } };
 export const Winning: Story = { args: { winning: true } };
 export const Disabled: Story = { args: { disabled: true, onClear: fn() } };
-export const Clearable: Story = { render: args => { const [value, setValue] = useState(args.card); return <PlayingCard {...args} card={value} onClear={() => setValue(null)} />; } };
+export const Clearable: Story = {
+  render: (args) => {
+    const [value, setValue] = useState(args.card);
+    return (
+      <PlayingCard {...args} card={value} onClear={() => setValue(null)} />
+    );
+  },
+};
 export const ReadOnly: Story = { args: { onSelect: undefined } };
