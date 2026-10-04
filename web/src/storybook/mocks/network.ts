@@ -24,7 +24,7 @@ export async function startWorker() {
     quiet: true,
     onUnhandledRequest(request, print) {
       const url = new URL(request.url);
-      const asset = /^\/(?:@|src\/|node_modules\/|assets\/|sb-|index\.json|iframe\.html|mockServiceWorker\.js|favicon)/.test(url.pathname);
+      const asset = request.method === "GET" && /^\/(?:@|\.storybook\/|src\/|node_modules\/|assets\/|sb-|index\.json|iframe\.html|mockServiceWorker\.js|vite-inject-mocker-entry\.js|favicon)/.test(url.pathname);
       if (url.origin !== location.origin || !asset) print.error();
     },
   });

@@ -25,7 +25,7 @@ const preview: Preview = {
     const routePath = context.parameters.routePath ?? "*";
     return <MemoryRouter key={context.id} initialEntries={[route]}><PageHeaderProvider><Routes>
       <Route path={routePath} element={<div id="main-content" tabIndex={-1}><Story /></div>} />
-      <Route path="*" element={<div role="status">Navigation destination</div>} />
+      {routePath !== "*" && <Route path="*" element={<div role="status">Navigation destination</div>} />}
     </Routes></PageHeaderProvider></MemoryRouter>;
   }],
 };

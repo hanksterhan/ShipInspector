@@ -15,7 +15,7 @@ playwright-report/
 .playwright/
 web/e2e/.auth/
 web/storybook-static/
-web/.storybook/public/mockServiceWorker.js
+web/.storybook/public/
 web/storybook-results/
 
 # TypeScript build artifacts

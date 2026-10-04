@@ -1,15 +1,20 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const config: StorybookConfig = {
   framework: "@storybook/react-vite",
   stories: ["../src/**/*.stories.tsx"],
   addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-vitest"],
-  staticDirs: ["../public", "./public"],
+  staticDirs: ["./public"],
   core: { disableTelemetry: true },
   async viteFinal(config) {
+    config.publicDir = false;
+    const deps = JSON.parse(readFileSync(path.join(webRoot, "package.json"), "utf8")).dependencies;
+    const radix = Object.keys(deps).filter(name => name === "radix-ui" || name.startsWith("@radix-ui/"));
+    config.optimizeDeps = { ...config.optimizeDeps, include: [...new Set([...(config.optimizeDeps?.include ?? []), ...radix, "react-router-dom", "zustand", "zustand/middleware"])] };
     config.define = { ...config.define, "import.meta.env.VITE_API_URL": JSON.stringify("") };
     const aliases = config.resolve?.alias ?? [];
     config.resolve = {
