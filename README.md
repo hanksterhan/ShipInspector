@@ -70,7 +70,9 @@ npm run storybook
 
 Open [Storybook](http://localhost:6006). Press `Ctrl+C` in the terminal to stop it. To use another port, run `npm run storybook -- --port 6007`.
 
-Storybook uses the production components and CSS. It uses fake auth data, local HTTP handlers, and memory-only drafts. Startup generates the MSW worker from the pinned package. The catalog does not need an API process, database, sibling package build, WASM build, or Clerk key.
+The catalog uses the production components, CSS, and assets. It covers primitives, icons, poker tables and controls, recorder, library, replay, settings, shell, and all nine pages. Unused source components remain in the catalog. Use the toolbar to change viewport, zoom, and background; use Controls to change supported props. Open states use real portals and controls.
+
+Startup needs no API process, database, sibling package build, WASM build, or Clerk key. Storybook uses fake users and credentials, local MSW request handlers, and memory-only drafts. It overrides the API URL even when a local environment file exists. The Clerk sign-in form is a marked vendor stub; the real vendor form and backend remain app integration checks. Docs embeds stories in separate frames to keep their stores separate.
 
 Build and serve a static copy:
 
@@ -79,16 +81,43 @@ npm run build-storybook
 npm run preview-storybook
 ```
 
-The build writes to `web/storybook-static`. The preview also uses port 6006; stop the dev instance first, or pass `-- --port 6007`.
+The build writes to `web/storybook-static`. The preview also uses port 6006; stop the dev instance first, or run `npm run preview-storybook -- --port 6007`. The preview fails if its chosen port is busy. Startup, build, and browser tests generate the MSW worker from the pinned package.
 
-Check types and run a target in Chromium:
+Check types and one story in Chromium:
 
 ```bash
 npm run typecheck:storybook
 npm run test:storybook -- src/components/ui/dialog.stories.tsx -t Closed
 ```
 
-If Chromium is missing, run `npm --prefix web exec -- playwright install chromium`. Storybook checks use a separate Vitest config from app unit and auth tests. The catalog is in progress; `web/src/storybook/coverage.json` lists all required UI states.
+If Chromium is missing, run `npm --prefix web exec -- playwright install chromium`. Storybook uses a separate Vitest config from app unit and auth tests. Run the complete catalog and source-to-story audit:
+
+```bash
+npm run build-storybook
+npm run test:storybook -- --maxWorkers=4 --reporter=json --outputFile=storybook-results/browser.json
+npm run check:storybook -- --results storybook-results/browser.json
+```
+
+The root commands run in `web`, so report paths above resolve inside that package. `check:storybook:source` checks the source register alone. `check:storybook` checks the source scan, required states, exports, built index, and supplied browser results. It fails on missing, stale, extra, failed, or skipped stories. Generated builds and reports are ignored by Git.
+
+Existing accessibility faults have exact story IDs, rules, and reasons in `web/src/storybook/known-a11y.json`. These stories keep warnings visible in the Accessibility panel. Other stories use strict checks. To check that the recorded warnings have not changed:
+
+```bash
+STORYBOOK_A11Y_AUDIT=1 npm run test:storybook -- --maxWorkers=4 --reporter=json --outputFile=storybook-results/a11y.json
+npm run check:storybook -- --results storybook-results/browser.json --a11y-results storybook-results/a11y.json
+```
+
+The strict run exits with an error for the recorded faults. The final audit passes only when those exact rules recur and all other stories pass. Catalog coverage does not mean that the current product has no UI or accessibility faults.
+
+### Add a story or fix a UI element
+
+1. Add a `*.stories.tsx` file next to the source. Import the real component. Use typed CSF stories and the `autodocs` tag. Give each meaningful state a named export; use galleries for cards, icons, and finite variants.
+2. Add or update its source, element, state, and story-file rows in `web/src/storybook/coverage.json`. Include private helpers and inline page controls through their real parents. Give non-visual files an explicit reason.
+3. Use fresh fixtures from `web/src/storybook`. Seed public stores in `beforeEach`. Override only the request handlers needed for the state with `parameters.msw`; the preview keeps the default handlers as fallback. Return cleanup for story-owned timers or clipboard mocks. Keep requests local and use fake data.
+4. Open the target story. Change the production component and check the result on desktop and phone widths. Check focus, keyboard use, overflow, portals, and relevant settings. Use the page or shell stories to check the same element in context.
+5. Run the target browser check and typecheck. Run the full audit after shared changes or new states. Remove a fault record and its `knownA11y` use only after the strict check confirms the fix.
+
+The isolation stories under `Shell/Isolation` check draft writes, replay timers and keys, and live polling across view changes. They use real components and the same reset routine as the preview.
 
 ## Private poker tables
 
