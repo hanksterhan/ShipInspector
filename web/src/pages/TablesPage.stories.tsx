@@ -127,3 +127,20 @@ export const Ghost: Story = {
     await expect(ghost).toBeChecked();
   },
 };
+export const GhostHelp: Story = {
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    await userEvent.click(c.getByRole("button", { name: "Create table" }));
+    await userEvent.click(
+      c.getByRole("button", { name: "How Ghost hand works" }),
+    );
+    await expect(
+      await within(document.body).findByRole("dialog", {
+        name: "How Ghost hand works",
+      }),
+    ).toBeVisible();
+    await expect(
+      c.getByRole("checkbox", { name: "Ghost hand" }),
+    ).not.toBeChecked();
+  },
+};
