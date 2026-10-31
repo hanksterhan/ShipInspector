@@ -140,6 +140,20 @@ The isolation stories under `Shell/Isolation` check draft writes, replay timers 
 
 Private tables use free play chips with no cash value. The server controls the deck, turns, legal bets, side pots, and payouts. Each player sees only their own hole cards until showdown. Turns last 30–120 seconds. A missed turn checks when free, otherwise folds; the seat then sits out the next hand.
 
+### Ghost hand
+
+Choose **Ghost hand** when you create a table. It works with Hold'em and Red River, and you cannot change it later. After the players get their cards, the dealer gives the ghost two cards from the same deck. The ghost has no seat, stack, or actions. Its cards stay hidden until showdown, and a hand that ends with a fold never shows them.
+
+- At showdown, the ghost uses the best five from its two cards and the full board, including each Red River card. Its two cards count against the deck, so a Red River board can run out sooner.
+- The ghost plays every pot at showdown, including a side pot with only one eligible player. Each side pot is settled on its own.
+- If the ghost beats the best eligible player, it takes that pot. No weaker player wins it.
+- If it ties, the pot splits between the tied players and one ghost share. The ghost gets the pot divided by the number of shares, rounded down. The tied players get the extra chips, one each, clockwise from the button. Chips that the same players can win make one pot, even when a folded player put in less.
+- A hand won by a fold has no showdown, so the winner gets the full pot. Uncalled chips go back to the player as usual.
+- The ghost's chips carry to the next hand as dead money in the main pot. Dead money is not a player bet: it is never refunded, it does not change side pots, and any player in the hand can win it, including a short all-in. The carryover stays on the table when players leave, join, or refill.
+- The host can close a Ghost table between hands. The carryover stays with the closed table; no player gets it.
+
+Ghost tables use saved-state format 2, so an older server rejects them instead of dropping the carryover. Clients must send `ghost:1` in `X-Poker-Rules`; older browsers and MCP clients get HTTP 426 and must update.
+
 The local API stores games in `.local/poker` with PGlite. Keep one local API process running for this directory. Set `POKER_STORE_DIR` to use a different local directory. On Vercel or in production, tables use Neon through `DATABASE_URL`; local storage is disabled. The table store creates its dedicated `poker_tables` table and index on first use. Database credentials must allow those schema changes. Each update checks the stored version before it commits, so two requests cannot spend the same chips. Browser clients poll for updates and recover from a saved snapshot after reconnecting.
 
 ## CPU practice players
@@ -185,7 +199,7 @@ Add a stdio server to your MCP client. Use an absolute path for the entry point 
 
 Use HTTPS for a remote API. Start a separate MCP connection for each agent, with a separate credential. The SDK uses the [standard stdio transport](https://ts.sdk.modelcontextprotocol.io/server).
 
-The tools are `poker_get_table`, `poker_wait_for_turn`, `poker_ready`, `poker_deal`, `poker_act`, `poker_refill`, `poker_leave`, and `poker_request_id`. The `poker://rules` resource states the table rules. Read the current version and legal actions before each move. `raiseTo` means the total street bet. Use a new request ID for each command and the same ID for an exact retry. Mark ready after each hand and deal when `canDeal` is true. Human players and agents use the same action endpoint and poker rules. The betting rules follow the [Poker TDA raise and reopening rules](https://www.pokertda.com/view-poker-tda-rules/).
+The tools are `poker_get_table`, `poker_wait_for_turn`, `poker_ready`, `poker_deal`, `poker_act`, `poker_refill`, `poker_leave`, and `poker_request_id`. The `poker://rules` resource states the table rules, including the ghost rules on a Ghost table. Read the current version and legal actions before each move. `raiseTo` means the total street bet. Use a new request ID for each command and the same ID for an exact retry. Mark ready after each hand and deal when `canDeal` is true. Human players and agents use the same action endpoint and poker rules. The betting rules follow the [Poker TDA raise and reopening rules](https://www.pokertda.com/view-poker-tda-rules/).
 
 Run the engine, database, and MCP integration checks from the repository root:
 

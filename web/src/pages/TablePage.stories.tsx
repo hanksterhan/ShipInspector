@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { delay, http, HttpResponse } from "msw";
 import TablePage from "./TablePage";
-import { board, table, tableSeats } from "@/storybook/fixtures";
+import { board, ghostShowdown, table, tableSeats } from "@/storybook/fixtures";
 import type { TableView } from "@common/interfaces/tableInterfaces";
 import { mockClipboard } from "@/storybook/mocks/clipboard";
 
@@ -263,4 +263,26 @@ export const DeckExhausted: Story = {
     }),
   ),
   play: loaded,
+};
+export const GhostRules: Story = {
+  parameters: snapshot(() => ghostShowdown("red-river-holdem")),
+  play: async (context) => {
+    await loaded!(context);
+    const c = within(context.canvasElement);
+    await expect(c.getByText("Red River Hold'em · Ghost")).toBeVisible();
+    await expect(c.getByText("Ghost wins")).toBeVisible();
+    await expect(
+      c.getByText("Ghost: 120 · Three of a kind · Next hand"),
+    ).toBeVisible();
+    await expect(
+      c.getByText(
+        "Ghost wins 120 chips (Three of a kind). They carry to the next hand.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(c.getByText("Ghost rules"));
+    await expect(c.getByText(/a\s+tie\s+splits with one share/)).toBeVisible();
+    await expect(
+      c.getByText(/even a\s+side\s+pot with one player/),
+    ).toBeVisible();
+  },
 };

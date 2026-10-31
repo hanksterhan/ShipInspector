@@ -93,3 +93,37 @@ export const Practice: Story = {
     await expect(c.getByLabelText("Take a seat")).not.toBeChecked();
   },
 };
+export const Ghost: Story = {
+  parameters: {
+    msw: [
+      http.get("*/api/tables", () =>
+        HttpResponse.json({
+          tables: [
+            {
+              id: "storybook-ghost",
+              name: "Ghost table",
+              seats: 3,
+              maxPlayers: 6,
+              smallBlind: 5,
+              bigBlind: 10,
+              street: "complete",
+              gameMode: "red-river-holdem",
+              ghost: true,
+            },
+          ],
+        }),
+      ),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    await expect(
+      await c.findByRole("link", { name: /Red River Hold'em · Ghost/ }),
+    ).toBeVisible();
+    await userEvent.click(c.getByRole("button", { name: "Create table" }));
+    const ghost = c.getByRole("checkbox", { name: "Ghost hand" });
+    await expect(ghost).not.toBeChecked();
+    await userEvent.click(ghost);
+    await expect(ghost).toBeChecked();
+  },
+};

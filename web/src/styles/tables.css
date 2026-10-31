@@ -1557,6 +1557,24 @@ html[data-input-method="keyboard"]
   text-align: center;
   max-width: 105px;
 }
+.live-ghost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 96px;
+  padding: 6px 10px;
+  border: 1px dashed var(--muted-foreground);
+  border-radius: 8px;
+}
+.live-ghost.is-winner {
+  border-color: #f0cd72;
+}
+.live-ghost-chips {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
 .is-latest-river .playing-card {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

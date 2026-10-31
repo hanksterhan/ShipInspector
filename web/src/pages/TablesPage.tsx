@@ -9,7 +9,7 @@ import {
   BrainCircuit,
   LoaderCircle,
 } from "lucide-react";
-import { GAME_MODES, gameDefinition, type GameMode } from "@common/pokerModes";
+import { GAME_MODES, gameDefinition, modeLabel, type GameMode } from "@common/pokerModes";
 import type { TableSummary } from "@common/interfaces/tableInterfaces";
 import { Button } from "@/components/ui/button";
 import { tableService } from "@/services/tableService";
@@ -27,6 +27,7 @@ export default function TablesPage() {
     user?.firstName || user?.username || "Player",
   );
   const [gameMode, setGameMode] = useState<GameMode>("holdem");
+  const [ghost, setGhost] = useState(false);
   const [size, setSize] = useState(6);
   const [blind, setBlind] = useState(10);
   const [turn, setTurn] = useState(60);
@@ -54,6 +55,7 @@ export default function TablesPage() {
       const t = await tableService.create(
         {
           gameMode,
+          ...(ghost ? { ghost: true } : {}),
           name,
           maxPlayers: size,
           smallBlind: blind / 2,
@@ -120,7 +122,7 @@ export default function TablesPage() {
                   <div>
                     <strong>{t.name}</strong>
                     <span>
-                      {gameDefinition(t.gameMode).label} · {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
+                      {modeLabel(t.gameMode, t.ghost)} · {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
                       seats
                     </span>
                   </div>
@@ -184,6 +186,14 @@ export default function TablesPage() {
               <select value={gameMode} onChange={(e) => setGameMode(e.target.value as GameMode)}>
                 {GAME_MODES.map((mode) => <option key={mode} value={mode}>{gameDefinition(mode).label}</option>)}
               </select>
+            </label>
+            <label className="live-checkbox">
+              <input
+                type="checkbox"
+                checked={ghost}
+                onChange={(e) => setGhost(e.target.checked)}
+              />
+              Ghost hand
             </label>
             <div className="live-form-grid">
               <label>

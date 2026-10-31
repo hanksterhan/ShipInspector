@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { TableCommandRequest, TableSettings, TableView } from "@common/interfaces/tableInterfaces";
+import { GHOST_RULES } from "@common/pokerModes";
 import { applyCommand, joinSeat, makeTable, record, TableError, tableView, TableState } from "./engine";
 import { progressTable } from "./bots";
 import { handRecordView } from "./history";
@@ -10,9 +11,13 @@ const hash = (value: string) => createHash("sha256").update(value).digest("hex")
 export class TableService {
   constructor(private store: TableStore, private now = Date.now, private supportedRules: string | null = null) {}
   private requireRules(t: TableState) {
-    if (t.settings.gameMode !== "holdem" && this.supportedRules !== null &&
-        !this.supportedRules.split(",").map(s => s.trim()).includes(`${t.settings.gameMode}:${t.rulesVersion}`)) {
+    if (this.supportedRules === null) return;
+    const supported = this.supportedRules.split(",").map(s => s.trim());
+    if (t.settings.gameMode !== "holdem" && !supported.includes(`${t.settings.gameMode}:${t.rulesVersion}`)) {
       throw new TableError("This table uses Red River rules. Reload the website or update your MCP client before playing.", 426);
+    }
+    if (t.settings.ghost && !supported.includes(GHOST_RULES)) {
+      throw new TableError("This table uses Ghost rules. Reload the website or update your MCP client before playing.", 426);
     }
   }
   private principal(t: TableState, identity: Identity): string {
@@ -28,7 +33,7 @@ export class TableService {
     return t;
   }
   async list(userId: string) {
-    return (await this.store.list(userId)).map(t => ({ gameMode: t.settings.gameMode, id: t.id, name: t.settings.name, seats: t.seats.length,
+    return (await this.store.list(userId)).map(t => ({ gameMode: t.settings.gameMode, ...(t.settings.ghost ? { ghost: true } : {}), id: t.id, name: t.settings.name, seats: t.seats.length,
       maxPlayers: t.settings.maxPlayers, smallBlind: t.settings.smallBlind, bigBlind: t.settings.bigBlind, street: t.street }));
   }
   async create(userId: string, settings: TableSettings, name?: string) {

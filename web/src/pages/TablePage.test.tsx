@@ -180,3 +180,35 @@ it("offers a reload and hides game actions when table rules need an update", () 
   expect(screen.queryByRole("button", { name: "Call 10" })).not.toBeInTheDocument();
   expect(screen.getByRole("alert")).toHaveTextContent("Reload");
 });
+
+it("names Ghost tables, explains the ghost, and reports ghost shares in the result", () => {
+  const base = timedTable(100000);
+  const ghostTable = {
+    ...base,
+    settings: { ...base.settings, ghost: true },
+    street: "complete" as const,
+    actor: null,
+    deadline: null,
+    legal: null,
+    awards: [{ amount: 40, winners: [], ghost: { amount: 40, hand: "Three of a kind" } }],
+    ghost: { carry: 40, deadMoney: 0, hasCards: true, cards: [] },
+  };
+  live.table = ghostTable;
+  const { rerender } = render(page());
+  expect(screen.getByText("No-limit Hold'em · Ghost")).toBeVisible();
+  expect(screen.getByText("Ghost rules")).toBeVisible();
+  expect(screen.getByText(/plays every pot, even a side pot with one player/)).toBeInTheDocument();
+  const result = document.querySelector(".live-result") as HTMLElement;
+  expect(result).toHaveTextContent("Ghost wins");
+  expect(result).toHaveTextContent("Ghost: 40 · Three of a kind · Next hand");
+  live.table = {
+    ...ghostTable,
+    awards: [{ amount: 21, winners: [{ seat: 0, amount: 11, hand: "Flush" }], ghost: { amount: 10, hand: "Flush" } }],
+  };
+  rerender(page());
+  expect(document.querySelector(".live-result")).toHaveTextContent("Split pot");
+  expect(document.querySelector(".live-result")).toHaveTextContent(`${base.seats[0].name}: 11 · Flush / Ghost: 10 · Flush · Next hand`);
+  live.table = timedTable(100000);
+  rerender(page());
+  expect(screen.queryByText("Ghost rules")).not.toBeInTheDocument();
+});

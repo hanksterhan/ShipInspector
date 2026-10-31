@@ -1,6 +1,6 @@
 import { BrainCircuit, CircleDot, Crown, UserRound } from "lucide-react";
 import type { TableView } from "@common/interfaces/tableInterfaces";
-import { gameDefinition } from "@common/pokerModes";
+import { modeLabel } from "@common/pokerModes";
 import { BOT_PROFILES } from "@common/pokerBots";
 import { BotIcon } from "./CpuPlayers";
 import { PlayingCard } from "./PlayingCard";
@@ -28,6 +28,10 @@ export function LiveTable({
     p.winners.forEach((w) =>
       paid.set(w.seat, (paid.get(w.seat) || 0) + w.amount),
     ),
+  );
+  const ghostPaid = table.awards.reduce(
+    (n, p) => n + (p.ghost?.amount || 0),
+    0,
   );
   const count = table.settings.maxPlayers;
   const heroPosition =
@@ -213,6 +217,52 @@ export function LiveTable({
           <span>{table.street === "complete" ? "POT AWARDED" : "POT"}</span>
           <strong>{table.pot.toLocaleString()}</strong>
         </div>
+        {table.ghost && (
+          <div
+            className={cn("live-ghost", ghostPaid > 0 && "is-winner")}
+            role="group"
+            aria-label="Ghost hand"
+          >
+            <span className="live-board-label">Ghost</span>
+            {table.ghost.hasCards && (
+              <div className="live-board-cards">
+                {[0, 1].map((i) =>
+                  table.ghost?.cards[i] ? (
+                    <PlayingCard
+                      key={`${table.handNumber}:ghost:${i}`}
+                      card={table.ghost.cards[i]}
+                      label={`Ghost card ${i + 1}`}
+                      small
+                      winning={ghostPaid > 0}
+                    />
+                  ) : (
+                    <div
+                      key={`${table.handNumber}:ghost:${i}`}
+                      className="live-card-back"
+                      role="img"
+                      aria-label={`Ghost hidden card ${i + 1}`}
+                    >
+                      <span>♠</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
+            {ghostPaid > 0 && (
+              <span className="chip-award">+{ghostPaid.toLocaleString()}</span>
+            )}
+            {betting && table.ghost.deadMoney > 0 && (
+              <span className="live-ghost-chips">
+                Dead money {table.ghost.deadMoney.toLocaleString()}
+              </span>
+            )}
+            {table.ghost.carry > 0 && (
+              <span className="live-ghost-chips">
+                Carryover {table.ghost.carry.toLocaleString()}
+              </span>
+            )}
+          </div>
+        )}
         <div className="live-board">
           {[
             { label: "Flop", start: 0, count: 3 },
@@ -262,7 +312,10 @@ export function LiveTable({
           })}
         </div>
         <span className="felt-game-label">
-          {gameDefinition(table.settings.gameMode).label.toUpperCase()}
+          {modeLabel(
+            table.settings.gameMode,
+            table.settings.ghost,
+          ).toUpperCase()}
         </span>
       </div>
       <div className="live-seat-row">

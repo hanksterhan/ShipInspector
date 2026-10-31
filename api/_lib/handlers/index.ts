@@ -33,6 +33,7 @@ export type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<
 export const routes: Record<string, RouteHandler> = {
     "/tables": tablesHandler,
     "/tables/:id": tablesHandler,
+    "/tables/:id/hands/:n": tablesHandler,
     "/tables/:id/commands": tablesHandler,
     "/tables/:id/agents": tablesHandler,
     "/tables/:id/revoke-agent": tablesHandler,

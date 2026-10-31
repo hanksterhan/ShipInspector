@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { act, applyCommand, deal, joinSeat, legalActions, makeTable, type TableState } from "./engine";
-import { eightSeatExhaustionDeck } from "./__tests__/fixtures";
+import { eightSeatExhaustionDeck, stackedDeck } from "./__tests__/fixtures";
 import * as storage from "./store";
 import { TableStore } from "./store";
 import { tablesHandler } from "../handlers/tables";
@@ -226,5 +226,146 @@ describe("persistent tables and shared human/agent authorization", () => {
       expect((await invoke("POST", "/api/tables", undefined, { settings })).status).toBe(201);
       expect((await invoke("POST", "/api/tables", "holdem:1,red-river-holdem:1", { settings: { ...settings, gameMode: "unknown" } })).status).toBe(400);
     } finally { factory.mockRestore(); }
+  });
+  it("requires ghost rule support from every client of a ghost table and lists the modifier", async () => {
+    const factory = jest.spyOn(storage, "getTableStore").mockResolvedValue(store);
+    const current = "holdem:1,red-river-holdem:1,ghost:1";
+    const invoke = async (method: string, path: string, support?: string, body?: unknown, user = "ghost-owner") => {
+      let status = 200; let data: any;
+      const res = { setHeader() {}, status(code: number) { status = code; return this; }, json(value: unknown) { data = value; } };
+      await tablesHandler({ method, url: path, headers: { "x-test-user": user, ...(support ? { "x-poker-rules": support } : {}) }, body } as any, res as any);
+      return { status, data };
+    };
+    try {
+      for (const gameMode of ["holdem", "red-river-holdem"] as const) {
+        const body = { settings: { ...settings, gameMode, ghost: true }, displayName: "Alice" };
+        const count = (await store.list("ghost-owner")).length;
+        for (const support of [undefined, "holdem:1,red-river-holdem:1", gameMode === "holdem" ? "ghost:1,red-river-holdem:1" : "holdem:1,ghost:1"]) {
+          if (gameMode === "holdem" && support?.includes("ghost")) continue;
+          expect((await invoke("POST", "/api/tables", support, body)).status).toBe(426);
+        }
+        expect((await store.list("ghost-owner")).length).toBe(count);
+        const created = await invoke("POST", "/api/tables", current, body);
+        expect(created.status).toBe(201);
+        expect(created.data).toMatchObject({ settings: { gameMode, ghost: true }, ghost: { carry: 0, deadMoney: 0, hasCards: false, cards: [] } });
+        const id = created.data.id;
+        const joined = await invoke("POST", `/api/tables/${id}/commands`, current, { version: created.data.version, requestId: randomUUID(), command: { type: "join", name: "Bob" } }, "ghost-other");
+        expect(joined.status).toBe(200);
+        for (const support of [undefined, "holdem:1,red-river-holdem:1"]) {
+          expect((await invoke("GET", `/api/tables/${id}`, support)).status).toBe(426);
+          expect((await invoke("GET", `/api/tables/${id}/hands/1`, support)).status).toBe(426);
+          expect((await invoke("POST", `/api/tables/${id}/commands`, support, { version: joined.data.version, requestId: randomUUID(), command: { type: "ready", ready: true } })).status).toBe(426);
+        }
+        expect((await store.get(id))!.version).toBe(joined.data.version);
+        expect((await invoke("GET", `/api/tables/${id}`, current)).status).toBe(200);
+        expect((await service.list("ghost-owner")).find(t => t.id === id)).toMatchObject({ gameMode, ghost: true });
+      }
+      expect((await invoke("POST", "/api/tables", current, { settings: { ...settings, ghost: "yes" } })).status).toBe(400);
+      const plain = await invoke("POST", "/api/tables", undefined, { settings: { ...settings, ghost: false } });
+      expect(plain.status).toBe(201); expect(plain.data).not.toHaveProperty("ghost");
+      expect((await invoke("GET", `/api/tables/${plain.data.id}`)).status).toBe(200);
+    } finally { factory.mockRestore(); }
+  });
+  it.each(["holdem", "red-river-holdem"] as const)("%s settles a duplicate or racing terminal action once, with one ghost carry and one archive", async gameMode => {
+    const t = makeTable(randomUUID(), "settle-0", { ...settings, gameMode, ghost: true });
+    for (const id of ["settle-0", "settle-1"]) { joinSeat(t, id, id); applyCommand(t, id, { type: "ready", ready: true }, clock); }
+    // Seat 1 has aces and seat 0 kings; the ghost's nines make a set and take
+    // the 20-chip pot plus 30 dead money. The black river ends Red River too.
+    t.ghostCarry = 30;
+    deal(t, clock, stackedDeck(["14s 14d", "13s 13d"], "9c 9s", "9h 2c 5d 8s 12c"));
+    await store.create(t);
+    const open = () => new TableService(new TableStore(async (sql, params) => (await db.query(sql, params)).rows), () => clock);
+    const step = (state: TableState) => {
+      const principal = state.seats.find(s => s.seat === state.actor)!.principal;
+      const command: TableCommand = { type: "act", action: legalActions(state, principal)!.check ? "check" : "call" };
+      const after = structuredClone(state); applyCommand(after, principal, command, clock);
+      return { principal, command, terminal: after.street === "complete" };
+    };
+    let state = (await store.get(t.id))!;
+    for (let n = 0; !step(state).terminal && n < 20; n++) {
+      const { principal, command } = step(state);
+      await open().command(t.id, { userId: principal }, { version: state.version, requestId: randomUUID(), command });
+      state = (await store.get(t.id))!;
+    }
+    const { principal, command, terminal } = step(state);
+    expect(terminal).toBe(true);
+    const requestId = randomUUID();
+    const finish = (id = requestId) => open().command(t.id, { userId: principal }, { version: state.version, requestId: id, command });
+    // Two copies of one request and a second click with a new request ID.
+    const results = await Promise.allSettled([finish(), finish(), finish(randomUUID())]);
+    expect(results.filter(r => r.status === "fulfilled")).toHaveLength(1);
+    for (const r of results) if (r.status === "rejected") expect(r.reason.message).toMatch(/Another action reached the table first/);
+    const saved = (await store.get(t.id))!;
+    expect(saved).toMatchObject({ street: "complete", version: state.version + 1, ghostCarry: 50, deadMoney: 30 });
+    expect(saved.awards).toEqual([{ amount: 50, winners: [], ghost: { amount: 50, hand: "Three of a kind" } }]);
+    expect(saved.seats.map(s => s.stack)).toEqual([990, 990]);
+    // An exact retry after the commit returns the table without settling again.
+    if (saved.receipts.some(r => r.key.endsWith(requestId))) expect((await finish()).version).toBe(saved.version);
+    await expect(finish(randomUUID())).rejects.toThrow("table changed");
+    expect((await store.get(t.id))!).toMatchObject({ version: saved.version, ghostCarry: 50 });
+    const rows = (await db.query<{ record: any }>("SELECT record FROM poker_hand_records WHERE table_id = $1", [t.id])).rows;
+    expect(rows).toHaveLength(1);
+    const events = rows[0].record.events as { type: string; award?: { ghost?: { amount: number } }; ghostCarry?: number }[];
+    expect(events.filter(e => e.type === "award").map(e => e.award!.ghost!.amount)).toEqual([50]);
+    expect(events.filter(e => e.type === "end").map(e => e.ghostCarry)).toEqual([50]);
+    expect(events.filter(e => e.type === "dead-money")).toHaveLength(1);
+    // The next hand takes the carry as dead money once and leaves the archive alone.
+    let next = await open().command(t.id, { userId: "settle-0" }, { version: saved.version, requestId: randomUUID(), command: { type: "ready", ready: true } });
+    next = await open().command(t.id, { userId: "settle-1" }, { version: next.version, requestId: randomUUID(), command: { type: "ready", ready: true } });
+    const dealId = randomUUID();
+    const dealt = await Promise.allSettled([0, 1].map(() => open().command(t.id, { userId: "settle-0" }, { version: next.version, requestId: dealId, command: { type: "deal" } })));
+    expect(dealt.filter(r => r.status === "fulfilled")).toHaveLength(1);
+    expect((await store.get(t.id))!).toMatchObject({ handNumber: 2, deadMoney: 50, ghostCarry: 0 });
+    expect((await db.query("SELECT hand_number FROM poker_hand_records WHERE table_id = $1", [t.id])).rows).toEqual([{ hand_number: 1 }]);
+  });
+  it("keeps one ghost carryover through restarts, duplicate and racing deals, and seat changes", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ship-poker-ghost-"));
+    let disk = await PGlite.create(directory);
+    const open = () => new TableService(new TableStore(async (sql, params) => (await disk.query(sql, params)).rows), () => clock);
+    const owed = (t: TableState) => t.seats.reduce((n, s) => n + s.stack + (["waiting", "complete"].includes(t.street) ? 0 : s.committed), 0) +
+      (["waiting", "complete"].includes(t.street) ? 0 : t.deadMoney) + t.ghostCarry;
+    try {
+      let first = open();
+      let v = await first.create("carry-owner", { ...settings, ghost: true }, "Alice");
+      v = await first.command(v.id, { userId: "carry-other" }, { version: v.version, requestId: randomUUID(), command: { type: "join", name: "Bob" } });
+      for (const id of ["carry-owner", "carry-other"]) v = await first.command(v.id, { userId: id }, { version: v.version, requestId: randomUUID(), command: { type: "ready", ready: true } });
+      // Seed a carryover from an earlier hand through the same compare-and-swap write.
+      const diskStore = new TableStore(async (sql, params) => (await disk.query(sql, params)).rows);
+      const seeded = (await diskStore.get(v.id))!; seeded.ghostCarry = 70; seeded.version++;
+      expect(await diskStore.save(seeded, v.version)).toBe(true);
+      expect(await diskStore.save(seeded, v.version)).toBe(false);
+      await disk.close(); disk = await PGlite.create(directory); first = open();
+      v = await first.get(v.id, { userId: "carry-owner" });
+      expect(v.ghost).toMatchObject({ carry: 70, deadMoney: 0 });
+      const requestId = randomUUID();
+      const deal = (service: TableService, id = requestId) => service.command(v.id, { userId: "carry-owner" }, { version: v.version, requestId: id, command: { type: "deal" } });
+      const results = await Promise.allSettled([deal(first), deal(open()), deal(open(), randomUUID())]);
+      expect(results.filter(r => r.status === "fulfilled").length).toBeGreaterThanOrEqual(1);
+      let state = (await open()["store"].get(v.id))!;
+      expect(state).toMatchObject({ handNumber: 1, deadMoney: 70, ghostCarry: 0 }); expect(owed(state)).toBe(2070);
+      const committed = state.receipts.some(r => r.key.endsWith(requestId));
+      if (committed) expect((await deal(open())).handNumber).toBe(1);
+      state = (await open()["store"].get(v.id))!;
+      expect(state).toMatchObject({ handNumber: 1, deadMoney: 70, ghostCarry: 0 });
+      const service = open();
+      for (let n = 0; n < 40; n++) {
+        v = await service.get(v.id, { userId: "carry-owner" });
+        if (v.street === "complete") break;
+        const who = v.seats.find(s => s.seat === v.actor)!.name === "Alice" ? "carry-owner" : "carry-other";
+        const view = await service.get(v.id, { userId: who });
+        v = await service.command(v.id, { userId: who }, { version: view.version, requestId: randomUUID(), command: { type: "act", action: view.legal!.check ? "check" : "call" } });
+      }
+      state = (await open()["store"].get(v.id))!;
+      expect(state.street).toBe("complete"); expect(owed(state)).toBe(2070);
+      const awarded = state.awards.reduce((n, p) => n + p.amount, 0);
+      expect(awarded).toBe(state.seats.reduce((n, s) => n + s.committed, 0) + 70);
+      expect(state.ghostCarry).toBe(state.awards.reduce((n, p) => n + (p.ghost?.amount ?? 0), 0));
+      const carry = state.ghostCarry;
+      v = await service.command(v.id, { userId: "carry-other" }, { version: state.version, requestId: randomUUID(), command: { type: "leave" } });
+      await disk.close(); disk = await PGlite.create(directory);
+      const after = await open().get(v.id, { userId: "carry-owner" });
+      expect(after).toMatchObject({ street: "waiting", ghost: { carry, deadMoney: 0, cards: [] } });
+      expect((await open().history(v.id, { userId: "carry-owner" }, 1)).events.filter(e => e.type === "dead-money")).toEqual([expect.objectContaining({ amount: 70 })]);
+    } finally { await disk.close(); await rm(directory, { recursive: true, force: true }); }
   });
 });

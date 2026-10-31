@@ -285,3 +285,65 @@ it("keeps all 25 board cards and numbered rivers visible with a text color cue",
     screen.getByRole("group", { name: "River 21 · Black · Final" }),
   ).toBeVisible();
 });
+
+it("shows the ghost hand hidden in play, revealed at showdown, and its carryover", () => {
+  const playing: TableView = {
+    ...dealt(),
+    settings: { ...dealt().settings, ghost: true },
+    pot: 45,
+    ghost: { carry: 0, deadMoney: 30, hasCards: true, cards: [] },
+  };
+  const { rerender } = render(<LiveTable table={playing} />);
+  const ghost = screen.getByRole("group", { name: "Ghost hand" });
+  expect(
+    within(ghost).getAllByRole("img", { name: /Ghost hidden card/ }),
+  ).toHaveLength(2);
+  expect(within(ghost).getByText("Dead money 30")).toBeVisible();
+  expect(within(ghost).queryByText(/Carryover/)).not.toBeInTheDocument();
+  const complete: TableView = {
+    ...playing,
+    street: "complete",
+    actor: null,
+    awards: [
+      {
+        amount: 45,
+        winners: [],
+        ghost: { amount: 45, hand: "Three of a kind" },
+      },
+    ],
+    ghost: {
+      carry: 45,
+      deadMoney: 30,
+      hasCards: true,
+      cards: [parseCard("14c"), parseCard("14d")],
+    },
+  };
+  rerender(<LiveTable table={complete} />);
+  const revealed = screen.getByRole("group", { name: "Ghost hand" });
+  expect(
+    within(revealed).getByRole("img", { name: "Ghost card 1: A of Clubs" }),
+  ).toBeVisible();
+  expect(
+    within(revealed).queryByRole("img", { name: /hidden/ }),
+  ).not.toBeInTheDocument();
+  expect(within(revealed).getByText("+45")).toBeVisible();
+  expect(within(revealed).getByText("Carryover 45")).toBeVisible();
+  expect(within(revealed).queryByText(/Dead money/)).not.toBeInTheDocument();
+  rerender(
+    <LiveTable
+      table={{
+        ...complete,
+        street: "waiting",
+        awards: [],
+        ghost: { carry: 45, deadMoney: 0, hasCards: false, cards: [] },
+      }}
+    />,
+  );
+  const between = screen.getByRole("group", { name: "Ghost hand" });
+  expect(within(between).queryAllByRole("img")).toHaveLength(0);
+  expect(within(between).getByText("Carryover 45")).toBeVisible();
+  rerender(<LiveTable table={dealt()} />);
+  expect(
+    screen.queryByRole("group", { name: "Ghost hand" }),
+  ).not.toBeInTheDocument();
+});

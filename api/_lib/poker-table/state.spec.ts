@@ -51,4 +51,46 @@ describe("saved table format compatibility", () => {
     act(t, "one", "call", undefined, 1); act(t, "two", "check", undefined, 2);
     expect(tableView(t, "one", 2)).toMatchObject({ roundId: 2, burnCount: 1, dealtPlayerCount: 2, riverNumber: 0 });
   });
+  it("loads saved tables from before the ghost modifier with no ghost state", async () => {
+    for (const legacy of [false, true]) {
+      const t = saved();
+      for (const key of ["ghostCards", "ghostCarry", "deadMoney"]) delete t[key];
+      if (legacy) for (const key of ["stateFormatVersion", "rulesVersion", "roundId", "riverNumber", "burnCount", "dealtPlayerCount", "terminalReason"]) delete t[key];
+      if (legacy) t.handRecord = null;
+      const restored = (await load(t))!;
+      expect(restored).toMatchObject({ stateFormatVersion: 1, ghostCards: [], ghostCarry: 0, deadMoney: 0 });
+      expect(restored.settings.ghost).toBeUndefined();
+      expect(tableView(restored, "one", 1)).not.toHaveProperty("ghost");
+      expect(tableView(restored, "one", 1).pot).toBe(15);
+    }
+  });
+  it("round-trips a ghost table and rejects inconsistent ghost state", async () => {
+    const ghost = () => {
+      const t = makeTable("saved", "one", { ...settings, ghost: true });
+      for (const id of ["one", "two"]) { joinSeat(t, id, id); applyCommand(t, id, { type: "ready", ready: true }, 0); }
+      deal(t, 0); return JSON.parse(JSON.stringify(t)) as TableState;
+    };
+    const t = ghost();
+    expect(await load(t)).toEqual(t);
+    const between = ghost(); act(between, "one", "fold", undefined, 1); between.ghostCarry = 40;
+    expect((await load(between))!.ghostCarry).toBe(40);
+    for (const change of [
+      (s: TableState) => { s.stateFormatVersion = 1; },
+      (s: TableState) => { delete s.settings.ghost; },
+      (s: TableState) => { s.ghostCarry = -1; },
+      (s: TableState) => { s.ghostCarry = 1.5; },
+      (s: TableState) => { s.ghostCarry = 10; },
+      (s: TableState) => { s.deadMoney = Number.NaN; },
+      (s: TableState) => { s.ghostCards = s.ghostCards.slice(0, 1); },
+      (s: TableState) => { delete s.ghostCards; },
+      (s: TableState) => { s.ghostCards = []; },
+    ]) {
+      const broken = ghost(); change(broken);
+      await expect(load(broken)).rejects.toThrow(/ghost|format|Invalid saved/i);
+    }
+    const plain = saved(); plain.ghostCarry = 5;
+    await expect(load(plain)).rejects.toThrow(/ghost/i);
+    const legacy = saved(); delete legacy.stateFormatVersion; legacy.settings.ghost = true;
+    await expect(load(legacy)).rejects.toThrow("legacy table");
+  });
 });

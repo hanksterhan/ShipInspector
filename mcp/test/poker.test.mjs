@@ -17,7 +17,8 @@ let http; let service; let store; let apiUrl;
 before(async () => {
   store = await getTableStore(); service = new TableService(store);
   const app = express(); app.use(express.json());
-  app.use((req, _res, next) => { assert.equal(req.headers["x-poker-rules"], "holdem:1,red-river-holdem:1"); next(); });
+  // Every MCP request must announce its rules; a marked request simulates an older client.
+  app.use((req, _res, next) => { if (!req.headers["x-test-old-client"]) assert.equal(req.headers["x-poker-rules"], "holdem:1,red-river-holdem:1,ghost:1"); next(); });
   app.use(tablesHandler);
   http = await new Promise(resolve => { const server = app.listen(0, "127.0.0.1", () => resolve(server)); });
   apiUrl = `http://127.0.0.1:${http.address().port}`;
@@ -100,6 +101,95 @@ for (const gameMode of ["holdem", "red-river-holdem"]) test(`${gameMode}: two st
     await service.revokeAgent(view.id, "mcp-host", view.version, randomUUID(), grants[0].agentId);
     assert.equal((await clients[0].callTool({ name: "poker_get_table", arguments: {} }, undefined, { timeout: 5000 })).isError, true);
   } finally { await Promise.all(clients.map(c => c.close())); }
+});
+const parse = text => text.split(" ").map(c => ({ rank: Number(c.slice(0, -1)), suit: c.slice(-1) }));
+const key = c => `${c.rank}${c.suit}`;
+test("red-river-holdem ghost: two stdio clients see the ghost only at showdown and carry it once", { timeout: 30000 }, async () => {
+  let view = await service.create("mcp-ghost-host", { gameMode: "red-river-holdem", ghost: true, name: "Ghost match", maxPlayers: 6, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 60 });
+  const grants = [];
+  for (const name of ["Alpha", "Beta"]) {
+    const grant = await service.issueAgent(view.id, "mcp-ghost-host", view.version, randomUUID(), name);
+    grants.push(grant); view = grant.table;
+  }
+  const clients = [];
+  try {
+    for (const grant of grants) {
+      const client = new Client({ name: "poker-ghost-test", version: "1.0.0" });
+      clients.push(client);
+      await client.connect(new StdioClientTransport({ command: process.execPath,
+        args: [new URL("../src/index.mjs", import.meta.url).pathname],
+        env: { ...process.env, SHIPINSPECTOR_API_URL: apiUrl, SHIPINSPECTOR_AGENT_TOKEN: grant.token }, stderr: "pipe" }), { timeout: 5000 });
+    }
+    const call = async (i, name, args = {}) => {
+      const response = await clients[i].callTool({ name, arguments: args }, undefined, { timeout: 5000 });
+      assert.ok(!response.isError, response.content?.[0]?.text);
+      return response.structuredContent;
+    };
+    const rules = (await clients[0].readResource({ uri: "poker://rules" }, { timeout: 5000 })).contents[0].text;
+    assert.match(rules, /Ghost/); assert.match(rules, /ties split/i); assert.match(rules, /dead money/i);
+    assert.match(rules, /every pot at showdown, including a side pot with one eligible player/); assert.doesNotMatch(rules, /two or more eligible/);
+    assert.match(rules, /keeps the carryover on the closed table/);
+    const old = await fetch(`${apiUrl}/tables/${view.id}`, { headers: { Authorization: `Bearer ${grants[0].token}`, "X-Poker-Rules": "holdem:1,red-river-holdem:1", "X-Test-Old-Client": "1" } });
+    assert.equal(old.status, 426);
+    const ready = async () => { for (let i = 0; i < 2; i++) { view = await call(i, "poker_get_table"); view = await call(i, "poker_ready", { version: view.version, requestId: randomUUID(), ready: true }); } };
+    await ready();
+    view = await call(0, "poker_deal", { version: view.version, requestId: randomUUID() });
+    // Stack the dealt hand: the ghost holds aces; rivers are J♥ (red) then 5♣ (black).
+    const state = await store.get(view.id);
+    const [alpha, beta] = state.seats;
+    alpha.cards = parse("2s 7d"); beta.cards = parse("3h 8c"); state.ghostCards = parse("14s 14d");
+    const head = parse("6h 14h 13c 4d 6d 9s 6c 11h 6s 5c");
+    const used = new Set([...alpha.cards, ...beta.cards, ...state.ghostCards, ...head].map(key));
+    state.deck = [...head, ...["c", "d", "h", "s"].flatMap(suit => Array.from({ length: 13 }, (_, i) => ({ rank: i + 2, suit }))).filter(c => !used.has(key(c)))];
+    assert.equal(state.deck.length, 52 - 6);
+    state.handRecord.players.find(p => p.seat === alpha.seat).cards = alpha.cards;
+    state.handRecord.players.find(p => p.seat === beta.seat).cards = beta.cards;
+    state.version++;
+    assert.equal(await store.save(state, view.version), true);
+    const observations = await Promise.all([call(0, "poker_get_table"), call(1, "poker_get_table")]);
+    for (const seen of observations) {
+      assert.deepEqual(seen.ghost, { carry: 0, deadMoney: 0, hasCards: true, cards: [] });
+      assert.ok(!/ghostCards|"deck"|\{"rank":14,"suit":"(s|d)"\}/.test(JSON.stringify(seen)));
+    }
+    view = observations[0];
+    let actions = 0;
+    while (view.street !== "complete" && actions++ < 48) {
+      const player = view.actor;
+      view = await call(player, "poker_wait_for_turn", { seconds: 1 });
+      assert.deepEqual(view.ghost.cards, []);
+      view = await call(player, "poker_act", { version: view.version, requestId: randomUUID(), action: view.legal.check ? "check" : "call" });
+    }
+    assert.equal(view.terminalReason, "black-river"); assert.equal(view.board.length, 6);
+    assert.deepEqual(view.awards, [{ amount: 20, winners: [], ghost: { amount: 20, hand: "Three of a kind" } }]);
+    assert.deepEqual(view.ghost, { carry: 20, deadMoney: 0, hasCards: true, cards: parse("14s 14d") });
+    assert.equal(view.seats.reduce((n, s) => n + s.stack, 0) + view.ghost.carry, 2000);
+    const first = await call(1, "poker_get_hand", { handNumber: 1 });
+    assert.deepEqual(first.events.find(e => e.type === "ghost").cards, parse("14s 14d"));
+    await ready();
+    view = await call(1, "poker_deal", { version: view.version, requestId: randomUUID() });
+    assert.equal(view.ghost.deadMoney, 20); assert.equal(view.ghost.carry, 0); assert.equal(view.pot, 35);
+    const folder = view.actor;
+    view = await call(folder, "poker_act", { version: view.version, requestId: randomUUID(), action: "fold" });
+    // The small blind folds: the big blind gets 5 uncalled chips back, then wins 5 + 5 + 20 dead money.
+    assert.equal(view.awards[0].amount, 30); assert.equal(view.awards[0].ghost, undefined);
+    assert.deepEqual(view.ghost, { carry: 0, deadMoney: 20, hasCards: false, cards: [] });
+    assert.equal(view.seats.reduce((n, s) => n + s.stack, 0), 2000);
+    const second = await call(0, "poker_get_hand", { handNumber: 2 });
+    assert.ok(!second.events.some(e => e.type === "ghost"));
+    assert.equal(second.events.find(e => e.type === "dead-money").amount, 20);
+  } finally { await Promise.all(clients.map(c => c.close())); }
+});
+test("describes the ghost only on ghost tables", { timeout: 10000 }, async () => {
+  const view = await service.create("mcp-plain-host", { name: "Plain", maxPlayers: 2, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 60 });
+  const grant = await service.issueAgent(view.id, "mcp-plain-host", view.version, randomUUID(), "Solo");
+  const server = createPokerServer({ apiUrl, token: grant.token });
+  const [clientTransport, serverTransport] = (await import("@modelcontextprotocol/sdk/inMemory.js")).InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "plain-rules", version: "1.0.0" });
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  try {
+    const text = (await client.readResource({ uri: "poker://rules" })).contents[0].text;
+    assert.match(text, /No-limit Texas Hold'em/); assert.doesNotMatch(text, /Ghost/);
+  } finally { await client.close(); }
 });
 test("rejects remote cleartext transport and malformed credentials", () => {
   assert.throws(() => createPokerServer({ apiUrl: "http://example.com", token: "x" }), /HTTPS/);

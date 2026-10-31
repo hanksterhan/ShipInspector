@@ -16,3 +16,16 @@ it("labels the saved mode and sends the selected Red River mode when creating a 
   fireEvent.click(screen.getByRole("button", { name: "Open table" }));
   await waitFor(() => expect(tableService.create).toHaveBeenCalledWith(expect.objectContaining({ gameMode: "red-river-holdem", bigBlind: 10 }), "Henry"));
 });
+it("labels Ghost tables and sends the Ghost modifier with either mode", async () => {
+  vi.mocked(tableService.list).mockResolvedValue({ tables: [{ id: "ghostly", name: "Haunt", gameMode: "holdem", ghost: true, seats: 2, maxPlayers: 6, smallBlind: 5, bigBlind: 10, street: "waiting" }] });
+  vi.mocked(tableService.create).mockResolvedValue({ id: "new-table" } as never);
+  render(<MemoryRouter><TablesPage /></MemoryRouter>);
+  expect(await screen.findByRole("link", { name: /Haunt.*No-limit Hold'em · Ghost/ })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Create table" }));
+  const ghost = screen.getByRole("checkbox", { name: "Ghost hand" });
+  expect(ghost).not.toBeChecked();
+  fireEvent.click(ghost);
+  fireEvent.change(screen.getByRole("combobox", { name: "Game mode" }), { target: { value: "red-river-holdem" } });
+  fireEvent.click(screen.getByRole("button", { name: "Open table" }));
+  await waitFor(() => expect(tableService.create).toHaveBeenLastCalledWith(expect.objectContaining({ gameMode: "red-river-holdem", ghost: true }), "Henry"));
+});

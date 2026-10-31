@@ -1,4 +1,4 @@
-import { gameDefinition } from "@common/pokerModes";
+import { modeLabel } from "@common/pokerModes";
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -94,10 +94,13 @@ export default function TablePage() {
   const awards = [
     ...new Set(table.awards.flatMap((p) => p.winners.map((w) => w.seat))),
   ];
+  const ghostShare = table.awards.some((p) => p.ghost);
   const winner =
-    awards.length === 1
+    awards.length === 1 && !ghostShare
       ? table.seats.find((s) => s.seat === awards[0])?.name
-      : null;
+      : awards.length === 0 && ghostShare
+        ? "Ghost"
+        : null;
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(
@@ -119,7 +122,9 @@ export default function TablePage() {
           </Link>
           <h1>{table.settings.name}</h1>
           <div className="live-table-stakes">
-            <span>{gameDefinition(table.settings.gameMode).label}</span>
+            <span>
+              {modeLabel(table.settings.gameMode, table.settings.ghost)}
+            </span>
             <span>
               {table.settings.smallBlind}/{table.settings.bigBlind}
             </span>
@@ -202,12 +207,17 @@ export default function TablePage() {
                 <span>
                   {table.awards
                     .map((p) =>
-                      p.winners
-                        .map(
+                      [
+                        ...p.winners.map(
                           (w) =>
                             `${table.seats.find((s) => s.seat === w.seat)?.name}: ${w.amount.toLocaleString()} · ${w.hand}`,
-                        )
-                        .join(" / "),
+                        ),
+                        ...(p.ghost
+                          ? [
+                              `Ghost: ${p.ghost.amount.toLocaleString()} · ${p.ghost.hand} · Next hand`,
+                            ]
+                          : []),
+                      ].join(" / "),
                     )
                     .join(" · ")}
                 </span>
@@ -258,6 +268,18 @@ export default function TablePage() {
                 round. Use the best five from all board cards and your two hole
                 cards. If the deck cannot supply another burn and river, show
                 down on the current board.
+              </p>
+            </details>
+          )}
+          {table.settings.ghost && (
+            <details className="live-game-rules">
+              <summary>Ghost rules</summary>
+              <p>
+                A ghost hand gets two cards after the players. It has no seat
+                and does not bet. At showdown it plays every pot, even a side
+                pot with one player: a better ghost hand takes the pot, and a
+                tie splits with one share for the ghost. Its chips go into the
+                next main pot. A fold win is not shown down.
               </p>
             </details>
           )}

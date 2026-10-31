@@ -1,9 +1,9 @@
 import { parseCard } from "@common/interfaces";
 import { BOT_STYLES } from "@common/pokerBots";
-import { act, applyCommand, deal, joinSeat, legalActions, makeTable, tableView } from "./engine";
+import { act, applyCommand, deal, inHand, joinSeat, legalActions, makeTable, tableView } from "./engine";
 import { gameDefinition, type GameMode } from "@common/pokerModes";
 import { sampleRunout } from "@lib/poker/runout";
-import { eightSeatExhaustionDeck } from "./__tests__/fixtures";
+import { eightSeatExhaustionDeck, stackedDeck } from "./__tests__/fixtures";
 import { estimateBotEquity, botObservation, chooseBotAction, progressTable, type BotObservation } from "./bots";
 const settings = { name: "CPU practice", maxPlayers: 8, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 30 };
 const seeded = (seed: number) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -152,5 +152,110 @@ describe("CPU policy and lifecycle", () => {
       expect(t.seats.reduce((n, s) => n + s.stack + (t.street === "complete" ? 0 : s.committed), 0)).toBe(8000);
     }
     expect(t.street).toBe("complete"); expect(t.terminalReason).not.toBeNull();
+  });
+  describe("ghost modifier", () => {
+    afterEach(() => jest.restoreAllMocks());
+    const ghostGame = (bots: number, gameMode: GameMode = "holdem") => {
+      const t = makeTable("cpu-ghost", "owner", { ...settings, gameMode, ghost: true }); joinSeat(t, "owner", "Player");
+      applyCommand(t, "owner", { type: "add-bots", styles: Array.from({ length: bots }, (_, i) => BOT_STYLES[i % 4]) }, 0);
+      applyCommand(t, "owner", { type: "ready", ready: true }, 0); return t;
+    };
+    it("observes the ghost's presence and dead money but never its cards", () => {
+      const t = ghostGame(1); t.ghostCarry = 30; deal(t, 0); act(t, "owner", "call", undefined, 1);
+      const before = botObservation(t);
+      expect(before).toMatchObject({ ghost: true, deadMoney: 30, pot: 50, dealtPlayerCount: 2, drawCapacity: 46 });
+      expect(JSON.stringify(before)).not.toMatch(/ghostCards|"deck"|principal/);
+      t.ghostCards = [parseCard("2c"), parseCard("3c")].filter(c => !t.seats.some(s => s.cards.some(h => h.rank === c.rank && h.suit === c.suit)));
+      t.deck.reverse();
+      expect(botObservation(t)).toEqual(before);
+      expect(chooseBotAction(before, "balanced", seeded(3))).toEqual(chooseBotAction(botObservation(t), "balanced", seeded(3)));
+      const plain = game(1); deal(plain, 0); act(plain, "owner", "call", undefined, 1);
+      expect(botObservation(plain)).not.toHaveProperty("ghost");
+      expect(botObservation(plain)).not.toHaveProperty("deadMoney");
+    });
+    it("reserves and samples a ghost hand from unknown cards", () => {
+      const view = { ...observation(), ghost: true, drawCapacity: 46 };
+      const trial = sampleRunout(view, gameDefinition("holdem"), () => 0);
+      expect(trial.hands).toEqual([[parseCard("2c"), parseCard("3c")]]);
+      expect(trial.ghost).toEqual([parseCard("4c"), parseCard("5c")]);
+      expect(trial.board).toEqual("7c 8c 9c 11c 13c".split(" ").map(parseCard));
+      expect(trial.remainingCards).toBe(46 - 8);
+      expect(() => sampleRunout({ ...view, drawCapacity: 48 }, gameDefinition("holdem"), () => 0)).toThrow("Invalid public card counts");
+      expect(sampleRunout(observation(), gameDefinition("holdem"), () => 0).ghost).toBeNull();
+    });
+    it("counts the ghost as a showdown rival and dead money as part of the main pot", () => {
+      const plain = estimateBotEquity(observation(), seeded(11));
+      const ghost = estimateBotEquity({ ...observation(), ghost: true, deadMoney: 30, pot: 60, drawCapacity: 46 }, seeded(11));
+      expect(ghost.reason).toBeUndefined(); expect(ghost.samples).toBe(96);
+      expect(ghost.eligiblePot).toBe(plain.eligiblePot + 30);
+      expect(ghost.equity).toBeLessThan(plain.equity - 0.05);
+      const board = { ...observation(), board: "10c 11c 12c 13c 14c".split(" ").map(parseCard), burnCount: 3, drawCapacity: 38, ghost: true };
+      // Board royal flush: hero, one opponent, and the ghost share every pot.
+      const chop = estimateBotEquity(board, seeded(5));
+      expect(chop.equity).toBeCloseTo(1 / 3, 12); expect(chop.rankEvaluations).toBe(288);
+    });
+    it("counts the ghost in a showdown side pot where the hero is the only eligible player", () => {
+      // Seat 1 is all-in for 40 and seat 2 folded after 100: a 120 main pot and a 120 side pot for the hero alone.
+      const view = { ...observation(), board: "10c 11c 12c 13c 14c".split(" ").map(parseCard), burnCount: 3, dealtPlayerCount: 3, drawCapacity: 36,
+        ghost: true, pot: 240, legal: { ...observation().legal, check: true, call: 0 },
+        players: [{ seat: 0, committed: 100, eligible: true }, { seat: 1, committed: 40, eligible: true }, { seat: 2, committed: 100, eligible: false }] };
+      // Board royal flush: 40 of the main pot and half the side pot.
+      const estimate = estimateBotEquity(view, seeded(5));
+      expect(estimate.reason).toBeUndefined(); expect(estimate.eligiblePot).toBe(240);
+      expect(estimate.equity).toBeCloseTo(100 / 240, 12);
+    });
+    it.each(["holdem", "red-river-holdem"] as const)("%s full eight-seat ghost table: a CPU with the nuts calls a river bet", gameMode => {
+      // A frozen clock removes the time bound, so only the work cap can stop sampling.
+      const now = jest.spyOn(Date, "now").mockReturnValue(0);
+      const warning = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const t = makeTable("cpu-ghost-full", "owner", { ...settings, gameMode, ghost: true }); joinSeat(t, "owner", "Player");
+      applyCommand(t, "owner", { type: "add-bots", styles: Array(7).fill("balanced") }, 0);
+      applyCommand(t, "owner", { type: "ready", ready: true }, 0);
+      // Button on seat 0: seat 1 posts the small blind and acts first after the flop.
+      // Seat 2 holds a royal flush; the black river ends a Red River hand too.
+      deal(t, 0, stackedDeck(["2d 3d", "13c 14c", "4d 5d", "6d 7d", "8d 9d", "2h 3h", "4h 5h", "6h 7h"], "8h 9h", "10c 11c 12c 2s 3s"));
+      for (let n = 0; t.board.length < 5 && n < 100; n++) {
+        const actor = t.seats.find(s => s.seat === t.actor)!;
+        act(t, actor.principal, legalActions(t, actor.principal)!.check ? "check" : "call", undefined, 0);
+      }
+      expect(t.street).toBe("river"); expect(t.actor).toBe(1);
+      act(t, t.seats[1].principal, "raise", 40, 0);
+      expect(t.actor).toBe(2);
+      const view = botObservation(t);
+      expect(view).toMatchObject({ dealtPlayerCount: 8, opponents: 7, ghost: true, legal: { call: 40 } });
+      const estimate = estimateBotEquity(view, seeded(4));
+      // Nine hands per trial: 85 complete trials fit the 768 rank cap.
+      expect(estimate).toMatchObject({ equity: 1, samples: 85, rankEvaluations: 765 });
+      expect(estimate.reason).toBeUndefined();
+      expect(chooseBotAction(view, "balanced", seeded(4)).action).not.toBe("fold");
+      t.botActionAt = 0; expect(progressTable(t, 0)).toBe(true);
+      expect(t.seats[2].status).not.toBe("folded");
+      expect(warning).not.toHaveBeenCalled();
+      now.mockRestore(); warning.mockRestore();
+    });
+    it.each(["holdem", "red-river-holdem"] as const)("%s plays several CPU ghost hands with every chip owed", gameMode => {
+      const warning = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const t = ghostGame(3, gameMode);
+      const owed = () => t.seats.reduce((n, s) => n + s.stack + (inHand(t) ? s.committed : 0), 0) + (inHand(t) ? t.deadMoney : 0) + t.ghostCarry;
+      let total = 4000; let carried = 0;
+      for (let hand = 0; hand < 8; hand++) {
+        for (const s of t.seats) if (s.kind !== "cpu" && s.stack === 0) { applyCommand(t, s.principal, { type: "rebuy" }, 0); total += 1000; }
+        total += t.seats.filter(s => s.kind === "cpu" && s.stack === 0).length * 1000;
+        applyCommand(t, "owner", { type: "ready", ready: true }, 0); deal(t, hand * 1e6);
+        let turns = 0;
+        while (inHand(t) && turns++ < 200) {
+          const actor = t.seats.find(s => s.seat === t.actor)!; const now = hand * 1e6 + turns * 2000;
+          if (actor.kind === "cpu") expect(progressTable(t, now)).toBe(true);
+          else act(t, "owner", legalActions(t, "owner")!.check ? "check" : "call", undefined, now);
+          expect(owed()).toBe(total);
+        }
+        expect(t.street).toBe("complete");
+        carried += t.ghostCarry;
+      }
+      expect(Number.isSafeInteger(carried)).toBe(true);
+      // The sampler must accept ghost card counts; a fallback means the CPU could not estimate.
+      expect(warning.mock.calls.filter(call => (call[1] as any)?.reason === "estimator-error")).toEqual([]);
+      warning.mockRestore();
+    }, 30000);
   });
 });
