@@ -29,6 +29,9 @@ export interface BotObservation {
   stack: number;
   position: number;
   legal: LegalActions;
+  /** Ghost tables only: the ghost exists and the carryover sits in the main pot. */
+  ghost?: boolean;
+  deadMoney?: number;
 }
 type Random = () => number;
 export type BotAction = { action: "check" | "call" | "fold" | "raise"; raiseTo?: number };
@@ -45,13 +48,15 @@ export function botObservation(t: TableState): BotObservation {
   const order = [...players].sort((a, b) => ((a.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers) - ((b.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers));
   return { gameMode: gameDefinition(t.settings.gameMode, t.rulesVersion).id, rulesVersion: t.rulesVersion,
     roundId: t.roundId, dealtPlayerCount: t.dealtPlayerCount, burnCount: t.burnCount,
-    drawCapacity: 52 - 2 * t.dealtPlayerCount - t.board.length - t.burnCount, seat: bot.seat,
+    drawCapacity: 52 - 2 * (t.dealtPlayerCount + (t.settings.ghost ? 1 : 0)) - t.board.length - t.burnCount, seat: bot.seat,
     players: t.seats.filter(s => s.status !== "waiting").map(s => ({ seat: s.seat, committed: s.committed, eligible: players.includes(s) })),
     cards: bot.cards.map(c => ({ ...c })), board: t.board.map(c => ({ ...c })),
-    opponents: players.length - 1, pot: t.seats.reduce((sum, s) => sum + s.committed, 0),
+    opponents: players.length - 1, pot: t.seats.reduce((sum, s) => sum + s.committed, 0) + t.deadMoney,
     bigBlind: t.settings.bigBlind, currentBet: t.currentBet, bet: bot.bet, stack: bot.stack,
     position: order.findIndex(s => s === bot) / Math.max(1, order.length - 1),
-    legal: { ...legalActions(t, bot.principal)! } };
+    legal: { ...legalActions(t, bot.principal)! },
+    // The ghost's presence is public; its cards never enter an observation.
+    ...(t.settings.ghost ? { ghost: true, deadMoney: t.deadMoney } : {}) };
 }
 export interface BotEstimate {
   equity: number;
@@ -71,18 +76,25 @@ export function estimateBotEquity(view: BotObservation, rng: Random): BotEstimat
     const rules = gameDefinition(view.gameMode, view.rulesVersion);
     const opponents = view.players.filter(p => p.eligible && p.seat !== view.seat);
     if (opponents.length !== view.opponents) throw new Error("Invalid pot eligibility.");
-    const pots = potLayers(view.players.map(p => ({ ...p,
+    const layers = potLayers(view.players.map(p => ({ ...p,
       committed: p.committed + (p.seat === view.seat ? view.legal.call : 0),
-    }))).filter(p => p.eligible.includes(view.seat));
+    })));
+    if (layers.length && view.deadMoney) layers[0] = { ...layers[0], amount: layers[0].amount + view.deadMoney };
+    const pots = layers.filter(p => p.eligible.includes(view.seat));
     eligiblePot = pots.reduce((n, p) => n + p.amount, 0);
     if (eligiblePot <= 0) throw new Error("No eligible pot.");
-    for (; samples < 96; samples++) {
-      if (Date.now() - started >= 100 || rankEvaluations + opponents.length + 1 > 768) return result("work-budget");
+    // The sample target fits the rank cap: 96 trials up to eight hands, 85 for
+    // eight players and the ghost. Only the deadline can stop a trial early.
+    const target = Math.min(96, Math.floor(768 / (opponents.length + 1 + (view.ghost ? 1 : 0))));
+    for (; samples < target; samples++) {
+      if (Date.now() - started >= 100) return result("work-budget");
       const trial = sampleRunout(view, rules, rng);
       const ranks = new Map([[view.seat, bestHighHand([...view.cards, ...trial.board]).rank]]); rankEvaluations++;
       for (let i = 0; i < opponents.length; i++) {
         ranks.set(opponents[i].seat, bestHighHand([...trial.hands[i], ...trial.board]).rank); rankEvaluations++;
       }
+      const ghost = trial.ghost ? bestHighHand([...trial.ghost, ...trial.board]).rank : null;
+      if (ghost) rankEvaluations++;
       let award = 0;
       for (const pot of pots) {
         let ties = 1; let beaten = false;
@@ -91,6 +103,12 @@ export function estimateBotEquity(view: BotObservation, rng: Random): BotEstimat
           const comparison = compareRanks(ranks.get(view.seat)!, ranks.get(seat)!);
           if (comparison < 0) { beaten = true; break; }
           if (comparison === 0) ties++;
+        }
+        // The ghost contests every showdown pot, even one with only the hero
+        // eligible. Fractional shares make merged and separate layers equal.
+        if (!beaten && ghost) {
+          const comparison = compareRanks(ranks.get(view.seat)!, ghost);
+          if (comparison < 0) beaten = true; else if (comparison === 0) ties++;
         }
         if (!beaten) award += pot.amount / ties;
       }
@@ -126,7 +144,7 @@ export function chooseBotAction(view: BotObservation, style: BotStyle, rng: Rand
   }
   const equity = estimate.equity;
   const odds = legal.call / Math.max(1, estimate.eligiblePot);
-  const fairShare = 1 / (view.opponents + 1);
+  const fairShare = 1 / (view.opponents + 1 + (view.ghost ? 1 : 0));
   const weakStart = view.gameMode === "holdem" && view.board.length === 0 && startingHand(view.cards) < profile.entry + (1 - view.position) * 0.08 - (view.opponents === 1 ? 0.08 : 0);
   if (!legal.check && (equity + profile.loose < odds + 0.025 || (weakStart && legal.call >= view.bigBlind))) return { action: "fold" };
   const value = equity > Math.max(fairShare + 0.12, odds + 0.15);

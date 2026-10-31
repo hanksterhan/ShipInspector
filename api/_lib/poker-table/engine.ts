@@ -38,7 +38,12 @@ export interface AgentGrant {
 }
 export interface TableState {
   handRecord: PrivateHandRecord | null;
-  stateFormatVersion: 1;
+  // Ghost tables use format 2 so that older servers refuse them instead of
+  // dropping the ghost hand or its carryover.
+  stateFormatVersion: 1 | 2;
+  ghostCards: Card[];
+  ghostCarry: number;
+  deadMoney: number;
   rulesVersion: number;
   roundId: number;
   riverNumber: number;
@@ -79,9 +84,11 @@ export function record(t: TableState, text: string) {
 }
 export function makeTable(id: string, owner: string, settings: TableSettings): TableState {
   const rules = gameDefinition(settings.gameMode);
-  return { handRecord: null, stateFormatVersion: 1, rulesVersion: rules.rulesVersion, roundId: 0, riverNumber: 0,
+  const ghost = settings.ghost === true;
+  const { ghost: _ghost, ...base } = settings;
+  return { handRecord: null, stateFormatVersion: ghost ? 2 : 1, ghostCards: [], ghostCarry: 0, deadMoney: 0, rulesVersion: rules.rulesVersion, roundId: 0, riverNumber: 0,
     dealtPlayerCount: 0, burnCount: 0, terminalReason: null,
-    id, owner, members: [owner], version: 0, settings: { ...settings, gameMode: rules.id }, street: "waiting", handNumber: 0,
+    id, owner, members: [owner], version: 0, settings: { ...base, gameMode: rules.id, ...(ghost ? { ghost } : {}) }, street: "waiting", handNumber: 0,
     button: -1, smallBlindSeat: null, bigBlindSeat: null, actor: null, deadline: null, botActionAt: null, board: [], deck: [], currentBet: 0,
     minRaise: settings.bigBlind, seats: [], awards: [], events: [], eventId: 0, agents: [], receipts: [], closed: false };
 }
@@ -143,9 +150,25 @@ const handNames = ["High card", "One pair", "Two pair", "Three of a kind", "Stra
 function settle(t: TableState, showdown: boolean, reason: TerminalReason = "uncontested") {
   refundUncalled(t);
   const remaining = contenders(t);
-  const layers = potLayers(t.seats.map(s => ({ seat: s.seat, committed: s.committed, eligible: remaining.includes(s) })));
+  let layers = potLayers(t.seats.map(s => ({ seat: s.seat, committed: s.committed, eligible: remaining.includes(s) })));
+  // On a ghost table, contribution layers with the same eligible players are
+  // one pot, so the ghost's floor share is taken once. Eligible sets only
+  // shrink from layer to layer, so equal sets are always adjacent.
+  if (t.settings.ghost) layers = layers.reduce<typeof layers>((pots, layer) => {
+    const last = pots[pots.length - 1];
+    if (last && last.eligible.join() === layer.eligible.join()) last.amount += layer.amount; else pots.push({ ...layer });
+    return pots;
+  }, []);
+  // Dead money joins the main pot. Every remaining player has chips in it,
+  // so a short all-in can win it; it never changes contributions or refunds.
+  if (t.deadMoney > 0) {
+    if (!layers.length) throw new TableError("Pot has no eligible player.", 500);
+    layers[0].amount += t.deadMoney;
+  }
   t.awards = [];
   const ranks = new Map(remaining.map(s => [s.seat, showdown ? bestHighHand([...s.cards, ...t.board]).rank : null]));
+  const ghostRank = showdown && t.settings.ghost && t.ghostCards.length === 2 ? bestHighHand([...t.ghostCards, ...t.board]).rank : null;
+  if (ghostRank) handEvent(t, { type: "ghost", cards: t.ghostCards });
   for (const { amount, eligible: seats } of layers) {
     const eligible = remaining.filter(s => seats.includes(s.seat));
     if (!eligible.length) throw new TableError("Pot has no eligible player.", 500);
@@ -154,22 +177,36 @@ function settle(t: TableState, showdown: boolean, reason: TerminalReason = "unco
       const comparison = showdown ? compareRanks(ranks.get(s.seat)!, ranks.get(winners[0].seat)!) : 0;
       if (comparison > 0) winners = [s]; else if (comparison === 0) winners.push(s);
     }
-    // Odd chips go clockwise from the dealer button.
+    // The ghost contests every showdown pot, including a side pot with one
+    // eligible player. A better ghost takes the pot; a tie adds one ghost
+    // share to the chop. Only a fold-out has no showdown and no ghost.
+    const ghost = ghostRank !== null ? compareRanks(ghostRank, ranks.get(winners[0].seat)!) : -1;
+    if (ghost > 0) winners = [];
+    const shares = winners.length + (ghost >= 0 ? 1 : 0);
+    // The ghost is last in odd-chip order, so it takes the floor share. The
+    // remainder is below the share count, so tied players receive every odd
+    // chip, one each, clockwise from the dealer button.
+    const ghostShare = ghost >= 0 ? Math.floor(amount / shares) : 0;
     winners.sort((a, b) => ((a.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers) - ((b.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers));
     const award: PotAward = { amount, winners: winners.map((s, i) => {
-      const chips = Math.floor(amount / winners.length) + (i < amount % winners.length ? 1 : 0);
+      const chips = Math.floor(amount / shares) + (i < amount % shares ? 1 : 0);
       s.stack += chips;
       return { seat: s.seat, amount: chips, hand: showdown ? handNames[ranks.get(s.seat)!.category] || "Winning hand" : "Uncontested" };
-    }) };
+    }), ...(ghost >= 0 ? { ghost: { amount: ghostShare, hand: handNames[ghostRank!.category] || "Winning hand" } } : {}) };
+    t.ghostCarry += ghostShare;
     t.awards.push(award);
     handEvent(t, { type: "award", award });
   }
-  for (const award of t.awards) for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
+  for (const award of t.awards) {
+    for (const w of award.winners) record(t, `${t.seats.find(s => s.seat === w.seat)!.name} wins ${w.amount} chips (${w.hand}).`);
+    if (award.ghost) record(t, `Ghost wins ${award.ghost.amount} chips (${award.ghost.hand}). They carry to the next hand.`);
+  }
   if (reason === "deck-exhausted") record(t, "Deck exhausted. Showdown on the current board.");
-  handEvent(t, { type: "end", reason, revealedSeats: showdown ? remaining.map(s => s.seat) : [] });
+  handEvent(t, { type: "end", reason, revealedSeats: showdown ? remaining.map(s => s.seat) : [], ...(t.settings.ghost ? { ghostCarry: t.ghostCarry } : {}) });
   t.terminalReason = reason;
   t.street = "complete"; t.actor = null; t.deadline = null; t.botActionAt = null; t.deck = [];
   for (const s of t.seats) { s.ready = s.kind === "cpu"; s.bet = 0; if (!showdown || s.status === "folded") s.cards = []; }
+  if (!showdown) t.ghostCards = [];
 }
 function dealBoard(t: TableState) {
   const rules = gameDefinition(t.settings.gameMode, t.rulesVersion);
@@ -225,6 +262,10 @@ export function deal(t: TableState, now: number, deck = shuffledDeck()) {
   // Deal clockwise, one card at a time, starting left of the button.
   const order = [...ready].sort((a, b) => ((a.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers) - ((b.seat - t.button - 1 + t.settings.maxPlayers) % t.settings.maxPlayers));
   for (let round = 0; round < 2; round++) for (const s of order) s.cards.push(t.deck.shift()!);
+  // The ghost takes the next two cards after every player has two. Its
+  // carryover becomes dead money in this hand's main pot, exactly once.
+  t.ghostCards = t.settings.ghost ? t.deck.splice(0, 2) : [];
+  t.deadMoney = t.ghostCarry; t.ghostCarry = 0;
   const sb = ready.length === 2 ? ready.find(s => s.seat === t.button)! : next(t, t.button, ready);
   const bb = next(t, sb.seat, ready);
   t.smallBlindSeat = sb.seat; t.bigBlindSeat = bb.seat;
@@ -318,7 +359,8 @@ export function applyCommand(t: TableState, principal: string, command: TableCom
   if (command.type === "leave") {
     t.seats = t.seats.filter(p => p !== s); record(t, `${s.name} left the table.`);
     // Completed-hand awards reference seat numbers; clear them before a seat is reused.
-    if (t.street === "complete") { t.street = "waiting"; t.awards = []; t.board = []; for (const p of t.seats) { p.cards = []; p.committed = 0; p.status = "waiting"; } }
+    // The ghost carryover stays on the table for the next hand.
+    if (t.street === "complete") { t.street = "waiting"; t.awards = []; t.board = []; t.ghostCards = []; t.deadMoney = 0; for (const p of t.seats) { p.cards = []; p.committed = 0; p.status = "waiting"; } }
   }
 }
 function blindSeats(t: TableState) {
@@ -343,12 +385,14 @@ export function tableView(t: TableState, principal: string, now: number): TableV
     yourSeat: you?.seat ?? null, street: t.street, handNumber: t.handNumber, button: t.button,
     ...blindSeats(t),
     actor: t.actor, deadline: t.deadline, serverTime: now, board: t.board, currentBet: t.currentBet,
-    pot: t.seats.reduce((sum, s) => sum + s.committed, 0),
+    pot: t.seats.reduce((sum, s) => sum + s.committed, 0) + t.deadMoney,
     seats: t.seats.map(s => ({ seat: s.seat, name: s.name, kind: s.kind, ...(s.botStyle ? { botStyle: s.botStyle } : {}), stack: s.stack, bet: s.bet,
       committed: s.committed, status: s.status, ready: s.ready, sittingOut: s.sittingOut,
       isYou: s.principal === principal, cards: s.principal === principal || (reveal && s.status !== "folded") ? s.cards : [],
       hasCards: s.cards.length > 0, lastAction: s.lastAction })),
     legal: legalActions(t, principal), awards: t.awards, events: t.events, closed: t.closed,
+    ...(t.settings.ghost ? { ghost: { carry: t.ghostCarry, deadMoney: t.deadMoney, hasCards: t.ghostCards.length > 0,
+      cards: reveal ? t.ghostCards.map(c => ({ ...c })) : [] } } : {}),
     canDeal: !t.closed && !inHand(t) && (principal === t.owner || !!you?.ready) && t.seats.filter(s => s.ready && !s.sittingOut && (s.stack > 0 || s.kind === "cpu")).length >= 2,
     agents: principal === t.owner ? t.agents.map(({ id, name, seat, expiresAt, revoked }) => ({ id, name, seat, expiresAt, revoked, seated: t.seats.some(s => s.principal === `agent:${id}`) })) : [] };
 }

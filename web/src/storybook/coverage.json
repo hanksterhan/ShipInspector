@@ -356,6 +356,10 @@
       "RedRiver",
       "ManyRivers",
       "DeckExhausted",
+      "GhostHidden",
+      "GhostShowdown",
+      "GhostSplit",
+      "GhostCarry",
       "LongNames",
       "DealTransition"
     ],
@@ -809,7 +813,8 @@
       "InviteCopied",
       "CopyFailed",
       "RedRiverRules",
-      "DeckExhausted"
+      "DeckExhausted",
+      "GhostRules"
     ],
     "storyFile": "pages/TablePage.stories.tsx",
     "inline": [
@@ -824,6 +829,7 @@
       "Results",
       "SpectatorJoin",
       "Rules",
+      "GhostRules",
       "Activity",
       "CpuSheet",
       "AgentSheet",
@@ -842,13 +848,16 @@
       "Create",
       "Join",
       "InvalidInvite",
-      "Practice"
+      "Practice",
+      "Ghost",
+      "GhostHelp"
     ],
     "storyFile": "pages/TablesPage.stories.tsx",
     "inline": [
       "LobbyRow",
       "EmptyLobby",
       "CreateForm",
+      "GhostHelpPopover",
       "JoinForm",
       "RetryAlert",
       "PracticePanel"

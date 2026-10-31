@@ -88,6 +88,138 @@ export function tableSeats(count = 8): TableSeatView[] {
     }));
 }
 
+// Ghost tables copy the API engine's view of stacked decks: button on seat 0,
+// the shared board, and Alex bets 50 on the flop. Each pot is the committed
+// chips plus dead money, and each award pays the whole pot.
+const ghostSeats = (
+  stack: [number, number],
+  committed: number,
+  cards: [Card[], Card[]],
+  status: TableSeatView["status"] = "active",
+  lastAction: [string, string] = ["Check", "Check"],
+) =>
+  tableSeats(2).map((s, i) => ({
+    ...s,
+    stack: stack[i],
+    bet: 0,
+    committed,
+    status,
+    cards: cards[i],
+    hasCards: status !== "waiting",
+    lastAction: lastAction[i],
+  }));
+const ghostEnd = {
+  street: "complete" as const,
+  board: board(),
+  actor: null,
+  deadline: null,
+  legal: null,
+  currentBet: 0,
+  riverNumber: 1,
+};
+/** Aces and kings lose the 120-chip pot to the ghost's set of nines. */
+export function ghostShowdown(
+  gameMode: TableView["settings"]["gameMode"] = "holdem",
+): TableView {
+  return table({
+    ...ghostEnd,
+    settings: { ...table().settings, gameMode, ghost: true },
+    terminalReason: gameMode === "holdem" ? "river-complete" : "black-river",
+    pot: 120,
+    // The engine's last four events of the hand.
+    events: [
+      "River 1 dealt.",
+      "Marina: Check.",
+      "Alex: Check.",
+      "Ghost wins 120 chips (Three of a kind). They carry to the next hand.",
+    ].map((text, i) => ({ id: i + 13, hand: 1, text })),
+    seats: ghostSeats([940, 940], 60, [
+      [card(14, "s"), card(14, "d")],
+      [card(13, "s"), card(13, "h")],
+    ]),
+    awards: [
+      {
+        amount: 120,
+        winners: [],
+        ghost: { amount: 120, hand: "Three of a kind" },
+      },
+    ],
+    ghost: {
+      carry: 120,
+      deadMoney: 0,
+      hasCards: true,
+      cards: [card(9, "h"), card(9, "c")],
+    },
+  });
+}
+/** 45 dead money: Alex's A-K ties the ghost's A-K; the ghost takes the floor share. */
+export function ghostSplit(): TableView {
+  return table({
+    ...ghostEnd,
+    settings: { ...table().settings, ghost: true },
+    terminalReason: "river-complete",
+    pot: 165,
+    seats: ghostSeats([1023, 940], 60, [
+      [card(14, "s"), card(13, "s")],
+      [card(4, "d"), card(5, "s")],
+    ]),
+    awards: [
+      {
+        amount: 165,
+        winners: [{ seat: 0, amount: 83, hand: "High card" }],
+        ghost: { amount: 82, hand: "High card" },
+      },
+    ],
+    ghost: {
+      carry: 82,
+      deadMoney: 45,
+      hasCards: true,
+      cards: [card(14, "c"), card(13, "c")],
+    },
+  });
+}
+/** The split hand on the flop: Marina checked and Alex acts. */
+export function ghostHidden(): TableView {
+  return table({
+    settings: { ...table().settings, ghost: true },
+    street: "flop",
+    board: board().slice(0, 3),
+    pot: 65,
+    currentBet: 0,
+    legal: {
+      fold: true,
+      check: true,
+      call: 0,
+      minRaiseTo: 10,
+      maxRaiseTo: 990,
+    },
+    seats: ghostSeats(
+      [990, 990],
+      10,
+      [[card(14, "s"), card(13, "s")], []],
+      "active",
+      ["", "Check"],
+    ),
+    ghost: { carry: 0, deadMoney: 45, hasCards: true, cards: [] },
+  });
+}
+/** A third player checked down and left after the ghost won the 30-chip pot. */
+export function ghostCarry(): TableView {
+  return table({
+    settings: { ...table().settings, ghost: true },
+    street: "waiting",
+    actor: null,
+    deadline: null,
+    legal: null,
+    pot: 0,
+    currentBet: 0,
+    smallBlindSeat: null,
+    bigBlindSeat: null,
+    seats: ghostSeats([990, 990], 0, [[], []], "waiting"),
+    ghost: { carry: 30, deadMoney: 0, hasCards: false, cards: [] },
+  });
+}
+
 export function handList(count = 6): HandListItem[] {
   return Array.from({ length: count }, (_, n) => ({
     id: `storybook-hand-${n}`,

@@ -31,7 +31,15 @@ const definitions: Record<GameMode, GameDefinition> = {
   }),
 };
 
-export const SUPPORTED_POKER_RULES = GAME_MODES.map(mode => `${mode}:${definitions[mode].rulesVersion}`).join(",");
+// Ghost modifier rules: one hidden two-card hand that contests every showdown
+// pot, even one with a single eligible player. Clients that omit this token cannot
+// read or act on a ghost table.
+export const GHOST_RULES = "ghost:1";
+export const SUPPORTED_POKER_RULES = [...GAME_MODES.map(mode => `${mode}:${definitions[mode].rulesVersion}`), GHOST_RULES].join(",");
+
+export function modeLabel(mode: GameMode = "holdem", ghost = false): string {
+  return `${gameDefinition(mode).label}${ghost ? " · Ghost" : ""}`;
+}
 
 export function gameDefinition(mode: GameMode = "holdem", rulesVersion = 1): GameDefinition {
   if (!Object.prototype.hasOwnProperty.call(definitions, mode)) throw new Error("Unsupported poker mode.");

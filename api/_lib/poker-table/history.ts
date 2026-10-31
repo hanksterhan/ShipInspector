@@ -24,6 +24,7 @@ export function startHandRecord(t: TableState) {
     players: t.seats.filter(s => s.status !== "waiting").map(s => ({ seat: s.seat, principal: s.principal,
       name: s.name, kind: s.kind, startingStack: s.stack + s.committed, cards: s.cards.map(c => ({ ...c })) })), events: [] };
   handEvent(t, { type: "start" });
+  if (t.deadMoney > 0) handEvent(t, { type: "dead-money", amount: t.deadMoney });
   for (const [seat, blind] of [[t.smallBlindSeat, "small"], [t.bigBlindSeat, "big"]] as const) {
     const s = t.seats.find(s => s.seat === seat)!;
     handEvent(t, { type: "blind", seat: s.seat, blind, amount: s.bet });

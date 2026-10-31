@@ -1,14 +1,27 @@
 import { gameDefinition } from "@common/pokerModes";
 import { readHandRecord } from "./history";
-import { TableError, type TableState } from "./engine";
+import { inHand, TableError, type TableState } from "./engine";
 
+const chipCount = (n: unknown) => Number.isSafeInteger(n) && (n as number) >= 0;
+// Tables saved before the ghost modifier have no ghost fields. A ghost table
+// must say so in both its settings and its format, and hold a valid carryover.
+function readGhost(raw: TableState, ghost: boolean) {
+  if (!ghost) {
+    if ((raw.ghostCards?.length ?? 0) || (raw.ghostCarry ?? 0) || (raw.deadMoney ?? 0)) throw new TableError("Invalid saved ghost state.", 409);
+    return { ghostCards: [], ghostCarry: 0, deadMoney: 0 };
+  }
+  if (!Array.isArray(raw.ghostCards) || ![0, 2].includes(raw.ghostCards.length) || !chipCount(raw.ghostCarry) || !chipCount(raw.deadMoney) ||
+      (inHand(raw) && (raw.ghostCarry !== 0 || raw.ghostCards.length !== 2))) throw new TableError("Invalid saved ghost state.", 409);
+  return { ghostCards: raw.ghostCards, ghostCarry: raw.ghostCarry, deadMoney: raw.deadMoney };
+}
 export function readTableState(raw: TableState): TableState {
   if (!raw || !raw.settings || !Array.isArray(raw.board) || !Array.isArray(raw.seats) || !Array.isArray(raw.deck)) {
     throw new TableError("Invalid saved table state.", 409);
   }
   const legacy = raw.stateFormatVersion === undefined;
-  if (!legacy && raw.stateFormatVersion !== 1) throw new TableError("Unsupported saved table format.", 409);
-  if (legacy && raw.settings.gameMode && raw.settings.gameMode !== "holdem") {
+  const ghost = raw.settings.ghost === true;
+  if (!legacy && raw.stateFormatVersion !== (ghost ? 2 : 1)) throw new TableError("Unsupported saved table format.", 409);
+  if (legacy && ((raw.settings.gameMode && raw.settings.gameMode !== "holdem") || raw.settings.ghost !== undefined)) {
     throw new TableError("A legacy table cannot use new poker rules.", 409);
   }
   let rules;
@@ -24,10 +37,10 @@ export function readTableState(raw: TableState): TableState {
         throw new TableError("Invalid saved hand metadata.", 409);
       }
     }
-    return { ...raw, handRecord: raw.handRecord ?? null };
+    return { ...raw, ...readGhost(raw, ghost), handRecord: raw.handRecord ?? null };
   }
   const burns = raw.board.length >= 5 ? 3 : raw.board.length === 4 ? 2 : raw.board.length === 3 ? 1 : 0;
-  return { ...raw, handRecord: null, settings: { ...raw.settings, gameMode: rules.id }, stateFormatVersion: 1,
+  return { ...raw, ...readGhost(raw, false), handRecord: null, settings: { ...raw.settings, gameMode: rules.id }, stateFormatVersion: 1,
     rulesVersion: rules.rulesVersion, roundId: raw.handNumber ? burns + 1 : 0,
     riverNumber: raw.board.length >= 5 ? 1 : 0, burnCount: burns,
     dealtPlayerCount: raw.seats.filter(s => s.status !== "waiting").length,

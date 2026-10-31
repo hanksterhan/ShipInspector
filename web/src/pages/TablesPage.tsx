@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import {
@@ -8,10 +8,19 @@ import {
   Gamepad2,
   BrainCircuit,
   LoaderCircle,
+  Info,
 } from "lucide-react";
-import { GAME_MODES, gameDefinition, type GameMode } from "@common/pokerModes";
+import { GAME_MODES, gameDefinition, modeLabel, type GameMode } from "@common/pokerModes";
 import type { TableSummary } from "@common/interfaces/tableInterfaces";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { tableService } from "@/services/tableService";
 
 export default function TablesPage() {
@@ -27,6 +36,8 @@ export default function TablesPage() {
     user?.firstName || user?.username || "Player",
   );
   const [gameMode, setGameMode] = useState<GameMode>("holdem");
+  const [ghost, setGhost] = useState(false);
+  const ghostHelpId = useId();
   const [size, setSize] = useState(6);
   const [blind, setBlind] = useState(10);
   const [turn, setTurn] = useState(60);
@@ -54,6 +65,7 @@ export default function TablesPage() {
       const t = await tableService.create(
         {
           gameMode,
+          ...(ghost ? { ghost: true } : {}),
           name,
           maxPlayers: size,
           smallBlind: blind / 2,
@@ -120,7 +132,7 @@ export default function TablesPage() {
                   <div>
                     <strong>{t.name}</strong>
                     <span>
-                      {gameDefinition(t.gameMode).label} · {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
+                      {modeLabel(t.gameMode, t.ghost)} · {t.smallBlind}/{t.bigBlind} · {t.seats}/{t.maxPlayers}{" "}
                       seats
                     </span>
                   </div>
@@ -185,6 +197,67 @@ export default function TablesPage() {
                 {GAME_MODES.map((mode) => <option key={mode} value={mode}>{gameDefinition(mode).label}</option>)}
               </select>
             </label>
+            <div className="ghost-hand-field">
+              <label className="live-checkbox">
+                <input
+                  type="checkbox"
+                  checked={ghost}
+                  onChange={(e) => setGhost(e.target.checked)}
+                />
+                Ghost hand
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-full text-muted-foreground"
+                    aria-label="How Ghost hand works"
+                  >
+                    <Info aria-hidden="true" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  collisionPadding={16}
+                  aria-labelledby={`${ghostHelpId}-title`}
+                  aria-describedby={`${ghostHelpId}-body`}
+                  className="max-h-(--radix-popover-content-available-height) w-[min(20rem,calc(100vw-2rem))] overflow-y-auto text-sm"
+                >
+                  <PopoverHeader>
+                    <PopoverTitle id={`${ghostHelpId}-title`}>
+                      How Ghost hand works
+                    </PopoverTitle>
+                    <div id={`${ghostHelpId}-body`}>
+                      <PopoverDescription>
+                        The dealer gives a hidden ghost two cards from the same
+                        deck. It plays in Hold'em and Red River and uses the
+                        same board.
+                      </PopoverDescription>
+                      <ul className="mt-2 list-disc space-y-1.5 pl-4">
+                        <li>
+                          At showdown, players must beat the ghost to win each
+                          main pot and side pot.
+                        </li>
+                        <li>
+                          When the ghost wins a pot, the ghost's chips go into
+                          the next hand's main pot.
+                        </li>
+                        <li>
+                          A tie splits the pot with one ghost share. That share
+                          also goes into the next hand's main pot.
+                        </li>
+                        <li>
+                          If all other players fold, the winner gets the full
+                          pot. There is no ghost showdown.
+                        </li>
+                      </ul>
+                    </div>
+                  </PopoverHeader>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="live-form-grid">
               <label>
                 Seats
