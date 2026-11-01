@@ -17,10 +17,24 @@ export function sleep(ms, signal) {
   });
 }
 
+// A signal that aborts when any given signal aborts, including one that
+// aborted before this call.
+export function anySignal(signals) {
+  const controller = new AbortController();
+  for (const signal of signals) {
+    if (!signal) continue;
+    if (signal.aborted) { controller.abort(signal.reason); break; }
+    signal.addEventListener("abort", () => controller.abort(signal.reason), { once: true });
+  }
+  return controller.signal;
+}
+
 // `canPoll` lets a caller cap upstream reads for one wait; the wait then
-// returns the latest snapshot early.
-export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1000 }) {
+// returns the latest snapshot early. `signal` lets a caller cancel every
+// tool's API calls and waits, for example when its client disconnects.
+export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1000, signal }) {
   const server = new McpServer({ name: "shipinspector-poker", version: "1.0.0" });
+  const stopFor = extra => signal ? anySignal([extra?.signal, signal]) : extra?.signal;
   const version = z.number().int().nonnegative().describe("The version from your latest table snapshot. Refresh on a conflict.");
   const requestId = z.string().uuid().describe("A new UUID for this command. Reuse it only to retry the exact same command.");
   // An authenticated table read can commit a due CPU move or turn timeout, so it is not read-only.
@@ -29,7 +43,7 @@ export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1
   const writeAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false };
   const result = table => ({ content: [{ type: "text", text: JSON.stringify(table) }], structuredContent: table });
   const safe = callback => async (args, extra) => {
-    try { return result(await callback(args, extra)); }
+    try { return result(await callback(args, { ...extra, signal: stopFor(extra) })); }
     catch (error) { return { isError: true, content: [{ type: "text", text: error instanceof Error ? error.message : "Poker request failed." }] }; }
   };
   server.registerTool("poker_get_table", {
@@ -37,15 +51,23 @@ export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1
     inputSchema: {}, annotations: pollAnnotations,
   }, safe((_, extra) => request("", undefined, extra.signal)));
   server.registerTool("poker_wait_for_turn", {
-    description: "Wait up to 25 seconds for your turn, the end of a hand, or a table close. Returns the latest snapshot even on timeout. Call again if another player still has the turn. Each poll can commit a due CPU move or turn timeout.",
+    description: "Wait up to 25 seconds for your turn, the end of a hand, or a table close. Returns the latest snapshot even on timeout. A slow first read can take longer. Call again if another player still has the turn. Each poll can commit a due CPU move or turn timeout.",
     inputSchema: { seconds: z.number().int().min(1).max(25).default(20) }, annotations: pollAnnotations,
   }, safe(async ({ seconds }, extra) => {
     const until = Date.now() + seconds * 1000;
-    do {
-      const table = await request("", undefined, extra.signal);
+    // The first read has only the API timeout, so a wait always has a snapshot.
+    // Later reads stop at the deadline, which returns the previous snapshot.
+    let table = await request("", undefined, extra.signal);
+    for (;;) {
       if (table.closed || table.legal || ["waiting", "complete"].includes(table.street) || Date.now() >= until || !canPoll()) return table;
-      await sleep(Math.min(pollMs, Math.max(1, until - Date.now())), extra.signal);
-    } while (true);
+      await sleep(Math.min(pollMs, until - Date.now()), extra.signal);
+      if (Date.now() >= until) return table;
+      const deadline = new AbortController();
+      const timer = setTimeout(() => deadline.abort(new Error("wait deadline")), until - Date.now());
+      try { table = await request("", undefined, anySignal([extra.signal, deadline.signal])); }
+      catch (error) { if (deadline.signal.aborted && !extra.signal?.aborted) return table; throw error; }
+      finally { clearTimeout(timer); }
+    }
   }));
   server.registerTool("poker_act", {
     description: "Take one legal poker action using a current snapshot. raiseTo is the TOTAL current-round bet, not the amount to add. All-in uses action raise and legal.maxRaiseTo, or call for a short all-in call. Never guess hidden cards or act out of turn.",
@@ -68,7 +90,7 @@ export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1
     inputSchema: { handNumber: z.number().int().positive() }, annotations: readAnnotations,
   }, safe(({ handNumber }, extra) => request(`/hands/${handNumber}`, undefined, extra.signal)));
   server.registerResource("poker_rules", "poker://rules", { mimeType: "text/plain" }, async (uri, extra) => {
-    const table = await request("", undefined, extra?.signal);
+    const table = await request("", undefined, stopFor(extra));
     return { contents: [{ uri: uri.href, text: rulesText(table) }] };
   });
   return server;

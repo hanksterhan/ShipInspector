@@ -4,7 +4,7 @@
 import { createServer } from "node:net";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { devArgs, root, runWrangler } from "../scripts/offline.mjs";
 
@@ -60,7 +60,11 @@ export function variantConfig(name, edit) {
 // Start the gateway with `wrangler dev` (workerd through Miniflare).
 export async function startGateway({ upstream, config = "wrangler.toml", vars = {}, ready = 200 }) {
   const port = await freePort();
-  const child = runWrangler(devArgs({ port, upstream, config, vars }), { stdio: ["ignore", "pipe", "pipe"] });
+  // Wrangler keeps local rate-limit counts on disk. A fresh directory for each
+  // gateway keeps one test's counts out of the next test's buckets.
+  const state = join(root, ".wrangler", "test-state", `${Date.now()}-${port}`);
+  rmSync(state, { recursive: true, force: true });
+  const child = runWrangler([...devArgs({ port, upstream, config, vars }), "--persist-to", state], { stdio: ["ignore", "pipe", "pipe"] });
   let output = "";
   child.stdout.on("data", chunk => { output += chunk; });
   child.stderr.on("data", chunk => { output += chunk; });
@@ -84,11 +88,13 @@ export async function startGateway({ upstream, config = "wrangler.toml", vars = 
     async stop(name) {
       // Keep the runtime output as evidence. It is checked for secrets in the tests.
       if (name) { mkdirSync(evidence, { recursive: true }); writeFileSync(join(evidence, `${name}.gateway.log`), output); }
-      if (child.exitCode !== null) return;
-      const exited = new Promise(resolve => child.once("exit", resolve));
-      child.kill("SIGTERM");
-      await Promise.race([exited, new Promise(resolve => setTimeout(resolve, 5000))]);
-      if (child.exitCode === null) child.kill("SIGKILL");
+      if (child.exitCode === null) {
+        const exited = new Promise(resolve => child.once("exit", resolve));
+        child.kill("SIGTERM");
+        await Promise.race([exited, new Promise(resolve => setTimeout(resolve, 5000))]);
+        if (child.exitCode === null) child.kill("SIGKILL");
+      }
+      rmSync(state, { recursive: true, force: true });
     },
   };
 }

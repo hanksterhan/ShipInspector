@@ -176,6 +176,47 @@ test("rejects bad methods, media types, bodies, and messages before calling the 
   assert.equal(unknown.json.error.code, -32601);
 });
 
+// The gateway checks the full envelope with the SDK's own JSON-RPC schema, so
+// a message the transport would refuse never costs a credential check.
+test("refuses invalid JSON-RPC envelopes with a valid credential and no API call", async () => {
+  const { grants } = await table(["Solo"]);
+  const token = grants[0].token;
+  const headers = { "Mcp-Protocol-Version": "2025-06-18" };
+  const invalid = [
+    { jsonrpc: "2.0" },
+    { jsonrpc: "2.0", id: [], method: "tools/list" },
+    { jsonrpc: "2.0", id: {}, method: "tools/list" },
+    { jsonrpc: "2.0", id: null, method: "tools/list" },
+    { jsonrpc: "2.0", id: 1.5, method: "tools/list" },
+    { jsonrpc: "2.0", id: 1, method: 7 },
+    { jsonrpc: "2.0", id: 1, method: "tools/list", params: "x" },
+    { jsonrpc: "2.0", id: 1, method: "tools/list", params: 3 },
+    { jsonrpc: "2.0", id: 1, method: "tools/list", params: [] },
+    { jsonrpc: "2.0", method: "notifications/initialized", params: "x" },
+    { jsonrpc: "2.0", id: 1 },
+    { jsonrpc: "2.0", id: 1, result: "x" },
+    { jsonrpc: "2.0", id: 1, error: { message: "no code" } },
+    { jsonrpc: "2.0", id: 1, method: "tools/list", extra: true },
+    { jsonrpc: 2, id: 1, method: "tools/list" },
+    { id: 1, method: "tools/list" },
+  ];
+  for (const message of invalid) {
+    const mark = api.calls.length;
+    const response = await body(await rpc(gateway.endpoint, message, { token, headers }));
+    assert.equal(response.status, 400, JSON.stringify(message));
+    assert.equal(response.json.error.code, -32600, JSON.stringify(message));
+    assert.equal(since(mark).length, 0, JSON.stringify(message));
+  }
+  // Valid notifications and responses are accepted (202) after the credential check.
+  for (const message of [{ jsonrpc: "2.0", method: "notifications/initialized" }, { jsonrpc: "2.0", id: 4, result: {} },
+    { jsonrpc: "2.0", id: 5, error: { code: -32000, message: "client error" } }]) {
+    const mark = api.calls.length;
+    const response = await rpc(gateway.endpoint, message, { token, headers });
+    assert.equal(response.status, 202, JSON.stringify(message));
+    assert.deepEqual(since(mark).map(c => c.path), [`/api/tables/${grants[0].table.id}/session`]);
+  }
+});
+
 test("serves static discovery documents without calling the API", async () => {
   const mark = api.calls.length;
   const llms = await fetch(`${gateway.url}/llms.txt`);

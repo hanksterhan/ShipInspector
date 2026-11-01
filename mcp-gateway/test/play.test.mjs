@@ -128,6 +128,69 @@ for (const [label, mode] of modes) test(`${label}: two remote clients play two h
   } finally { await Promise.all(clients.map(c => c.close())); }
 });
 
+// The command that ends a hand also pays the pots, moves the ghost's chips,
+// and archives the hand. Replaying it exactly must change none of that.
+test("an exact retry of the hand's final command changes no stacks, awards, ghost carry, or archive", { timeout: 120000 }, async () => {
+  const host = `gateway-retry-${randomUUID()}`;
+  let view = await api.service.create(host, { gameMode: "red-river-holdem", ghost: true, name: "Final retry", maxPlayers: 2, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 120 });
+  const grants = [];
+  for (const name of ["Alpha", "Beta"]) { const grant = await api.service.issueAgent(view.id, host, view.version, randomUUID(), name); grants.push(grant); view = grant.table; }
+  const clients = [await connect(gateway.endpoint, grants[0].token, "alpha"), await connect(gateway.endpoint, grants[1].token, "beta")];
+  try {
+    const calls = clients.map(caller);
+    const seatOf = [];
+    for (let i = 0; i < 2; i++) {
+      view = await calls[i]("poker_get_table"); seatOf[i] = view.yourSeat;
+      view = await calls[i]("poker_ready", { version: view.version, requestId: randomUUID(), ready: true });
+    }
+    view = await calls[0]("poker_deal", { version: view.version, requestId: randomUUID() });
+    await stackGhostWin(view);
+    view = await calls[0]("poker_get_table");
+    let last;
+    for (let actions = 0; view.street !== "complete" && actions < 60; actions++) {
+      const i = seatOf.indexOf(view.actor);
+      view = await calls[i]("poker_wait_for_turn", { seconds: 5 });
+      if (view.street === "complete") break;
+      const args = { version: view.version, requestId: randomUUID(), action: view.legal.check ? "check" : "call" };
+      view = await calls[i]("poker_act", args);
+      last = { i, args, result: view };
+    }
+    // The kept command is the one that completed the hand and paid the ghost.
+    assert.equal(last.result.street, "complete");
+    assert.deepEqual(last.result.awards, [{ amount: 20, winners: [], ghost: { amount: 20, hand: "Three of a kind" } }]);
+    assert.equal(last.result.ghost.carry, 20);
+    const stacks = v => v.seats.map(s => [s.seat, s.stack]);
+    const archive = async () => (await api.store.query("SELECT hand_number, record FROM poker_hand_records WHERE table_id = $1 ORDER BY hand_number", [view.id]));
+    const saved = await api.store.get(view.id);
+    const archived = await archive();
+    assert.equal(archived.length, 1);
+    // Replay the final command unchanged: on the same connection, then from a new one.
+    clients.push(await connect(gateway.endpoint, grants[last.i].token, "replay"));
+    for (const call of [calls[last.i], caller(clients[2])]) {
+      const retry = await call("poker_act", last.args);
+      assert.equal(retry.version, last.result.version);
+      assert.equal(retry.street, "complete");
+      assert.deepEqual(stacks(retry), stacks(last.result));
+      assert.deepEqual(retry.awards, last.result.awards);
+      assert.deepEqual(retry.ghost, last.result.ghost);
+    }
+    const after = await api.store.get(view.id);
+    assert.equal(after.version, saved.version);
+    assert.deepEqual(after.seats.map(s => [s.seat, s.stack]), saved.seats.map(s => [s.seat, s.stack]));
+    assert.equal(saved.ghostCarry, 20);
+    assert.equal(after.ghostCarry, saved.ghostCarry);
+    assert.equal(after.deadMoney, saved.deadMoney);
+    assert.deepEqual(await archive(), archived);
+    // Chips are conserved, and the one archive agrees with the stacks.
+    assert.equal(last.result.seats.reduce((sum, s) => sum + s.stack, 0) + last.result.ghost.carry, 2000);
+    const record = await calls[0]("poker_get_hand", { handNumber: 1 });
+    assert.equal(record.events.filter(e => e.type === "end").length, 1);
+    assert.equal(record.events.filter(e => e.type === "award").length, 1);
+    assert.equal(ghostTake(record), 20);
+    for (const seat of seatOf) assert.equal(eventNet(record, seat), last.result.seats.find(s => s.seat === seat).stack - 1000);
+  } finally { await Promise.all(clients.map(c => c.close())); }
+});
+
 test("gateway logs never hold credentials, cards, or request bodies", () => {
   const logs = gateway.logs();
   assert.match(logs, /"event":"request"/);

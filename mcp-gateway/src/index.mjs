@@ -3,7 +3,7 @@
 // authenticated is shared between requests. The table API stays the only
 // authority: the gateway checks the credential there on every request.
 import { createPokerMcpServer, TOOL_NAMES } from "../../mcp/src/tools.mjs";
-import { SUPPORTED_PROTOCOL_VERSIONS, WebStandardStreamableHTTPServerTransport } from "../../mcp/src/http.mjs";
+import { JSONRPCMessageSchema, SUPPORTED_PROTOCOL_VERSIONS, WebStandardStreamableHTTPServerTransport } from "../../mcp/src/http.mjs";
 import { ConfigError, readConfig } from "./config.mjs";
 import { homePage, llmsText } from "./docs.mjs";
 import { createUpstream, GatewayError, mediaType, readLimited } from "./upstream.mjs";
@@ -97,6 +97,19 @@ async function handleMcp(request, config, facts) {
   if (request.method !== "POST") return failure(405, "This server keeps no session. Send each MCP message with POST.", { ...cors, Allow: "POST" });
   const respond = response => { for (const [k, v] of Object.entries({ ...SECURITY_HEADERS, ...cors })) response.headers.set(k, v); return response; };
 
+  // Stop all API work once the runtime reports a disconnect
+  // (enable_request_signal), even one reported before this point. Local
+  // workerd does not report one, so a wait's deadline and call cap are the
+  // bounds there. A command already sent is not rolled back.
+  const cancel = new AbortController();
+  const disconnect = () => cancel.abort(new Error("client disconnected"));
+  if (request.signal?.aborted) disconnect(); else request.signal?.addEventListener?.("abort", disconnect, { once: true });
+  const cancelled = () => {
+    if (!cancel.signal.aborted) return null;
+    facts.error = "cancelled";
+    return respond(failure(499, "The request was cancelled."));
+  };
+
   // Cheap checks first: none of these reach the table API.
   const authorization = request.headers.get("authorization");
   if (!authorization) return respond(unauthorized("Send your seat credential in the Authorization header as a Bearer token."));
@@ -108,12 +121,16 @@ async function handleMcp(request, config, facts) {
   if (!accept.includes("application/json") || !accept.includes("text/event-stream")) return respond(failure(406, "Accept must include application/json and text/event-stream."));
   const protocol = request.headers.get("mcp-protocol-version");
   if (protocol !== null && !SUPPORTED_PROTOCOL_VERSIONS.includes(protocol)) return respond(failure(400, "Unsupported MCP protocol version."));
-  const bytes = await readLimited(request.body, MAX_BODY_BYTES, request.headers.get("content-length"));
+  let bytes;
+  try { bytes = await readLimited(request.body, MAX_BODY_BYTES, request.headers.get("content-length"), cancel.signal); }
+  catch { return cancelled() ?? respond(failure(400, "The request body could not be read.")); }
   if (bytes === null) return respond(failure(413, `Request body exceeds ${MAX_BODY_BYTES} bytes.`));
   let message;
   try { message = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); }
   catch { return respond(failure(400, "Parse error: send one JSON-RPC message.", {}, -32700)); }
-  if (!message || typeof message !== "object" || Array.isArray(message) || message.jsonrpc !== "2.0") {
+  // The SDK transport's own schema, so the gateway refuses exactly what the
+  // transport would refuse, but before any API call.
+  if (Array.isArray(message) || !JSONRPCMessageSchema.safeParse(message).success) {
     return respond(failure(400, "Send exactly one JSON-RPC 2.0 message in each request.", {}, -32600));
   }
   if (typeof message.method === "string") facts.rpc = RPC_METHODS.has(message.method) ? message.method : "other";
@@ -126,26 +143,26 @@ async function handleMcp(request, config, facts) {
       return respond(failure(429, "Too many requests for this credential. Wait a minute and try again.", { "Retry-After": "60" }));
     }
   } catch { return respond(failure(503, "The gateway cannot check request limits right now.")); }
+  const early = cancelled();
+  if (early) return early;
 
-  // Stop API calls if the runtime reports a disconnect (enable_request_signal).
-  // Local workerd does not report one, so a wait's deadline and call cap are
-  // the guaranteed bounds.
-  const cancel = new AbortController();
-  request.signal?.addEventListener?.("abort", () => cancel.abort(new Error("client disconnected")), { once: true });
   const budget = { used: 0, max: MAX_UPSTREAM_CALLS };
   const upstream = createUpstream({ origin: config.upstream, tableId, token, credentialKey, limiters: config.limiters, budget, signal: cancel.signal });
   try {
     try { await upstream.request("/session"); }
     catch (error) {
       if (!(error instanceof GatewayError)) throw error;
+      if (cancel.signal.aborted) return cancelled();
       if (error.status === 401 || error.status === 404) return respond(unauthorized("Agent credential is invalid, expired, or revoked."));
       if (error.status === 403) return respond(failure(403, "This credential cannot use this table."));
       if (error.status === 429) return respond(failure(429, error.message, { "Retry-After": "10" }));
       if (error.status === 426) return respond(failure(503, "This gateway does not support the table's rules yet."));
       return respond(failure(502, "The poker API is unavailable. Try again shortly."));
     }
+    const late = cancelled();
+    if (late) return late;
     // Leave one call spare so a wait never ends on a refused poll.
-    const server = createPokerMcpServer({ request: upstream.request, canPoll: () => budget.used < budget.max - 1 });
+    const server = createPokerMcpServer({ request: upstream.request, canPoll: () => budget.used < budget.max - 1, signal: cancel.signal });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     try {
       await server.connect(transport);
