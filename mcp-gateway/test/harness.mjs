@@ -4,12 +4,15 @@
 import { createServer } from "node:net";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { devArgs, root, runWrangler } from "../scripts/offline.mjs";
 
 const repo = join(root, "..");
-const evidence = process.env.GATEWAY_EVIDENCE_DIR || join(root, ".wrangler", "test-logs");
+// Two test runs in one checkout must not share files: see variantConfig().
+const runId = `run-${Date.now()}-${process.pid}-${randomBytes(4).toString("hex")}`;
+export const evidenceDir = process.env.GATEWAY_EVIDENCE_DIR || join(root, ".wrangler", "test-logs", runId);
 const apiRequire = createRequire(join(repo, "api", "package.json"));
 const mcpRequire = createRequire(join(repo, "mcp", "package.json"));
 const sdk = path => import(mcpRequire.resolve(`@modelcontextprotocol/sdk/${path}`));
@@ -50,19 +53,24 @@ export async function startApi() {
 }
 
 // Write a variant of wrangler.toml for one test (for example tiny limits).
+// `wrangler dev` reloads when its config file changes and answers an open
+// POST with its own 503, so each call writes a new file that no other test
+// or run writes again.
 export function variantConfig(name, edit) {
-  const file = join(root, ".wrangler", `test-${name}.toml`);
-  copyFileSync(join(root, "wrangler.toml"), file);
-  writeFileSync(file, edit(readFileSync(file, "utf8")).replace('main = "src/index.mjs"', `main = "${join(root, "src", "index.mjs")}"`));
+  const dir = join(root, ".wrangler", "test-configs");
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `${name}-${runId}-${randomBytes(4).toString("hex")}.toml`);
+  writeFileSync(file, edit(readFileSync(join(root, "wrangler.toml"), "utf8")).replace('main = "src/index.mjs"', `main = "${join(root, "src", "index.mjs")}"`));
   return file;
 }
 
-// Start the gateway with `wrangler dev` (workerd through Miniflare).
-export async function startGateway({ upstream, config = "wrangler.toml", vars = {}, ready = 200 }) {
+// Start the gateway with `wrangler dev` (workerd through Miniflare). An abort
+// of `signal` while it starts stops Wrangler and throws.
+export async function startGateway({ upstream, config = "wrangler.toml", vars = {}, ready = 200, signal }) {
   const port = await freePort();
   // Wrangler keeps local rate-limit counts on disk. A fresh directory for each
   // gateway keeps one test's counts out of the next test's buckets.
-  const state = join(root, ".wrangler", "test-state", `${Date.now()}-${port}`);
+  const state = join(root, ".wrangler", "test-state", `${runId}-${port}`);
   rmSync(state, { recursive: true, force: true });
   const child = runWrangler([...devArgs({ port, upstream, config, vars }), "--persist-to", state], { stdio: ["ignore", "pipe", "pipe"] });
   let output = "";
@@ -73,8 +81,11 @@ export async function startGateway({ upstream, config = "wrangler.toml", vars = 
   for (;;) {
     if (child.exitCode !== null) throw new Error(`wrangler dev exited early:\n${output}`);
     // A deliberately broken config answers 503 once the runtime is up.
-    try { if ((await fetch(`${url}/llms.txt`)).status === ready) break; } catch {}
-    if (Date.now() > deadline) { child.kill("SIGTERM"); throw new Error(`wrangler dev did not start:\n${output}`); }
+    try { if ((await fetch(`${url}/llms.txt`, { signal: AbortSignal.timeout(5000) })).status === ready) break; } catch {}
+    if (Date.now() > deadline || signal?.aborted) {
+      child.kill("SIGTERM");
+      throw new Error(signal?.aborted ? "wrangler dev start was stopped" : `wrangler dev did not start:\n${output}`);
+    }
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   return {
@@ -87,14 +98,17 @@ export async function startGateway({ upstream, config = "wrangler.toml", vars = 
     },
     async stop(name) {
       // Keep the runtime output as evidence. It is checked for secrets in the tests.
-      if (name) { mkdirSync(evidence, { recursive: true }); writeFileSync(join(evidence, `${name}.gateway.log`), output); }
+      if (name) { mkdirSync(evidenceDir, { recursive: true }); writeFileSync(join(evidenceDir, `${name}.gateway.log`), output); }
       if (child.exitCode === null) {
         const exited = new Promise(resolve => child.once("exit", resolve));
         child.kill("SIGTERM");
-        await Promise.race([exited, new Promise(resolve => setTimeout(resolve, 5000))]);
+        let timer;
+        await Promise.race([exited, new Promise(resolve => { timer = setTimeout(resolve, 5000); })]);
+        clearTimeout(timer);
         if (child.exitCode === null) child.kill("SIGKILL");
       }
       rmSync(state, { recursive: true, force: true });
+      if (config.startsWith(join(root, ".wrangler", "test-configs"))) rmSync(config, { force: true });
     },
   };
 }
