@@ -32,7 +32,9 @@ export function anySignal(signals) {
 // `canPoll` lets a caller cap upstream reads for one wait; the wait then
 // returns the latest snapshot early. `signal` lets a caller cancel every
 // tool's API calls and waits, for example when its client disconnects.
-export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1000, signal }) {
+// `errorText` picks the text a client sees for a failed tool or rules read.
+const messageOf = error => (error instanceof Error ? error.message : "Poker request failed.");
+export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1000, signal, errorText = messageOf }) {
   const server = new McpServer({ name: "shipinspector-poker", version: "1.0.0" });
   const stopFor = extra => signal ? anySignal([extra?.signal, signal]) : extra?.signal;
   const version = z.number().int().nonnegative().describe("The version from your latest table snapshot. Refresh on a conflict.");
@@ -44,7 +46,7 @@ export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1
   const result = table => ({ content: [{ type: "text", text: JSON.stringify(table) }], structuredContent: table });
   const safe = callback => async (args, extra) => {
     try { return result(await callback(args, { ...extra, signal: stopFor(extra) })); }
-    catch (error) { return { isError: true, content: [{ type: "text", text: error instanceof Error ? error.message : "Poker request failed." }] }; }
+    catch (error) { return { isError: true, content: [{ type: "text", text: errorText(error) }] }; }
   };
   server.registerTool("poker_get_table", {
     description: "Read your reserved private table, your hole cards, public cards, game mode, rules version, roundId, numbered rivers, legal actions, and the current version. Opponent hole cards stay hidden until showdown. On a Ghost table, ghost shows the carryover and dead money; its cards stay hidden until showdown. A read can also commit a due CPU move or turn timeout.",
@@ -90,15 +92,18 @@ export function createPokerMcpServer({ request, canPoll = () => true, pollMs = 1
     inputSchema: { handNumber: z.number().int().positive() }, annotations: readAnnotations,
   }, safe(({ handNumber }, extra) => request(`/hands/${handNumber}`, undefined, extra.signal)));
   server.registerResource("poker_rules", "poker://rules", { mimeType: "text/plain" }, async (uri, extra) => {
-    const table = await request("", undefined, stopFor(extra));
-    return { contents: [{ uri: uri.href, text: rulesText(table) }] };
+    let text;
+    try { text = rulesText(await request("", undefined, stopFor(extra))); }
+    catch (error) { throw new Error(errorText(error)); }
+    return { contents: [{ uri: uri.href, text }] };
   });
   return server;
 }
 
+export const RULES_UNSUPPORTED = "Update this MCP client to support these table rules.";
 export function rulesText(table) {
   const mode = table.settings.gameMode || "holdem";
-  if (!["holdem", "red-river-holdem"].includes(mode) || (table.rulesVersion ?? 1) !== 1) throw new Error("Update this MCP client to support these table rules.");
+  if (!["holdem", "red-river-holdem"].includes(mode) || (table.rulesVersion ?? 1) !== 1) throw new Error(RULES_UNSUPPORTED);
   const variant = mode === "red-river-holdem"
     ? "Red River Hold'em: after betting on a red river, burn one card and append another river. Bet on every river, including the first black river, then show down. Keep all board cards and select the best five from the full board and your two hole cards. All-ins run out to the same stop. If fewer than two cards remain after betting, show down on the current board; terminalReason is deck-exhausted. A fold to one player ends the hand at once."
     : "No-limit Texas Hold'em: use the best five from your two hole cards and the five-card board. Complete river betting before showdown.";

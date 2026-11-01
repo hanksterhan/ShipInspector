@@ -2,11 +2,11 @@
 // server, transport, and API client for one credential, so nothing
 // authenticated is shared between requests. The table API stays the only
 // authority: the gateway checks the credential there on every request.
-import { createPokerMcpServer, TOOL_NAMES } from "../../mcp/src/tools.mjs";
+import { createPokerMcpServer, RULES_UNSUPPORTED, TOOL_NAMES } from "../../mcp/src/tools.mjs";
 import { JSONRPCMessageSchema, SUPPORTED_PROTOCOL_VERSIONS, WebStandardStreamableHTTPServerTransport } from "../../mcp/src/http.mjs";
 import { ConfigError, readConfig } from "./config.mjs";
 import { homePage, llmsText } from "./docs.mjs";
-import { createUpstream, GatewayError, mediaType, readLimited } from "./upstream.mjs";
+import { admit, CANCELLED, createUpstream, GatewayError, LimitError, LIMITS_DOWN, mediaType, readLimited } from "./upstream.mjs";
 
 // The entry module may export only handlers, so these limits stay private.
 const MAX_BODY_BYTES = 64 * 1024;
@@ -65,11 +65,15 @@ async function handle(request, env, facts) {
   // a caller cannot pick its own bucket; X-Forwarded-For is never read.
   const ip = config.ipHeader === "cf-connecting-ip" ? request.headers.get("cf-connecting-ip") || "unknown" : "local";
   try {
-    if (!(await config.limiters.admission.limit({ key: await sha256(`ip:${ip}`) })).success) {
+    if (!(await admit(config.limiters.admission, await sha256(`ip:${ip}`), request.signal))) {
       facts.route = "limited";
       return failure(429, "Too many requests. Wait a minute and try again.", { "Retry-After": "60" });
     }
-  } catch { return failure(503, "The gateway cannot check request limits right now."); }
+  } catch (error) {
+    if (error instanceof LimitError) return failure(503, LIMITS_DOWN);
+    facts.error = "cancelled";
+    return failure(499, "The request was cancelled.");
+  }
   const head = request.method === "HEAD";
   if (url.pathname === "/" || url.pathname === "/llms.txt") {
     facts.route = "docs";
@@ -139,10 +143,10 @@ async function handleMcp(request, config, facts) {
   const credentialKey = await sha256(`credential:${token}`);
   facts.credential = credentialKey.slice(0, 12);
   try {
-    if (!(await config.limiters.credential.limit({ key: credentialKey })).success) {
+    if (!(await admit(config.limiters.credential, credentialKey, cancel.signal))) {
       return respond(failure(429, "Too many requests for this credential. Wait a minute and try again.", { "Retry-After": "60" }));
     }
-  } catch { return respond(failure(503, "The gateway cannot check request limits right now.")); }
+  } catch { return cancelled() ?? respond(failure(503, LIMITS_DOWN)); }
   const early = cancelled();
   if (early) return early;
 
@@ -153,6 +157,7 @@ async function handleMcp(request, config, facts) {
     catch (error) {
       if (!(error instanceof GatewayError)) throw error;
       if (cancel.signal.aborted) return cancelled();
+      if (error instanceof LimitError) return respond(failure(503, LIMITS_DOWN));
       if (error.status === 401 || error.status === 404) return respond(unauthorized("Agent credential is invalid, expired, or revoked."));
       if (error.status === 403) return respond(failure(403, "This credential cannot use this table."));
       if (error.status === 429) return respond(failure(429, error.message, { "Retry-After": "10" }));
@@ -161,8 +166,14 @@ async function handleMcp(request, config, facts) {
     }
     const late = cancelled();
     if (late) return late;
+    // A client sees only gateway messages, which are fixed or exact API
+    // messages, never text from another error.
+    const errorText = error => {
+      if (error instanceof GatewayError || (error instanceof Error && error.message === RULES_UNSUPPORTED)) return error.message;
+      return cancel.signal.aborted ? CANCELLED : "The gateway could not finish this call. Try again shortly.";
+    };
     // Leave one call spare so a wait never ends on a refused poll.
-    const server = createPokerMcpServer({ request: upstream.request, canPoll: () => budget.used < budget.max - 1, signal: cancel.signal });
+    const server = createPokerMcpServer({ request: upstream.request, canPoll: () => budget.used < budget.max - 1, signal: cancel.signal, errorText });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     try {
       await server.connect(transport);

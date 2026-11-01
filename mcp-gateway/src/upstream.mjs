@@ -7,6 +7,8 @@ import { anySignal, SUPPORTED_RULES } from "../../mcp/src/tools.mjs";
 
 export const MAX_UPSTREAM_BYTES = 512 * 1024;
 export const UPSTREAM_TIMEOUT_MS = 12000;
+// A rate-limit binding answers from a local cache, so a slow reply is a fault.
+export const LIMIT_TIMEOUT_MS = 3000;
 const PATH = /^(?:|\/session|\/commands|\/hands\/[1-9][0-9]{0,8})$/;
 // The API's own messages that an agent can act on, by status. A message must
 // match exactly. Any other text, such as a validation detail or a server
@@ -33,10 +35,40 @@ const GENERIC = {
 };
 const UNEXPECTED = "The poker API returned an unexpected response. Try again shortly.";
 const UNREACHABLE = "Could not reach the poker API. Retry with the same requestId if an action was sent.";
-const CANCELLED = "The request was cancelled. Retry with the same requestId if an action was sent.";
+export const CANCELLED = "The request was cancelled. Retry with the same requestId if an action was sent.";
+export const LIMITS_DOWN = "The gateway cannot check request limits right now.";
 
 export class GatewayError extends Error {
   constructor(status, message) { super(message); this.name = "GatewayError"; this.status = status; }
+}
+// A rate-limit binding failed. Its own error never leaves the gateway.
+export class LimitError extends GatewayError {
+  constructor() { super(503, LIMITS_DOWN); this.name = "LimitError"; }
+}
+
+// Ask one rate-limit binding whether `key` may go on. A throw, a rejection, a
+// reply with no boolean `success`, or no reply within `timeoutMs` is a
+// LimitError. A cancel ends the wait at once with a 499. A reply that comes
+// after either is dropped, so it cannot start work or go unhandled.
+export async function admit(binding, key, signal, timeoutMs = LIMIT_TIMEOUT_MS) {
+  if (signal?.aborted) throw new GatewayError(499, CANCELLED);
+  let reply;
+  try { reply = Promise.resolve(binding.limit({ key })); } catch { throw new LimitError(); }
+  reply.catch(() => {});
+  let timer; let onAbort;
+  const stopped = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new LimitError()), timeoutMs);
+    onAbort = () => reject(new GatewayError(499, CANCELLED));
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+  stopped.catch(() => {});
+  let success;
+  try { success = (await Promise.race([reply, stopped]))?.success; }
+  catch (error) { throw error instanceof GatewayError ? error : new LimitError(); }
+  finally { clearTimeout(timer); signal?.removeEventListener("abort", onAbort); }
+  if (signal?.aborted) throw new GatewayError(499, CANCELLED);
+  if (typeof success !== "boolean") throw new LimitError();
+  return success;
 }
 
 // Pass through only an exact known API message. Anything else gets a fixed
@@ -86,16 +118,23 @@ export async function readLimited(stream, max, declared, signal) {
 
 export function createUpstream({ origin, tableId, token, credentialKey, limiters, budget, signal, fetchImpl = fetch, timeoutMs = UPSTREAM_TIMEOUT_MS }) {
   const endpoint = `${origin}/api/tables/${tableId}`;
+  // Callers get only a GatewayError, whose message is fixed or an exact API
+  // message. Any other error becomes the fixed unexpected-response message.
   async function request(path, body, callSignal) {
+    try { return await send(path, body, callSignal); }
+    catch (error) { throw error instanceof GatewayError ? error : new GatewayError(502, UNEXPECTED); }
+  }
+  async function send(path, body, callSignal) {
     if (!PATH.test(path)) throw new GatewayError(400, "Unknown poker API path.");
     // Once the request or call is cancelled, start no more API work.
     const stop = anySignal([signal, callSignal]);
     if (stop.aborted) throw new GatewayError(499, CANCELLED);
     if (budget.used >= budget.max) throw new GatewayError(429, "This request reached its poker API call limit. Call the tool again.");
     budget.used++;
-    // Count every API call, including each poll inside one wait.
-    const [own, total] = await Promise.all([limiters.upstream.limit({ key: credentialKey }), limiters.gateway.limit({ key: "all" })]);
-    if (!own.success || !total.success) throw new GatewayError(429, "Too many poker API calls. Wait a few seconds before the next call.");
+    // Count every API call, including each poll inside one wait. A cancel or
+    // a wait's deadline ends a pending check at once.
+    const [own, total] = await Promise.all([admit(limiters.upstream, credentialKey, stop), admit(limiters.gateway, "all", stop)]);
+    if (!own || !total) throw new GatewayError(429, "Too many poker API calls. Wait a few seconds before the next call.");
     if (stop.aborted) throw new GatewayError(499, CANCELLED);
     // One timer covers the whole call: connecting, headers, and body.
     const timer = new AbortController();

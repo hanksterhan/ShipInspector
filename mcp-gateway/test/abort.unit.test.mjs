@@ -98,7 +98,10 @@ test("an abort during a wait's sleep ends it with no later poll", async () => {
   setTimeout(() => controller.abort(), 1500);
   const response = await worker.fetch(post(wait, controller.signal), env());
   const elapsed = Date.now() - started;
-  assert.equal((await response.json()).result.isError, true);
+  const result = (await response.json()).result;
+  assert.equal(result.isError, true);
+  // The abort reason is internal; the client sees the fixed cancel message.
+  assert.equal(result.content[0].text, "The request was cancelled. Retry with the same requestId if an action was sent.");
   assert.ok(elapsed < 1900, `elapsed ${elapsed}`);
   const polls = calls.filter(c => c.path === "/");
   assert.equal(polls.length, 2);
