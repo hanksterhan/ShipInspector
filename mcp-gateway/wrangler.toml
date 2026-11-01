@@ -3,7 +3,8 @@
 name = "shipinspector-mcp-gateway"
 main = "src/index.mjs"
 compatibility_date = "2026-10-23"
-# Lets a client disconnect cancel table API calls and waits.
+# Lets a reported client disconnect cancel table API calls and waits. Local
+# workerd does not report disconnects; each wait still ends at its deadline.
 compatibility_flags = ["enable_request_signal"]
 workers_dev = false
 preview_urls = false

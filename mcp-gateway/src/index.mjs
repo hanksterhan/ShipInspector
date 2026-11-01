@@ -58,8 +58,9 @@ async function handle(request, env, facts) {
     console.error(JSON.stringify({ event: "config_error", setting: error.setting }));
     return failure(503, "The gateway is not configured.");
   }
-  const url = new URL(request.url);
-  if (!config.hosts.has(url.host.toLowerCase())) { facts.route = "bad-host"; return failure(421, "Unknown host."); }
+  let url;
+  try { url = new URL(request.url); } catch { url = null; }
+  if (!url || !config.hosts.has(url.host.toLowerCase())) { facts.route = "bad-host"; return failure(421, "Unknown host."); }
   // CF-Connecting-IP is set by Cloudflare's edge. Local configs use "none" so
   // a caller cannot pick its own bucket; X-Forwarded-For is never read.
   const ip = config.ipHeader === "cf-connecting-ip" ? request.headers.get("cf-connecting-ip") || "unknown" : "local";
@@ -126,7 +127,9 @@ async function handleMcp(request, config, facts) {
     }
   } catch { return respond(failure(503, "The gateway cannot check request limits right now.")); }
 
-  // Stop API calls if the client disconnects (needs enable_request_signal).
+  // Stop API calls if the runtime reports a disconnect (enable_request_signal).
+  // Local workerd does not report one, so a wait's deadline and call cap are
+  // the guaranteed bounds.
   const cancel = new AbortController();
   request.signal?.addEventListener?.("abort", () => cancel.abort(new Error("client disconnected")), { once: true });
   const budget = { used: 0, max: MAX_UPSTREAM_CALLS };

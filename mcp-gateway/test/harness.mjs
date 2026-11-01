@@ -2,6 +2,7 @@
 // PGlite database, the gateway in Wrangler's local workerd runtime, and the
 // official MCP TypeScript SDK client. Nothing here contacts a remote service.
 import { createServer } from "node:net";
+import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -57,9 +58,9 @@ export function variantConfig(name, edit) {
 }
 
 // Start the gateway with `wrangler dev` (workerd through Miniflare).
-export async function startGateway({ upstream, config = "wrangler.toml" }) {
+export async function startGateway({ upstream, config = "wrangler.toml", vars = {}, ready = 200 }) {
   const port = await freePort();
-  const child = runWrangler(devArgs({ port, upstream, config }), { stdio: ["ignore", "pipe", "pipe"] });
+  const child = runWrangler(devArgs({ port, upstream, config, vars }), { stdio: ["ignore", "pipe", "pipe"] });
   let output = "";
   child.stdout.on("data", chunk => { output += chunk; });
   child.stderr.on("data", chunk => { output += chunk; });
@@ -67,12 +68,19 @@ export async function startGateway({ upstream, config = "wrangler.toml" }) {
   const deadline = Date.now() + 60000;
   for (;;) {
     if (child.exitCode !== null) throw new Error(`wrangler dev exited early:\n${output}`);
-    try { if ((await fetch(`${url}/llms.txt`)).ok) break; } catch {}
+    // A deliberately broken config answers 503 once the runtime is up.
+    try { if ((await fetch(`${url}/llms.txt`)).status === ready) break; } catch {}
     if (Date.now() > deadline) { child.kill("SIGTERM"); throw new Error(`wrangler dev did not start:\n${output}`); }
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   return {
     url, endpoint: `${url}/mcp`, logs: () => output,
+    // Runtime logs arrive a little after the response.
+    async waitForLog(pattern, ms = 5000) {
+      const end = Date.now() + ms;
+      while (!pattern.test(output) && Date.now() < end) await new Promise(resolve => setTimeout(resolve, 100));
+      return output;
+    },
     async stop(name) {
       // Keep the runtime output as evidence. It is checked for secrets in the tests.
       if (name) { mkdirSync(evidence, { recursive: true }); writeFileSync(join(evidence, `${name}.gateway.log`), output); }
@@ -104,5 +112,33 @@ export function caller(client) {
 export function rpc(endpoint, body, { token, headers = {}, method = "POST" } = {}) {
   return fetch(endpoint, { method, headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream",
     ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers }, body: method === "POST" ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined });
+}
+// Chips a player gained or lost in one hand, from the archived events alone.
+export function eventNet(record, seat) {
+  let net = 0;
+  for (const e of record.events) {
+    if ((e.type === "blind" || e.type === "action") && e.seat === seat) net -= e.amount;
+    if (e.type === "refund" && e.seat === seat) net += e.amount;
+    if (e.type === "award") net += e.award.winners.filter(w => w.seat === seat).reduce((sum, w) => sum + w.amount, 0);
+  }
+  return net;
+}
+export function ghostTake(record) {
+  return record.events.filter(e => e.type === "award").reduce((sum, e) => sum + (e.award.ghost?.amount ?? 0), 0);
+}
+
+// node:http lets a test set any Host header and stream a chunked body with no
+// Content-Length, which fetch does not allow.
+export function rawHttp(url, { method = "POST", headers = {}, chunks = [] } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(url, { method, headers }, res => {
+      let body = ""; res.setEncoding("utf8");
+      res.on("data", chunk => { body += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body }));
+    });
+    req.on("error", reject);
+    for (const chunk of chunks) req.write(chunk);
+    req.end();
+  });
 }
 export const initialize = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "raw", version: "1" } } };

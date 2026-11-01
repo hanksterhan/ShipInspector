@@ -22,11 +22,11 @@ export function offlineEnv() {
 // Local settings: loopback host and upstream only, one shared limit bucket.
 // Keeping the real local origin lets the Worker check the Host it receives,
 // instead of the production host Wrangler would infer from `routes`.
-export function devArgs({ port = 8787, upstream = "http://127.0.0.1:3000", config = "wrangler.toml" } = {}) {
-  const hosts = `127.0.0.1:${port},localhost:${port}`;
+export function devArgs({ port = 8787, upstream = "http://127.0.0.1:3000", config = "wrangler.toml", vars = {} } = {}) {
+  const settings = { UPSTREAM_ORIGIN: upstream, ALLOWED_HOSTS: `127.0.0.1:${port},localhost:${port}`, PUBLIC_MCP_URL: `http://127.0.0.1:${port}/mcp`,
+    CLIENT_IP_HEADER: "none", ALLOW_LOOPBACK_HTTP: "true", ...vars };
   return ["dev", "--config", config, "--ip", "127.0.0.1", "--port", String(port), "--local", "--show-interactive-dev-session=false", "--infer-origin-from-routes=false",
-    "--var", `UPSTREAM_ORIGIN:${upstream}`, "--var", `ALLOWED_HOSTS:${hosts}`, "--var", `PUBLIC_MCP_URL:http://127.0.0.1:${port}/mcp`,
-    "--var", "CLIENT_IP_HEADER:none", "--var", "ALLOW_LOOPBACK_HTTP:true"];
+    ...Object.entries(settings).flatMap(([key, value]) => ["--var", `${key}:${value}`])];
 }
 
 export function runWrangler(args, options = {}) {

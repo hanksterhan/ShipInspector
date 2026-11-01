@@ -3,26 +3,12 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { caller, connect, startApi, startGateway } from "./harness.mjs";
+import { caller, connect, eventNet, ghostTake, startApi, startGateway } from "./harness.mjs";
 
 const TOOLS = ["poker_act", "poker_deal", "poker_get_hand", "poker_get_table", "poker_leave", "poker_ready", "poker_refill", "poker_request_id", "poker_wait_for_turn"];
 let api; let gateway;
 before(async () => { api = await startApi(); gateway = await startGateway({ upstream: api.url }); }, { timeout: 90000 });
 after(async () => { await gateway?.stop("play"); await api?.close(); }, { timeout: 15000 });
-
-// Chips a player gained or lost in one hand, from the archived events alone.
-export function eventNet(record, seat) {
-  let net = 0;
-  for (const e of record.events) {
-    if ((e.type === "blind" || e.type === "action") && e.seat === seat) net -= e.amount;
-    if (e.type === "refund" && e.seat === seat) net += e.amount;
-    if (e.type === "award") net += e.award.winners.filter(w => w.seat === seat).reduce((sum, w) => sum + w.amount, 0);
-  }
-  return net;
-}
-export function ghostTake(record) {
-  return record.events.filter(e => e.type === "award").reduce((sum, e) => sum + (e.award.ghost?.amount ?? 0), 0);
-}
 
 // Deterministic fixture, as in the stdio ghost test: after a real deal, set
 // the saved cards so the ghost holds aces and wins at showdown. Rivers are
