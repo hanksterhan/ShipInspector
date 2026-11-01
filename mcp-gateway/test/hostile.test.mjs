@@ -286,7 +286,8 @@ test("a stalled API reply times out after 12 seconds, mid-body too, with no auto
       assert.equal(run.outcome.result.content[0].text, "Could not reach the poker API. Retry with the same requestId if an action was sent.");
       assert.ok(run.outcome.toolMs >= 11500 && run.outcome.toolMs < 16000, `tool ${run.outcome.toolMs} ms`);
     }
-    // Wait past another timeout: nothing was sent again.
+    // Wait 3 more seconds: no retry followed the timeout. (This does not wait
+    // for a second 12-second timeout.)
     await new Promise(resolve => setTimeout(resolve, 3000));
     for (const run of runs) {
       const stalled = Object.keys(plans.get(run.id))[0];
