@@ -33,7 +33,10 @@ async def main(endpoint: str) -> None:
             seat = view["yourSeat"]
             view = await call("poker_ready", {"version": view["version"], "requestId": str(uuid.uuid4()), "ready": True})
             actions = 0
-            hidden_ok = True
+            # Each in-play snapshot is one privacy sample: own two cards shown,
+            # every opponent's hidden. The runner requires at least one sample.
+            samples = 0
+            leaks = 0
             for _ in range(200):
                 if view["street"] == "complete" and view["handNumber"] >= 1:
                     break
@@ -42,9 +45,11 @@ async def main(endpoint: str) -> None:
                     view = await call("poker_get_table")
                     continue
                 view = await call("poker_wait_for_turn", {"seconds": 10})
-                for s in view["seats"]:
-                    if s["seat"] != seat and view["street"] != "complete" and s["cards"]:
-                        hidden_ok = False
+                if view["street"] not in ("waiting", "complete"):
+                    samples += 1
+                    for s in view["seats"]:
+                        if len(s["cards"]) != (2 if s["seat"] == seat else 0):
+                            leaks += 1
                 if view.get("legal") and view["actor"] == seat:
                     action = "check" if view["legal"]["check"] else "call"
                     view = await call("poker_act", {"version": view["version"], "requestId": str(uuid.uuid4()), "action": action})
@@ -55,7 +60,7 @@ async def main(endpoint: str) -> None:
                 "client": "mcp-python", "sdkVersion": version("mcp"), "protocolVersion": init.protocolVersion,
                 "server": init.serverInfo.name, "tools": tools, "rulesHaveNoCashValue": "no cash value" in rules,
                 "seat": seat, "actions": actions, "street": view["street"], "ownArchiveCards": len(mine["cards"]),
-                "opponentCardsHiddenDuringPlay": hidden_ok, "stackTotal": sum(s["stack"] for s in view["seats"]),
+                "privacySamples": samples, "privacyLeaks": leaks, "stackTotal": sum(s["stack"] for s in view["seats"]),
             }))
 
 
