@@ -9,6 +9,6 @@
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "test:python-client": "node test/interop/python.mjs"
   },
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=22" },
   "devDependencies": { "wrangler": "4.156.0" }
 }
