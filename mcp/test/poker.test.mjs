@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { createPokerServer } from "../src/server.mjs";
+import { TOOL_NAMES } from "../src/tools.mjs";
 
 const require = createRequire(new URL("../../api/package.json", import.meta.url));
 process.env.POKER_STORE_DIR = "memory://";
@@ -189,6 +190,11 @@ test("describes the ghost only on ghost tables", { timeout: 10000 }, async () =>
   try {
     const text = (await client.readResource({ uri: "poker://rules" })).contents[0].text;
     assert.match(text, /No-limit Texas Hold'em/); assert.doesNotMatch(text, /Ghost/);
+    const tools = (await client.listTools()).tools;
+    assert.deepEqual(tools.map(t => t.name).sort(), [...TOOL_NAMES].sort());
+    // Table reads can commit CPU moves and timeouts, so they are not read-only.
+    for (const name of ["poker_get_table", "poker_wait_for_turn"]) assert.equal(tools.find(t => t.name === name).annotations.readOnlyHint, false);
+    assert.equal(tools.find(t => t.name === "poker_get_hand").annotations.readOnlyHint, true);
   } finally { await client.close(); }
 });
 test("rejects remote cleartext transport and malformed credentials", () => {

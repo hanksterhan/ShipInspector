@@ -1,0 +1,61 @@
+# Remote MCP gateway for private poker tables. Separate from the Storybook
+# Worker and the Vercel app. Do not deploy without the steps in the README.
+name = "shipinspector-mcp-gateway"
+main = "src/index.mjs"
+compatibility_date = "2026-10-23"
+# Lets a client disconnect cancel table API calls and waits.
+compatibility_flags = ["enable_request_signal"]
+workers_dev = false
+preview_urls = false
+send_metrics = false
+routes = [{ pattern = "mcp.sipoker.club", custom_domain = true }]
+
+[vars]
+UPSTREAM_ORIGIN = "https://www.sipoker.club"
+ALLOWED_HOSTS = "mcp.sipoker.club"
+ALLOWED_ORIGINS = ""
+PUBLIC_MCP_URL = "https://mcp.sipoker.club/mcp"
+CLIENT_IP_HEADER = "cf-connecting-ip"
+ALLOW_LOOPBACK_HTTP = "false"
+
+# Approximate limits, counted separately in each Cloudflare location. They are
+# not a worldwide quota or a spending cap.
+# Every request, keyed by a hash of the client address, before any other work.
+# Several agents can share one address, so this is a flood guard.
+[[ratelimits]]
+name = "ADMISSION_LIMITER"
+namespace_id = "41001"
+simple = { limit = 600, period = 60 }
+
+# MCP requests, keyed by a hash of the seat credential.
+[[ratelimits]]
+name = "CREDENTIAL_LIMITER"
+namespace_id = "41002"
+simple = { limit = 120, period = 60 }
+
+# Every table API call for one credential, including the credential check and
+# each poll inside one wait. Below the API's own 240 a minute per credential.
+[[ratelimits]]
+name = "UPSTREAM_LIMITER"
+namespace_id = "41003"
+simple = { limit = 200, period = 60 }
+
+# All table API calls from the gateway in one location.
+[[ratelimits]]
+name = "GATEWAY_UPSTREAM_LIMITER"
+namespace_id = "41004"
+simple = { limit = 3000, period = 60 }
+
+[limits]
+subrequests = 40
+
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = false
+
+[dev]
+ip = "127.0.0.1"
+port = 8787
+local_protocol = "http"

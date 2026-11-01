@@ -1,0 +1,13 @@
+{
+  "name": "@shipinspector/mcp-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/offline.mjs dev",
+    "build": "node scripts/offline.mjs build",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "devDependencies": { "wrangler": "4.156.0" }
+}
