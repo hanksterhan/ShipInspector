@@ -6,8 +6,10 @@
 import { test, before, beforeEach, afterEach, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { getEventListeners } from "node:events";
 import worker from "../src/index.mjs";
 import { LIMITERS } from "../src/config.mjs";
+import { admit, GatewayError, LIMIT_TIMEOUT_MS, LimitError } from "../src/upstream.mjs";
 
 const tableId = randomUUID();
 const token = `si_agent_${tableId}.${"cd".repeat(32)}`;
@@ -204,6 +206,135 @@ for (const [binding, at, message, stage] of pendingPoints) {
     clean(outcome);
   });
 }
+
+// A binding can abort the request before limit() returns. This is a SYNTHETIC
+// reentrant binding; whether a real Cloudflare binding can do this is not known.
+for (const [binding, at, message, stage] of pendingPoints) {
+  for (const late of ["resolves", "rejects"]) test(`an abort inside ${binding}'s limit() (${stage}) ends the request at once; the reply ${late} late`, async () => {
+    upstream();
+    const stuck = gate(); const controller = new AbortController();
+    const hooks = { [binding]: n => {
+      if (n !== at) return Promise.resolve(ok);
+      controller.abort(new Error(DIAGNOSTIC));
+      return stuck.promise;
+    } };
+    const outcome = await send(message, hooks, controller.signal);
+    // A later poll starts after 1 s; the others must not wait for any timer.
+    const bound = at === 3 ? 1500 : 500;
+    assert.ok(outcome.ms < bound, `${stage}: took ${outcome.ms} ms`);
+    const sent = calls.length;
+    if (at <= 1) {
+      assert.equal(outcome.status, 499);
+      assert.equal(outcome.body.error.message, "The request was cancelled.");
+      assert.deepEqual(calls, []);
+    } else {
+      assert.equal(outcome.body.result.isError, true);
+      assert.equal(outcome.body.result.content[0].text, CANCELLED);
+      assert.deepEqual(calls, at === 3 ? ["/session", "/"] : ["/session"]);
+    }
+    if (late === "resolves") stuck.resolve(ok); else stuck.reject(new Error(DIAGNOSTIC));
+    await settledQuietly(sent);
+    clean(outcome);
+  });
+}
+
+// A cancel wins over whatever limit() does after the abort.
+const afterAbort = {
+  "returns success": () => ok,
+  "returns a refusal": () => ({ success: false }),
+  "returns no reply": () => undefined,
+  "returns a rejected promise": () => Promise.reject(new Error(DIAGNOSTIC)),
+  throws: () => { throw new Error(DIAGNOSTIC); },
+};
+for (const binding of Object.values(LIMITERS)) {
+  for (const [name, reply] of Object.entries(afterAbort)) test(`${binding} aborts the request and ${name}: 499, nothing sent`, async () => {
+    upstream();
+    const controller = new AbortController();
+    const outcome = await send(getTable, { [binding]: () => { controller.abort(new Error(DIAGNOSTIC)); return reply(); } }, controller.signal);
+    assert.ok(outcome.ms < 500, `took ${outcome.ms} ms`);
+    assert.equal(outcome.status, 499);
+    assert.equal(outcome.body.error.message, "The request was cancelled.");
+    assert.deepEqual(calls, []);
+    clean(outcome);
+    await settledQuietly(0);
+  });
+}
+
+test("a request aborted before it arrives calls no binding and no API", async () => {
+  upstream();
+  const controller = new AbortController(); controller.abort(new Error(DIAGNOSTIC));
+  const used = [];
+  const hooks = Object.fromEntries(Object.values(LIMITERS).map(name => [name, () => { used.push(name); return ok; }]));
+  const outcome = await send(getTable, hooks, controller.signal);
+  assert.equal(outcome.status, 499);
+  assert.deepEqual(used, []);
+  assert.deepEqual(calls, []);
+  clean(outcome);
+  await settledQuietly(0);
+});
+
+// A plain reply that is not a promise, with no abort, keeps its normal meaning.
+for (const binding of Object.values(LIMITERS)) {
+  test(`${binding} returns success at once: the call goes on`, async () => {
+    upstream();
+    const outcome = await send(getTable, { [binding]: () => ok });
+    assert.equal(outcome.body.result.structuredContent.version, 4);
+    assert.deepEqual(calls, ["/session", "/"]);
+  });
+  test(`${binding} returns a refusal at once: 429, nothing sent`, async () => {
+    upstream();
+    const outcome = await send(getTable, { [binding]: () => ({ success: false }) });
+    assert.equal(outcome.status, 429);
+    assert.deepEqual(calls, []);
+  });
+}
+
+// The shared helper itself: no timer or abort listener stays after any end.
+async function admitted(t, limit, signal) {
+  const set = t.mock.method(globalThis, "setTimeout"); const clear = t.mock.method(globalThis, "clearTimeout");
+  const started = Date.now();
+  let value; let error;
+  try { value = await admit({ limit }, "key", signal); } catch (caught) { error = caught; }
+  const ms = Date.now() - started;
+  const timers = set.mock.calls.filter(call => call.arguments[1] === LIMIT_TIMEOUT_MS).map(call => call.result);
+  const cleared = clear.mock.calls.map(call => call.arguments[0]);
+  set.mock.restore(); clear.mock.restore();
+  assert.ok(timers.every(timer => cleared.includes(timer)), "the limit timer is still set");
+  assert.equal(getEventListeners(signal, "abort").length, 0);
+  return { value, error, ms };
+}
+function isCancel({ error, ms }) {
+  assert.ok(error instanceof GatewayError && !(error instanceof LimitError), `got ${error?.name}`);
+  assert.equal(error.status, 499);
+  assert.equal(error.message, CANCELLED);
+  assert.ok(ms < 500, `took ${ms} ms`);
+}
+
+test("admit() with a signal that is already aborted never calls the binding", async t => {
+  const controller = new AbortController(); controller.abort();
+  let used = 0;
+  isCancel(await admitted(t, () => { used++; return ok; }, controller.signal));
+  assert.equal(used, 0);
+});
+
+for (const [name, reply] of Object.entries({ ...afterAbort, "returns a promise that never settles": () => new Promise(() => {}) })) {
+  test(`admit() when the binding aborts and ${name}: a cancel, with nothing left behind`, async t => {
+    const controller = new AbortController();
+    isCancel(await admitted(t, () => { controller.abort(new Error(DIAGNOSTIC)); return reply(); }, controller.signal));
+  });
+}
+
+test("admit() with no abort keeps its replies, faults, and cleanup", async t => {
+  const signal = () => new AbortController().signal;
+  assert.equal((await admitted(t, () => ok, signal())).value, true);
+  assert.equal((await admitted(t, () => ({ success: false }), signal())).value, false);
+  assert.equal((await admitted(t, () => Promise.resolve(ok), signal())).value, true);
+  for (const fault of Object.values(faults)) {
+    const { error } = await admitted(t, fault, signal());
+    assert.ok(error instanceof LimitError, `got ${error?.name}`);
+    assert.equal(error.message, LIMITS_DOWN);
+  }
+});
 
 test("normal 429 replies and API messages still pass", async () => {
   upstream();

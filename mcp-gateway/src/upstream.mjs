@@ -49,12 +49,11 @@ export class LimitError extends GatewayError {
 // Ask one rate-limit binding whether `key` may go on. A throw, a rejection, a
 // reply with no boolean `success`, or no reply within `timeoutMs` is a
 // LimitError. A cancel ends the wait at once with a 499. A reply that comes
-// after either is dropped, so it cannot start work or go unhandled.
+// after either is dropped, so it cannot start work or go unhandled. The abort
+// listener starts before the binding call, because a cancel can come during
+// that call, and a cancel wins over any fault that the call then shows.
 export async function admit(binding, key, signal, timeoutMs = LIMIT_TIMEOUT_MS) {
   if (signal?.aborted) throw new GatewayError(499, CANCELLED);
-  let reply;
-  try { reply = Promise.resolve(binding.limit({ key })); } catch { throw new LimitError(); }
-  reply.catch(() => {});
   let timer; let onAbort;
   const stopped = new Promise((_, reject) => {
     timer = setTimeout(() => reject(new LimitError()), timeoutMs);
@@ -63,9 +62,14 @@ export async function admit(binding, key, signal, timeoutMs = LIMIT_TIMEOUT_MS) 
   });
   stopped.catch(() => {});
   let success;
-  try { success = (await Promise.race([reply, stopped]))?.success; }
-  catch (error) { throw error instanceof GatewayError ? error : new LimitError(); }
-  finally { clearTimeout(timer); signal?.removeEventListener("abort", onAbort); }
+  try {
+    const reply = Promise.resolve(binding.limit({ key }));
+    reply.catch(() => {});
+    success = (await Promise.race([reply, stopped]))?.success;
+  } catch (error) {
+    if (signal?.aborted) throw new GatewayError(499, CANCELLED);
+    throw error instanceof GatewayError ? error : new LimitError();
+  } finally { clearTimeout(timer); signal?.removeEventListener("abort", onAbort); }
   if (signal?.aborted) throw new GatewayError(499, CANCELLED);
   if (typeof success !== "boolean") throw new LimitError();
   return success;
