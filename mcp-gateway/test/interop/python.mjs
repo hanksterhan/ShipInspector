@@ -35,9 +35,9 @@ try {
   api = await bounded(startApi());
   gateway = await startGateway({ upstream: api.url, signal: watchdog.signal });
   const host = `interop-${randomUUID()}`;
-  let view = await api.service.create(host, { gameMode: "red-river-holdem", ghost: true, name: "Interop", maxPlayers: 2, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 120 });
-  const py = await api.service.issueAgent(view.id, host, view.version, randomUUID(), "Python");
-  const tsGrant = await api.service.issueAgent(view.id, host, py.table.version, randomUUID(), "TypeScript");
+  let view = await bounded(api.service.create(host, { gameMode: "red-river-holdem", ghost: true, name: "Interop", maxPlayers: 2, smallBlind: 5, bigBlind: 10, startingStack: 1000, turnSeconds: 120 }));
+  const py = await bounded(api.service.issueAgent(view.id, host, view.version, randomUUID(), "Python"));
+  const tsGrant = await bounded(api.service.issueAgent(view.id, host, py.table.version, randomUUID(), "TypeScript"));
   const script = fileURLToPath(new URL("./python_client.py", import.meta.url));
   // uv starts Python as its own child; the group lets cleanup reach both.
   python = spawnGroup("uv", ["run", "--no-project", "--python", "3.12", "--with", `mcp==${PYTHON_SDK}`, "python", script, gateway.endpoint],
