@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node scripts/offline.mjs dev",
     "build": "node scripts/offline.mjs build",
-    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "test:python-client": "node test/interop/python.mjs"
   },
   "engines": { "node": ">=20" },
   "devDependencies": { "wrangler": "4.156.0" }

@@ -199,7 +199,7 @@ Add a stdio server to your MCP client. Use an absolute path for the entry point 
 
 Use HTTPS for a remote API. Start a separate MCP connection for each agent, with a separate credential. The SDK uses the [standard stdio transport](https://ts.sdk.modelcontextprotocol.io/server).
 
-The tools are `poker_get_table`, `poker_wait_for_turn`, `poker_ready`, `poker_deal`, `poker_act`, `poker_refill`, `poker_leave`, and `poker_request_id`. The `poker://rules` resource states the table rules, including the ghost rules on a Ghost table. Read the current version and legal actions before each move. `raiseTo` means the total street bet. Use a new request ID for each command and the same ID for an exact retry. Mark ready after each hand and deal when `canDeal` is true. Human players and agents use the same action endpoint and poker rules. The betting rules follow the [Poker TDA raise and reopening rules](https://www.pokertda.com/view-poker-tda-rules/).
+The tools are `poker_get_table`, `poker_wait_for_turn`, `poker_ready`, `poker_deal`, `poker_act`, `poker_refill`, `poker_leave`, `poker_request_id`, and `poker_get_hand`. A table read can also commit a due CPU move or turn timeout, so `poker_get_table` and `poker_wait_for_turn` are not marked read-only. The `poker://rules` resource states the table rules, including the ghost rules on a Ghost table. Read the current version and legal actions before each move. `raiseTo` means the total street bet. Use a new request ID for each command and the same ID for an exact retry. Mark ready after each hand and deal when `canDeal` is true. Human players and agents use the same action endpoint and poker rules. The betting rules follow the [Poker TDA raise and reopening rules](https://www.pokertda.com/view-poker-tda-rules/).
 
 Run the engine, database, and MCP integration checks from the repository root:
 
@@ -208,6 +208,81 @@ npm run test:multiplayer
 cd api && npm run build
 cd ../mcp && npm test
 ```
+
+### Remote MCP gateway (closed beta)
+
+`mcp-gateway` is a Cloudflare Worker that serves the same tools and rules over Streamable HTTP at `/mcp`. It is not deployed. The planned endpoint is `https://mcp.sipoker.club/mcp`. It is separate from the Storybook Worker. The Vercel API and database stay in control of tables, credentials, and play; the Worker holds no game state and no secrets.
+
+- **One message for each request.** Each POST holds one JSON-RPC message. The Worker makes a new MCP server, transport, and API client for that request alone and keeps no session. GET and DELETE return 405.
+- **Seat credential on every request.** The client sends `Authorization: Bearer YOUR_SEAT_CREDENTIAL`. The Worker checks the format, then asks the API (`GET /api/tables/:id/session`) before any MCP work, including `initialize` and `tools/list`. That route never advances the table. A revoked or expired credential fails on its next request. This beta has no OAuth, account sign-up, self-service seats, or anonymous play. The Worker does not publish OAuth discovery documents.
+- **Fixed upstream.** The Worker calls only `UPSTREAM_ORIGIN`, at fixed table paths, with the table ID from the credential. It refuses redirects, non-JSON replies, and replies over 512 KiB, and it never retries. After a lost command, the agent retries with the same `requestId`.
+- **Host and Origin.** The Host must match `ALLOWED_HOSTS` exactly. A request with an Origin header must match `ALLOWED_ORIGINS` exactly. The list is empty by default, so browsers cannot call. Clients that send no Origin, such as the MCP SDKs, can call. Responses never allow credentials mode.
+- **Early refusal.** Bodies over 64 KiB, wrong media types, batches, and malformed messages fail before any API call.
+- **Logs.** Each request logs its route, status, time, MCP method, tool name, a 12-character prefix of the credential's SHA-256 hash, and the number of API calls. Logs never hold headers, bodies, tool arguments, or cards. Invocation logs are off.
+
+Rate limits use Cloudflare rate-limit bindings in `mcp-gateway/wrangler.toml`. Each binding counts in each Cloudflare location separately, and counts are approximate. They are not a worldwide quota and not a spending cap.
+
+| Binding                    | Key                         | Limit per minute |
+| -------------------------- | --------------------------- | ---------------- |
+| `ADMISSION_LIMITER`        | hash of the client address  | 600              |
+| `CREDENTIAL_LIMITER`       | hash of the seat credential | 120              |
+| `UPSTREAM_LIMITER`         | hash of the seat credential | 200 API calls    |
+| `GATEWAY_UPSTREAM_LIMITER` | all traffic                 | 3,000 API calls  |
+
+A wait polls the API about once a second for up to 25 seconds, and each poll counts against `UPSTREAM_LIMITER`. One request makes at most 30 API calls, and `limits.subrequests` is 40. The API keeps its own limit of 240 table requests a minute for each credential in each server instance. In production, the client address comes from `CF-Connecting-IP`, which Cloudflare sets. The Worker never reads `X-Forwarded-For`. If a binding or setting is missing or unsafe, every request gets 503 and the log names the setting but not its value.
+
+Connect a client that supports Streamable HTTP and custom headers:
+
+```json
+{
+  "mcpServers": {
+    "shipinspector-poker": {
+      "type": "http",
+      "url": "https://mcp.sipoker.club/mcp",
+      "headers": { "Authorization": "Bearer YOUR_SEAT_CREDENTIAL" }
+    }
+  }
+}
+```
+
+For Claude Code: `claude mcp add --transport http shipinspector-poker https://mcp.sipoker.club/mcp --header "Authorization: Bearer YOUR_SEAT_CREDENTIAL"`. Local tests passed with the official TypeScript SDK 1.30.0 (`StreamableHTTPClientTransport`) and the official Python SDK 1.30.0 (`streamablehttp_client`). Both used protocol `2025-11-25`. Other clients are not tested.
+
+The Worker serves `/` (HTML) and `/llms.txt` (plain text) for people and agents. These pages never call the API and hold no table data. Publishing them does not list the server in any directory.
+
+Run the Worker on your computer with Wrangler's local runtime. The commands need no Cloudflare account and work only on `127.0.0.1`:
+
+```bash
+npm --prefix mcp ci
+npm --prefix lib ci && npm --prefix api ci && npm --prefix api run build
+npm --prefix mcp-gateway ci
+npm --prefix mcp-gateway run dev -- http://127.0.0.1:3000
+npm --prefix mcp-gateway test
+npm --prefix mcp-gateway run build
+```
+
+`dev` points the Worker at a local API and uses one shared limit bucket. `test` runs the Worker in local workerd against the real API router on an in-memory database: two SDK clients play every game mode, an agent plays CPUs with their real delay, and the security checks run. `build` makes an offline dry-run bundle. `npm --prefix mcp-gateway run test:python-client` also plays a hand with the Python SDK; it needs `uv`. The helper hides Cloudflare credentials and your Wrangler login from Wrangler, and it runs only `dev` and the dry run.
+
+Local workerd does not tell the Worker when a client disconnects, so a wait there runs to its deadline. The `enable_request_signal` flag lets the Worker stop early on Cloudflare if the platform reports the disconnect. This is not tested.
+
+#### Deploy (owner only, after approval)
+
+Do these steps in order:
+
+1. Deploy the API with `GET /api/tables/:id/session` to Vercel. Until then the gateway reports every credential as invalid.
+2. Make sure the `sipoker.club` zone is in the Cloudflare account. On deploy, `custom_domain = true` creates the DNS record for `mcp.sipoker.club`. The `workers.dev` and preview URLs stay off.
+3. Make sure no other rate-limit bindings in the account use namespace IDs `41001` to `41004`.
+4. Check the plan limits. The Free plan allows 10 ms of CPU time and 50 subrequests for each request. The gzip bundle is about 157 KiB, and each request builds an MCP server. CPU time was not measured; check it in the Workers dashboard after deploy.
+5. Sign in to Wrangler from your own terminal, then deploy:
+
+```bash
+npm --prefix mcp ci && npm --prefix mcp-gateway ci
+npm --prefix mcp-gateway run build
+cd mcp-gateway
+npx wrangler login
+npx wrangler deploy
+```
+
+Then check that `https://mcp.sipoker.club/llms.txt` returns plain text, that a POST to `/mcp` with no credential returns 401, and that a test credential can list tools and read `poker://rules`.
 
 ## Development Commands
 
@@ -248,6 +323,10 @@ npm run lint             # Run Prettier checks
 npm run build            # Build TypeScript interfaces
 npm run lint             # Run Prettier checks
 ```
+
+## API browser origins
+
+Browser requests send cookies, so the API allows only exact origins: `https://sipoker.club`, `https://www.sipoker.club`, the request's own host (for example, a Vercel preview calling its own API), and the entries in `CORS_ORIGIN`. During development it also allows `http://localhost` and `http://127.0.0.1` on any port. Other origins get 403. To call the API from another preview host or a phone on your network, add that exact origin to `CORS_ORIGIN`.
 
 ## Rate Limiting
 
