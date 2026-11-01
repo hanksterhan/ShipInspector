@@ -1,41 +1,45 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
 
+const PRODUCTION_ORIGINS = ["https://sipoker.club", "https://www.sipoker.club"];
+
+function isLoopbackOrigin(origin: string): boolean {
+    try {
+        const url = new URL(origin);
+        return url.origin === origin && url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+    } catch {
+        return false;
+    }
+}
+
 /**
- * CORS handler for serverless functions
+ * CORS handler for serverless functions. Browser requests carry cookies, so
+ * every allowed origin is an exact match: the production hosts, the request's
+ * own host (for example a Vercel preview calling its own API), entries in
+ * CORS_ORIGIN, and loopback origins during development.
  */
 export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
     const origin = req.headers.origin;
-    const allowedOrigins = process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+    const configured = process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
         : ["http://localhost:4000", "http://localhost:8080"];
-
     const isDevelopment = process.env.NODE_ENV !== "production";
-
-    // Set CORS headers
-    if (!origin) {
-        // Allow requests with no origin
-        res.setHeader("Access-Control-Allow-Origin", "*");
-    } else if (
-        isDevelopment && origin.startsWith("http://localhost:")
-    ) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    } else if (
-        origin.includes(".vercel.app") ||
-        origin.includes("sipoker.club") ||
-        allowedOrigins.includes(origin)
-    ) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    } else if (isDevelopment) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    } else {
-        // In production, reject unknown origins
-        res.status(403).json({ error: "Not allowed by CORS" });
-        return false;
-    }
+    const host = typeof req.headers.host === "string" ? req.headers.host.toLowerCase() : "";
 
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Poker-Rules");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+
+    // Requests without an Origin header are not browser cross-origin requests.
+    if (origin) {
+        const allowed = PRODUCTION_ORIGINS.includes(origin) || configured.includes(origin) ||
+            (host !== "" && origin === `https://${host}`) || (isDevelopment && isLoopbackOrigin(origin));
+        if (!allowed) {
+            res.status(403).json({ error: "Not allowed by CORS" });
+            return false;
+        }
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Vary", "Origin");
+    }
 
     // Handle preflight requests
     if (req.method === "OPTIONS") {
@@ -45,4 +49,3 @@ export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
 
     return true;
 }
-

@@ -84,6 +84,48 @@ describe("persistent tables and shared human/agent authorization", () => {
     await service.revokeAgent(first.id, "token-owner", grant.table.version, randomUUID(), grant.agentId);
     await expect(service.get(first.id, { token: grant.token })).rejects.toThrow("revoked");
   });
+  it("checks an agent session without advancing the table", async () => {
+    const t = await service.create("session-owner", { ...settings, maxPlayers: 4 });
+    const grant = await service.issueAgent(t.id, "session-owner", t.version, randomUUID(), "Bot");
+    let v = await service.command(t.id, { userId: "session-owner" }, { version: grant.table.version, requestId: randomUUID(), command: { type: "add-bots", styles: ["balanced"] } });
+    v = await service.command(t.id, { token: grant.token }, { version: v.version, requestId: randomUUID(), command: { type: "ready", ready: true } });
+    v = await service.command(t.id, { token: grant.token }, { version: v.version, requestId: randomUUID(), command: { type: "deal" } });
+    const before = (await store.get(t.id))!;
+    clock += 60000;
+    expect(await service.authorize(t.id, { token: grant.token })).toEqual({ authorized: true });
+    expect((await store.get(t.id))!.version).toBe(before.version);
+    const other = await service.create("session-owner", settings);
+    await expect(service.authorize(other.id, { token: grant.token })).rejects.toMatchObject({ status: 401 });
+    await expect(service.authorize(t.id, { token: `si_agent_${t.id}.${"0".repeat(64)}` })).rejects.toMatchObject({ status: 401 });
+    await expect(service.authorize(t.id, { userId: "stranger" })).rejects.toMatchObject({ status: 403 });
+    clock += 7 * 86400000;
+    await expect(service.authorize(t.id, { token: grant.token })).rejects.toMatchObject({ status: 401 });
+    clock = 1000;
+    const current = (await store.get(t.id))!;
+    await service.revokeAgent(t.id, "session-owner", current.version, randomUUID(), grant.agentId);
+    await expect(service.authorize(t.id, { token: grant.token })).rejects.toMatchObject({ status: 401 });
+    const ghost = await service.create("session-owner", { ...settings, ghost: true });
+    const ghostGrant = await service.issueAgent(ghost.id, "session-owner", ghost.version, randomUUID(), "Bot");
+    await expect(new TableService(store, () => clock, "holdem:1,red-river-holdem:1").authorize(ghost.id, { token: ghostGrant.token })).rejects.toMatchObject({ status: 426 });
+    expect(await new TableService(store, () => clock, "holdem:1,red-river-holdem:1,ghost:1").authorize(ghost.id, { token: ghostGrant.token })).toEqual({ authorized: true });
+    const factory = jest.spyOn(storage, "getTableStore").mockResolvedValue(store);
+    const invoke = async (method: string, path: string, token: string) => {
+      let status = 200; let data: any;
+      const res = { setHeader() {}, status(code: number) { status = code; return this; }, json(value: unknown) { data = value; } };
+      await tablesHandler({ method, url: path, headers: { authorization: `Bearer ${token}`, "x-poker-rules": "holdem:1,red-river-holdem:1,ghost:1" } } as any, res as any);
+      return { status, data };
+    };
+    try {
+      // The handler uses the real clock, so this grant must too.
+      const live = await new TableService(store).issueAgent(ghost.id, "session-owner", (await store.get(ghost.id))!.version, randomUUID(), "Live");
+      const ghostVersion = (await store.get(ghost.id))!.version;
+      expect(await invoke("GET", `/api/tables/${ghost.id}/session`, live.token)).toEqual({ status: 200, data: { authorized: true } });
+      expect((await store.get(ghost.id))!.version).toBe(ghostVersion);
+      expect((await invoke("GET", `/api/tables/${ghost.id}/session`, grant.token)).status).toBe(403);
+      expect((await invoke("GET", `/api/tables/${t.id}/session`, grant.token)).status).toBe(401);
+      expect((await invoke("POST", `/api/tables/${ghost.id}/session`, live.token)).status).toBe(405);
+    } finally { factory.mockRestore(); }
+  });
   it("distinguishes a revoked seat from a new agent with the same name", async () => {
     const t = await service.create("replacement-owner", settings);
     const first = await service.issueAgent(t.id, "replacement-owner", t.version, randomUUID(), "Bot");
