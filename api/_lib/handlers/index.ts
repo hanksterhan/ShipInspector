@@ -35,6 +35,7 @@ export const routes: Record<string, RouteHandler> = {
     "/tables/:id": tablesHandler,
     "/tables/:id/hands/:n": tablesHandler,
     "/tables/:id/commands": tablesHandler,
+    "/tables/:id/session": tablesHandler,
     "/tables/:id/agents": tablesHandler,
     "/tables/:id/revoke-agent": tablesHandler,
     "/auth/me": authMeHandler,

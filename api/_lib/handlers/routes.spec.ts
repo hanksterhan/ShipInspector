@@ -29,6 +29,12 @@ describe("API router", () => {
     expect(tablesHandler).toHaveBeenCalledTimes(1);
     expect(result.params).toEqual({ id, n: "3" });
   });
+  it("sends an agent session check to the table handler without Clerk", async () => {
+    const result = await route(`/api/tables/${id}/session`, `Bearer si_agent_${id}.secret`);
+    expect(clerkMiddlewareInstance).not.toHaveBeenCalled();
+    expect(tablesHandler).toHaveBeenCalledTimes(1);
+    expect(result.params).toEqual({ id });
+  });
   it("still refuses paths that no route names", async () => {
     for (const url of [`/api/tables/${id}/hands`, `/api/tables/${id}/hands/3/extra`]) {
       expect((await route(url)).status).toBe(404);

@@ -58,6 +58,14 @@ export class TableService {
     }
     throw new TableError("The table changed. Refresh and try again.", 409);
   }
+  // A remote gateway checks the credential on every request. This read never
+  // advances CPU turns or timeouts and returns no table details.
+  async authorize(id: string, identity: Identity) {
+    const t = await this.load(id); const principal = this.principal(t, identity);
+    if (!t.members.includes(principal)) throw new TableError("Join this private table to view the game.", 403);
+    this.requireRules(t);
+    return { authorized: true as const };
+  }
   async history(id: string, identity: Identity, handNumber: number) {
     const t = await this.load(id); const principal = this.principal(t, identity);
     if (!t.members.includes(principal)) throw new TableError("Join this private table to view its hands.", 403);
